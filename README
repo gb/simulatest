@@ -1,0 +1,9 @@
+*** Simulatest Test Harness Framwork
+
+WTF is that?
+
+It's about change the way of preparing the environment to run yours integration tests.
+
+We don't like writting XML or SQL to get the real behaviour of our systems.
+
+Our systems are OOP. So why don't use the classes to do it?
