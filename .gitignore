@@ -1,1 +1,5 @@
-/EnvironmentJUnitRunner.java
+target
+.classpath
+.project
+.settings
+log4j.log
