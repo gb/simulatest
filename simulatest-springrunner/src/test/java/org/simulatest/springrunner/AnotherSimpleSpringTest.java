@@ -12,7 +12,6 @@ import org.simulatest.springrunner.spring.mock.DatabaseMock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
-
 @RunWith(EnvironmentSpringRunner.class)
 @UseEnvironment(SpringChildExampleEnvironment.class)
 @ContextConfiguration(locations={"/applicationContext.xml"})
@@ -29,7 +28,8 @@ public class AnotherSimpleSpringTest {
 	
 	@Test
 	public void environmentsTest() {
-		Assert.assertEquals(0, DatabaseMock.getMessages().size());
+		Assert.assertEquals(2, DatabaseMock.getMessages().size());
+		DatabaseMock.reseta();
 	}
 
 }

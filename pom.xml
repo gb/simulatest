@@ -12,6 +12,7 @@
 		<module>simulatest-insistencelayer</module>
 		<module>simulatest-environment</module>
 		<module>simulatest-springrunner</module>
+<!-- 	<module>simulatest-spikes</module> -->
 	</modules>
 
 	<dependencyManagement>

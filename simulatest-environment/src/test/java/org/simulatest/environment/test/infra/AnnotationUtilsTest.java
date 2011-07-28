@@ -3,8 +3,8 @@ package org.simulatest.environment.test.infra;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-
 import org.junit.Test;
+import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.infra.AnnotationUtils;
 import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
@@ -12,10 +12,6 @@ import org.simulatest.environment.mock.Environments.PessoaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaFisicaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaJuridicaEnvironment;
 import org.simulatest.environment.mock.Environments.Root;
-import org.simulatest.environment.mock.Tests.EmpresaTest;
-import org.simulatest.environment.mock.Tests.PessoaFisicaTest;
-import org.simulatest.environment.mock.Tests.UsuarioTest;
-
 
 public class AnnotationUtilsTest {
 	
@@ -44,5 +40,14 @@ public class AnnotationUtilsTest {
 	private void assertParentEnvirontmentEquals(Class<?> expectedEnvironment, Class<?> clazz) {
 		assertEquals(expectedEnvironment, AnnotationUtils.extractEnvironmentParent(clazz));
 	}
+	
+	@UseEnvironment(PessoaFisicaEnvironment.class)
+	class PessoaFisicaTest { }
+	
+	@UseEnvironment(PessoaFisicaEnvironment.class)
+	class UsuarioTest { }
+	
+	@UseEnvironment(EmpresaEnvironment.class)
+	class EmpresaTest { }
 	
 }

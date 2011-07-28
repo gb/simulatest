@@ -7,7 +7,6 @@ import org.simulatest.environment.infra.EnvironmentExecutionException;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
 
-
 public class EnvironmentRunner {
 	
 	private EnvironmentFactory factory;
@@ -61,7 +60,7 @@ public class EnvironmentRunner {
 
 	private void runEnvironment(EnvironmentDefinition definition) {
 		fireBeforeRun(definition);
-		executeEnvironment(definition);
+		if (!definition.equals(EnvironmentDefinition.bigBang())) executeEnvironment(definition);
 		fireAfterRun(definition);
 	}
 

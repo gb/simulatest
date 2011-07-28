@@ -7,7 +7,6 @@ import java.lang.annotation.Target;
 
 import org.simulatest.environment.environment.Environment;
 
-
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface EnvironmentParent {

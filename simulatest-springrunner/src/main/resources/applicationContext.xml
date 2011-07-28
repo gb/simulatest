@@ -11,6 +11,6 @@
 		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
 
 	<context:annotation-config />
-	<context:component-scan base-package="objectiveLabs.environmentTestHarness" />
+	<context:component-scan base-package="org.simulatest.springrunner" />
 	
 </beans>

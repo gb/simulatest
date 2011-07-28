@@ -6,7 +6,6 @@ import org.simulatest.springrunner.spring.mock.DatabaseMock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-
 @Component
 @EnvironmentParent(value = SpringExampleEnvironment.class)
 public class SpringChildExampleEnvironment implements Environment {

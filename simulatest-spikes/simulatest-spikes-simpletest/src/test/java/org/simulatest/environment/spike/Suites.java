@@ -1,17 +1,17 @@
-package org.simulatest.environment.mock;
+package org.simulatest.environment.spike;
 
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite.SuiteClasses;
 import org.simulatest.environment.junit.EnvironmentJUnitSuite;
-import org.simulatest.environment.mock.Tests.EmpresaTest;
-import org.simulatest.environment.mock.Tests.FuncionarioTest;
-import org.simulatest.environment.mock.Tests.PessoaFisicaTest;
-import org.simulatest.environment.mock.Tests.PessoaJuridicaTest;
-import org.simulatest.environment.mock.Tests.RelatorioLancamentosTest;
-import org.simulatest.environment.mock.Tests.RelatorioProjetosTest;
-import org.simulatest.environment.mock.Tests.RelatorioReceitaTest;
-import org.simulatest.environment.mock.Tests.UsuarioTest;
+import org.simulatest.environment.spike.Tests.EmpresaTest;
+import org.simulatest.environment.spike.Tests.FuncionarioTest;
+import org.simulatest.environment.spike.Tests.PessoaFisicaTest;
+import org.simulatest.environment.spike.Tests.PessoaJuridicaTest;
+import org.simulatest.environment.spike.Tests.RelatorioLancamentosTest;
+import org.simulatest.environment.spike.Tests.RelatorioProjetosTest;
+import org.simulatest.environment.spike.Tests.RelatorioReceitaTest;
+import org.simulatest.environment.spike.Tests.UsuarioTest;
 
 
 public class Suites {

@@ -12,7 +12,6 @@ import org.simulatest.springrunner.spring.mock.DatabaseMock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
-
 @RunWith(EnvironmentSpringRunner.class)
 @UseEnvironment(SpringChildExampleEnvironment.class)
 @ContextConfiguration(locations={"/applicationContext.xml"})

@@ -1,5 +1,4 @@
-package org.simulatest.environment.mock;
-
+package org.simulatest.environment.spike;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,7 +8,6 @@ import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaFisicaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaJuridicaEnvironment;
 import org.simulatest.environment.mock.Environments.ProjetoEnvironment;
-
 
 public class Tests {
 	
