@@ -4,18 +4,12 @@ import org.simulatest.environment.environment.Environment;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.springrunner.spring.SpringContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class EnvironmentSpringFactory implements EnvironmentFactory {
 
 	@Override
 	public Environment create(EnvironmentDefinition definition) {
-		if (SpringContext.getApplicationContext() == null) initializeSpring();
-		return SpringContext.getApplicationContext().getBean(definition.getEnvironmentClass());
+		return SpringContext.getBean(definition.getEnvironmentClass());
 	}
 
-	private void initializeSpring() {
-		new ClassPathXmlApplicationContext("applicationContext.xml");
-	}
-	
 }

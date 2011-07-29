@@ -1,7 +1,7 @@
-package org.simulatest.springrunner.spring.example;
+package org.simulatest.springrunner.test.example;
 
 import org.simulatest.environment.environment.Environment;
-import org.simulatest.springrunner.spring.mock.DatabaseMock;
+import org.simulatest.springrunner.test.mock.DatabaseMock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

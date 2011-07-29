@@ -1,4 +1,4 @@
-package org.simulatest.springrunner.spring.example;
+package org.simulatest.springrunner.test.example;
 
 public interface LanguageTeacher {
 

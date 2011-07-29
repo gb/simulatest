@@ -1,4 +1,4 @@
-package org.simulatest.springrunner.spring.mock;
+package org.simulatest.springrunner.test.mock;
 
 import java.util.ArrayList;
 import java.util.Collections;
