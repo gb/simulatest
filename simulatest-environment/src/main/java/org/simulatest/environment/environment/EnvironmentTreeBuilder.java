@@ -14,7 +14,12 @@ public class EnvironmentTreeBuilder  {
 	private Tree<EnvironmentDefinition> tree;
 
 	public EnvironmentTreeBuilder() {
-		tree = new Tree<EnvironmentDefinition>(EnvironmentDefinition.bigBang());
+		this.tree = new Tree<EnvironmentDefinition>(EnvironmentDefinition.bigBang());
+	}
+	
+	public EnvironmentTreeBuilder(Collection<EnvironmentDefinition> environments) {
+		this();
+		this.addAll(environments);
 	}
 
 	public void add(EnvironmentDefinition definition) {
