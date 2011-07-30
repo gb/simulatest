@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import org.junit.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.BigBangEnvironment;
+import org.simulatest.environment.environment.Environment;
 import org.simulatest.environment.infra.AnnotationUtils;
 import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaEnvironment;
@@ -30,14 +31,13 @@ public class AnnotationUtilsTest {
 		assertParentEnvirontmentEquals(PessoaEnvironment.class, PessoaFisicaEnvironment.class);
 		assertParentEnvirontmentEquals(PessoaEnvironment.class, PessoaJuridicaEnvironment.class);
 		assertParentEnvirontmentEquals(BigBangEnvironment.class, Root.class);
-		assertNull(AnnotationUtils.extractEnvironmentParent(BigBangEnvironment.class));
 	}
 	
 	private void assertEnvironmentEquals(Class<?> expectedEnvironment, Class<?> clazz) {
 		assertEquals(expectedEnvironment, AnnotationUtils.extractEnvironment(clazz));
 	}
 	
-	private void assertParentEnvirontmentEquals(Class<?> expectedEnvironment, Class<?> clazz) {
+	private void assertParentEnvirontmentEquals(Class<?> expectedEnvironment, Class<? extends Environment> clazz) {
 		assertEquals(expectedEnvironment, AnnotationUtils.extractEnvironmentParent(clazz));
 	}
 	

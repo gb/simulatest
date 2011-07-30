@@ -1,9 +1,11 @@
 package org.simulatest.environment.environment;
 
+import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironmentParent;
 
 public class EnvironmentDefinition {
 
 	private final Class<? extends Environment> environmentClass;
+	private final Class<? extends Environment> parentClass;
 	
 	public static EnvironmentDefinition create(Class<? extends Environment> environmentClass) {
 		if (environmentClass == null) return null;
@@ -16,10 +18,15 @@ public class EnvironmentDefinition {
 	
 	private EnvironmentDefinition(Class<? extends Environment> environmentClass) {
 		this.environmentClass = environmentClass;
+		this.parentClass = extractEnvironmentParent(environmentClass);
 	}
 	
 	public Class<? extends Environment> getEnvironmentClass() {
 		return environmentClass;
+	}
+	
+	public Class<? extends Environment> getParentClass() {
+		return parentClass;
 	}
 
 	public String getName() {

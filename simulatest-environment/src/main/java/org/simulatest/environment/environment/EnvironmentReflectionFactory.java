@@ -1,9 +1,7 @@
 package org.simulatest.environment.environment;
 
-
 import org.apache.log4j.Logger;
 import org.simulatest.environment.infra.EnvironmentInstantiationException;
-
 
 public class EnvironmentReflectionFactory implements EnvironmentFactory {
 	

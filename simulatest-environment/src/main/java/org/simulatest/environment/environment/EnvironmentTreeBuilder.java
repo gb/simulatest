@@ -1,14 +1,11 @@
 package org.simulatest.environment.environment;
 
-import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironmentParent;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.simulatest.environment.infra.EnvironmentCyclicException;
 import org.simulatest.environment.tree.Tree;
-
 
 import com.google.common.base.Preconditions;
 
@@ -38,7 +35,7 @@ public class EnvironmentTreeBuilder  {
 		cyclicSanityTest(definition, environmentQueue);
 		
 		environmentQueue.add(definition);
-		EnvironmentDefinition parentDefinition = createParentDefinition(definition);
+		EnvironmentDefinition parentDefinition = EnvironmentDefinition.create(definition.getParentClass());
 		
 		if (!tree.contains(parentDefinition)) addChild(parentDefinition, environmentQueue);
 		tree.addChild(parentDefinition, definition);
@@ -48,10 +45,6 @@ public class EnvironmentTreeBuilder  {
 		if (!environmentQueue.contains(definition)) return;
 		String message = String.format("The environment \"%s\" is cyclicity referenced", definition.getName());
 		throw new EnvironmentCyclicException(message);
-	}
-	
-	private EnvironmentDefinition createParentDefinition(EnvironmentDefinition definition) {
-		return EnvironmentDefinition.create(extractEnvironmentParent(definition.getEnvironmentClass()));
 	}
 	
 }

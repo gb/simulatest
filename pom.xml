@@ -1,19 +1,31 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
 
+	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.simulatest</groupId>
 	<artifactId>simulatest</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>Simulatest</name>
+	<name>Simulatest | Integration Test Harness Framework</name>
 
 	<modules>
 		<module>simulatest-insistencelayer</module>
 		<module>simulatest-environment</module>
 		<module>simulatest-springrunner</module>
-<!-- 	<module>simulatest-spikes</module> -->
 	</modules>
+
+	<developers>
+		<developer>
+			<id>gabrielsuch</id>
+			<name>Gabriel Such</name>
+			<email>gabrielsuch@gmail.com</email>
+		</developer>
+		<developer>
+			<id>lohandus</id>
+			<name>Lohandus Terceiro</name>
+			<email>lohandus@gmail.com</email>
+		</developer>
+	</developers>
 
 	<dependencyManagement>
 		<dependencies>
@@ -99,6 +111,7 @@
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
+					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
 		</plugins>
