@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentRunnerListener;
 
-
 public class EnvironmentRunnerListenerLog implements EnvironmentRunnerListener {
 	
 	private Logger logger = Logger.getLogger(EnvironmentRunnerListenerLog.class);

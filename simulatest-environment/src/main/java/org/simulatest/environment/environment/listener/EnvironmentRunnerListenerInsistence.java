@@ -1,11 +1,9 @@
 package org.simulatest.environment.environment.listener;
 
-
 import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentRunnerListener;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
-
 
 public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerListener {
 	
