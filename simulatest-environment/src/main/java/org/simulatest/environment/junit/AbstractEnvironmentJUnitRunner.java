@@ -26,7 +26,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 	private Tree<EnvironmentDefinition> environmentTree;
 	private EnvironmentRaker environmentRaker;
 	private EnvironmentDescriptionTreeBuilder descriptionTreeBuilder;
-	EnvironmentDatabaseRunner environmentRunner;
+	private EnvironmentDatabaseRunner environmentRunner;
 	
 	public AbstractEnvironmentJUnitRunner(Set<Class<?>> testClasses) throws InitializationError {
 		this.testClasses = testClasses;
@@ -36,6 +36,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 	public AbstractEnvironmentJUnitRunner(Class<?> testClass) throws InitializationError {
 		this.testClasses = new HashSet<Class<?>>(1);
 		this.testClasses.add(testClass);
+		
 		setup();
 	}
 
