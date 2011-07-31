@@ -9,7 +9,7 @@
 	</parent>
 
 	<groupId>org.simulatest</groupId>
-	<artifactId>simulatest-springrunner</artifactId>
+	<artifactId>simulatest-spring</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Simulatest - Spring Environment Runner</name>
 
