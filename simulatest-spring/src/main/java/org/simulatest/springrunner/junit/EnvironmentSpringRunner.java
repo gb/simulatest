@@ -9,8 +9,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 public class EnvironmentSpringRunner extends EnvironmentJUnitRunner {
 
-	private EnvironmentSpringFactory environmentSpringFactory = new EnvironmentSpringFactory();
-
 	public EnvironmentSpringRunner(Class<?> clazz) throws InitializationError {
 		super(clazz);
 	}
@@ -22,7 +20,7 @@ public class EnvironmentSpringRunner extends EnvironmentJUnitRunner {
 	
 	@Override
 	protected EnvironmentFactory getEnvironmentFactory() {
-		return environmentSpringFactory;
+		return new EnvironmentSpringFactory();
 	}
 	
 }
