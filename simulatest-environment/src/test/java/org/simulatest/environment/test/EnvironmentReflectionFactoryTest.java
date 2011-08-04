@@ -11,7 +11,6 @@ import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.infra.EnvironmentInstantiationException;
 import org.simulatest.environment.mock.Environments.PrivateConstructorEnvironment;
 
-
 public class EnvironmentReflectionFactoryTest {
 	
 	private EnvironmentFactory environmentReflection = new EnvironmentReflectionFactory();

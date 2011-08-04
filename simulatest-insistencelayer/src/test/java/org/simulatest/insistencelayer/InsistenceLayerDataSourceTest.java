@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 
 import org.junit.Test;
-import org.simulatest.insistencelayer.infra.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 public class InsistenceLayerDataSourceTest {
 	

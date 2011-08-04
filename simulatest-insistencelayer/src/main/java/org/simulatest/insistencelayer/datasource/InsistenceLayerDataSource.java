@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer.infra;
+package org.simulatest.insistencelayer.datasource;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -6,6 +6,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import javax.sql.DataSource;
+
+import org.simulatest.insistencelayer.connection.ConnectionBean;
+import org.simulatest.insistencelayer.connection.ConnectionBeanDigester;
+import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 
 import com.google.common.base.Preconditions;
 

@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.mock.Environments.PessoaEnvironment;
 
-
 public class EnvironmentDefinitionTest {
 
 	@Test

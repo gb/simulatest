@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.environment.tree.Node;
 
-
 public class NodeTest {
 	
 	private Node<String> jose;

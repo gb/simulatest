@@ -6,6 +6,7 @@ import org.simulatest.environment.environment.listener.EnvironmentRunnerListener
 import org.simulatest.environment.infra.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.Tree;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.connection.ConnectionFactory;
 
 public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 	
@@ -21,10 +22,9 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 		return insistenceLayerManager;
 	}
 	
-	//TODO get the insistenceLayerManager over the connection and don't statically
 	private InsistenceLayerManager getInsistenceLayerManager() {
 		try {
-			return InsistenceLayerManager.getInstance();
+			return new InsistenceLayerManager(ConnectionFactory.getConnection());
 		} catch (SQLException exception) {
 			String message = "Error trying get the instance of InsistenceLayer";
 			throw new EnvironmentInstantiationException(message, exception);

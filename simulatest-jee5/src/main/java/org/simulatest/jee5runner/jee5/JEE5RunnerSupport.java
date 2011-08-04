@@ -22,7 +22,6 @@ public class JEE5RunnerSupport {
 		deployer.start();
 
 		containerRunning = true;
-		System.out.println("startando container");
 	}
 	
 	public void terminate() throws Exception {

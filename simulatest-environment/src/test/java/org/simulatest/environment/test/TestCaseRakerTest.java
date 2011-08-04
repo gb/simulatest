@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.runners.Suite.SuiteClasses;
 import org.simulatest.environment.environment.TestCaseRaker;
 
-
 public class TestCaseRakerTest {
 	
 	private TestCaseRaker testCaseRaker;

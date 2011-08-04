@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer.infra;
+package org.simulatest.insistencelayer.connection;
 
 public class ConnectionBean {
 

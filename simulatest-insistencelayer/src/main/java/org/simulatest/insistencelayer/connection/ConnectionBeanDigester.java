@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer.infra;
+package org.simulatest.insistencelayer.connection;
 
 import java.io.File;
 import java.io.FileInputStream;

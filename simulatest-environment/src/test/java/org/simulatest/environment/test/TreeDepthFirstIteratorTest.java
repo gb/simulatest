@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
 
-
 public class TreeDepthFirstIteratorTest {
 		
 		Tree<Integer> tree = new Tree<Integer>(1);

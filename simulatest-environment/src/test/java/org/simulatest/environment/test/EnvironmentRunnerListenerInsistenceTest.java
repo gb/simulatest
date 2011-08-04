@@ -18,7 +18,6 @@ import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
 import org.simulatest.environment.mock.Environments.ProjetoEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 
-
 public class EnvironmentRunnerListenerInsistenceTest {
 	
 	private EnvironmentTreeBuilder builder;

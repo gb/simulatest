@@ -5,10 +5,8 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Stack;
 
-
 import org.apache.log4j.Logger;
-import org.simulatest.insistencelayer.infra.ConnectionWrapper;
-import org.simulatest.insistencelayer.infra.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.infra.InsistenceLayerException;
 
 import com.google.common.base.Preconditions;
@@ -18,7 +16,6 @@ public class InsistenceLayerManager {
 	private static final String PREFIX_SAVEPOINT = "LAYER";
 	private static final Logger logger = Logger.getLogger(InsistenceLayerManager.class);
 	
-	private static InsistenceLayerManager instance;
 	private ConnectionWrapper connection;
 	private Stack<Savepoint> savepoints;
 
@@ -110,15 +107,6 @@ public class InsistenceLayerManager {
 	
 	private boolean isDisabled() {
 		return getCurrentLevel() == 0;
-	}
-	
-	public static InsistenceLayerManager getInstance() throws SQLException {
-		if (instance == null) initializeInstance();
-		return instance;
-	}
-	
-	private static void initializeInstance() throws SQLException {
-		instance = new InsistenceLayerManager(new InsistenceLayerDataSource().getConnection());
 	}
 	
 }

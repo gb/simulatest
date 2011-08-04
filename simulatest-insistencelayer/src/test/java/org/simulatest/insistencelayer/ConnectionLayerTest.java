@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.infra.ConnectionLayer;
+import org.simulatest.insistencelayer.connection.ConnectionLayer;
 import org.simulatest.insistencelayer.mock.ConnectionMock;
 
 import static org.mockito.Mockito.*;

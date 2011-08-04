@@ -11,8 +11,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.simulatest.insistencelayer.infra.ConnectionBean;
-import org.simulatest.insistencelayer.infra.ConnectionBeanDigester;
+import org.simulatest.insistencelayer.connection.ConnectionBean;
+import org.simulatest.insistencelayer.connection.ConnectionBeanDigester;
 
 public class ConnectionBeanDigesterTest {
 	

@@ -12,7 +12,7 @@ import java.sql.SQLException;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.infra.ConnectionWrapper;
+import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 
 public class ConnectionWrapperTest {
 	

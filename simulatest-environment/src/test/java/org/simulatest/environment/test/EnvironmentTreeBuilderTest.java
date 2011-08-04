@@ -22,7 +22,6 @@ import org.simulatest.environment.mock.Environments.ProjetoEnvironment;
 import org.simulatest.environment.mock.Environments.ProjetoEnvironmentCiclico;
 import org.simulatest.environment.mock.Environments.Root;
 
-
 public class EnvironmentTreeBuilderTest {
 	
 	private EnvironmentTreeBuilder builder;

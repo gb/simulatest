@@ -12,6 +12,7 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.connection.ConnectionFactory;
 
 
 public class InsistenceLayerForm extends JFrame {
@@ -26,7 +27,7 @@ public class InsistenceLayerForm extends JFrame {
 	private JLabel lbCurrentLevel = new JLabel("Current Level");
 
 	public InsistenceLayerForm() throws SQLException {
-		insistenceLayerManager = InsistenceLayerManager.getInstance();
+		insistenceLayerManager = new InsistenceLayerManager(ConnectionFactory.getConnection());
 		
 		addComponents();
 		configureLayout();

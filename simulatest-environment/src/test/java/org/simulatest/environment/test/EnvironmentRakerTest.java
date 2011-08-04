@@ -1,4 +1,3 @@
-
 package org.simulatest.environment.test;
 
 import static junit.framework.Assert.assertEquals;
@@ -15,7 +14,6 @@ import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentRaker;
 import org.simulatest.environment.mock.Environments.PessoaEnvironment;
 import org.simulatest.environment.mock.Environments.Root;
-
 
 public class EnvironmentRakerTest {
 	
