@@ -4,7 +4,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.simulatest.environment.annotation.EnvironmentParent;
-import org.simulatest.jee5runner.test.mock.DatabaseMock;
+import org.simulatest.jee5runner.environment.example.mock.DatabaseMock;
 
 @Stateless
 @EnvironmentParent(value = JEE5ExampleEnvironment.class)
