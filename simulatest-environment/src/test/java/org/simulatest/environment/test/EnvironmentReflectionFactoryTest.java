@@ -5,7 +5,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.simulatest.environment.environment.BigBangEnvironment;
-import org.simulatest.environment.environment.EnvironmentDefinition;
+import static org.simulatest.environment.environment.EnvironmentDefinition.*;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.infra.EnvironmentInstantiationException;
@@ -18,7 +18,7 @@ public class EnvironmentReflectionFactoryTest {
 	@Test
 	public void shouldInstanceAnEnvironmentWithSuccess() {
 		try {
-			environmentReflection.create(EnvironmentDefinition.create(BigBangEnvironment.class));
+			environmentReflection.create(create(BigBangEnvironment.class));
 		} catch (Exception exception) {
 			fail("should instance an environment successfully");
 		}
@@ -27,7 +27,7 @@ public class EnvironmentReflectionFactoryTest {
 	@Test
 	public void shouldThrowAnEnvironmentInstantiationExceptionWhenSomethingWrongHappen() {
 		try {
-			environmentReflection.create(EnvironmentDefinition.create(PrivateConstructorEnvironment.class));
+			environmentReflection.create(create(PrivateConstructorEnvironment.class));
 			fail("should throw an EnvironmentInstantiationException");
 		} catch (EnvironmentInstantiationException exception) {
 			String expectedMessage = "Error in instanciation of environment: PrivateConstructorEnvironment";

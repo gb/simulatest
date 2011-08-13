@@ -7,22 +7,21 @@ import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.mock.Environments.PessoaEnvironment;
 
 public class EnvironmentDefinitionTest {
+	
+	EnvironmentDefinition definition = EnvironmentDefinition.create(PessoaEnvironment.class);
 
 	@Test
-	public void shouldReturnEnvironmentClass() {
-		EnvironmentDefinition definition = EnvironmentDefinition.create(PessoaEnvironment.class);
+	public void shouldReturnTheEnvironmentClassWhenCallGetEnvironmentClass() {
 		assertEquals(PessoaEnvironment.class, definition.getEnvironmentClass());
 	}
 	
 	@Test
-	public void shouldReturnName() {
-		EnvironmentDefinition definition = EnvironmentDefinition.create(PessoaEnvironment.class);
+	public void shouldReturnTheEnvironmentSimpleClassNameWhenCallGetName() {
 		assertEquals("PessoaEnvironment", definition.getName());
 	}
 	
 	@Test
-	public void shouldReturnToString() {
-		EnvironmentDefinition definition = EnvironmentDefinition.create(PessoaEnvironment.class);
+	public void shouldReturnTheEnvironmentDefinitionNameWhenCallToString() {
 		assertEquals("PessoaEnvironment", definition.toString());
 	}
 	
