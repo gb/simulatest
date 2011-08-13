@@ -2,28 +2,25 @@ package org.simulatest.insistencelayer.integration;
 
 import static junit.framework.Assert.assertEquals;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.connection.ConnectionFactory;
+import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 
 public class InsistenceLayerIntegrationTest {
 	
 	private InsistenceLayerManager insistenceLayerManager;
-	private Connection connection;
+	private ConnectionWrapper connection;
 	private Statement statement;
 	
 	@Before
 	public void setup() throws Exception {
-		Class.forName("org.h2.Driver");
-		connection = DriverManager.getConnection("jdbc:h2:~/.h2/test", "sa", "");
-		
+		connection = ConnectionFactory.getConnection();
 		insistenceLayerManager = new InsistenceLayerManager(connection);
 		statement = connection.createStatement();
 		

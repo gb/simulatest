@@ -1,6 +1,5 @@
 package org.simulatest.insistencelayer;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Stack;
@@ -19,9 +18,9 @@ public class InsistenceLayerManager {
 	private ConnectionWrapper connection;
 	private Stack<Savepoint> savepoints;
 
-	public InsistenceLayerManager(Connection connection) {
+	public InsistenceLayerManager(ConnectionWrapper connection) {
 		Preconditions.checkNotNull(connection, "Connection is null");
-		this.connection = new ConnectionWrapper(connection);
+		this.connection = connection;
 		this.savepoints = new Stack<Savepoint>();
 	}
 	

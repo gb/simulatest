@@ -14,7 +14,6 @@ import javax.swing.WindowConstants;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.connection.ConnectionFactory;
 
-
 public class InsistenceLayerForm extends JFrame {
 	
 	private static final long serialVersionUID = 1L;

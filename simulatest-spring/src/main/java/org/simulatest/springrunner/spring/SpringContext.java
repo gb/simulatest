@@ -24,7 +24,7 @@ public class SpringContext implements ApplicationContextAware {
 		return context;
 	}
 	
-	private static void initializeSpring() {
+	public static void initializeSpring() {
 		new ClassPathXmlApplicationContext("applicationContext.xml");
 	}
 	

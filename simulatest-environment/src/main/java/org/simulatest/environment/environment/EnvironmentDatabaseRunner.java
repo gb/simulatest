@@ -22,6 +22,13 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 		return insistenceLayerManager;
 	}
 	
+	@Override
+	public void run() {
+		insistenceLayerManager.increaseLevel();
+		super.run();
+		insistenceLayerManager.decreaseLevel();
+	}
+	
 	private InsistenceLayerManager getInsistenceLayerManager() {
 		try {
 			return new InsistenceLayerManager(ConnectionFactory.getConnection());
@@ -30,5 +37,5 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 			throw new EnvironmentInstantiationException(message, exception);
 		}
 	}
-
+	
 }

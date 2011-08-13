@@ -117,4 +117,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 		environmentRunner.insistenceLayer().resetCurrentLevel();
 	}
 
+	protected final EnvironmentDatabaseRunner getEnvironmentRunner() {
+		return environmentRunner;
+	}
 }

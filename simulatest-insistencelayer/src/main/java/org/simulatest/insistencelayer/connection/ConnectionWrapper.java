@@ -80,7 +80,7 @@ public class ConnectionWrapper implements Connection {
 
 	@Override
 	public void close() throws SQLException {
-		connection.close();
+		//connection.close();
 	}
 
 	@Override

@@ -64,7 +64,7 @@ public class EnvironmentRunner {
 		fireAfterRun(definition);
 	}
 
-	private void executeEnvironment(EnvironmentDefinition definition) {
+	protected void executeEnvironment(EnvironmentDefinition definition) {
 		try {
 			factory.create(definition).run();
 		} catch (Exception exception) {
