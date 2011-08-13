@@ -10,23 +10,23 @@ import org.simulatest.insistencelayer.connection.ConnectionFactory;
 
 public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 	
-	private InsistenceLayerManager insistenceLayerManager;
+	private InsistenceLayerManager insistenceLayer;
 
 	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
 		super(factory, environmentTree);
-		this.addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer()));
-	}
-	
-	public InsistenceLayerManager insistenceLayer() {
-		if (insistenceLayerManager == null) insistenceLayerManager = getInsistenceLayerManager();
-		return insistenceLayerManager;
+		this.insistenceLayer = getInsistenceLayerManager();
+		this.addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
 	}
 	
 	@Override
 	public void run() {
-		insistenceLayerManager.increaseLevel();
+		insistenceLayer.increaseLevel();
 		super.run();
-		insistenceLayerManager.decreaseLevel();
+		insistenceLayer.decreaseLevel();
+	}
+	
+	public InsistenceLayerManager insistenceLayer() {
+		return insistenceLayer;
 	}
 	
 	private InsistenceLayerManager getInsistenceLayerManager() {

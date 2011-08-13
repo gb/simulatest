@@ -2,13 +2,15 @@ package org.simulatest.environment.environment;
 
 import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironmentParent;
 
+import com.google.common.base.Preconditions;
+
 public class EnvironmentDefinition {
 
 	private final Class<? extends Environment> environmentClass;
 	private final Class<? extends Environment> parentClass;
 	
 	public static EnvironmentDefinition create(Class<? extends Environment> environmentClass) {
-		if (environmentClass == null) return null;
+		Preconditions.checkNotNull(environmentClass, "Null Argument! Don't you want create a Definition?");
 		return new EnvironmentDefinition(environmentClass);
 	}
 
