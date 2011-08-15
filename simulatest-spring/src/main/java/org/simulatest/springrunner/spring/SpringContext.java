@@ -19,13 +19,12 @@ public class SpringContext implements ApplicationContextAware {
 		return getApplicationContext().getBean(clazz);
 	}
 
-	private static ApplicationContext getApplicationContext() {
-		if (context == null) initializeSpring();
+	public static ApplicationContext getApplicationContext() {
 		return context;
 	}
 	
 	public static void initializeSpring() {
-		new ClassPathXmlApplicationContext("applicationContext.xml");
+		new ClassPathXmlApplicationContext("simulatest-applicationContext.xml");
 	}
 	
 }

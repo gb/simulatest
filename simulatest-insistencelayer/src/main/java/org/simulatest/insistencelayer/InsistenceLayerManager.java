@@ -44,7 +44,7 @@ public class InsistenceLayerManager {
 		
 		try {
 			savepoints.add(connection.setSavepoint(savePointName));
-		} catch (Exception exception) {
+		} catch (SQLException exception) {
 			String message = "Error creating the savepoint: " + savePointName;
 			throw new InsistenceLayerException(message, exception);
 		}

@@ -6,17 +6,18 @@ import org.junit.runners.model.RunnerBuilder;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.junit.EnvironmentJUnitSuite;
 import org.simulatest.springrunner.environment.EnvironmentSpringFactory;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.simulatest.springrunner.spring.SpringContext;
 
-public class EnvironmentSpringSuiteRunner extends EnvironmentJUnitSuite {
+public class SimulatestSpringSuiteRunner extends EnvironmentJUnitSuite {
 
-	public EnvironmentSpringSuiteRunner(Class<?> suiteClass, RunnerBuilder builder) throws InitializationError {
+	public SimulatestSpringSuiteRunner(Class<?> suiteClass, RunnerBuilder builder) throws InitializationError {
 		super(suiteClass, builder);
+		SpringContext.initializeSpring();
 	}
 
 	@Override
 	protected Runner instanceTest(Class<?> test) throws InitializationError {
-		return new SpringJUnit4ClassRunner(test);
+		return new SimulatestSpringJUnit4Runner(this, test);
 	}
 	
 	@Override

@@ -6,7 +6,7 @@ import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.springrunner.spring.SpringContext;
 
 public class EnvironmentSpringFactory implements EnvironmentFactory {
-
+	
 	@Override
 	public Environment create(EnvironmentDefinition definition) {
 		return SpringContext.getBean(definition.getEnvironmentClass());

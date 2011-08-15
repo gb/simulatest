@@ -1,7 +1,5 @@
 package org.simulatest.environment.environment;
 
-public interface Environment {
-	
-	void run();
+public interface Environment extends Runnable {
 	
 }
