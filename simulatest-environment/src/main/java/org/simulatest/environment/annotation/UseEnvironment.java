@@ -8,9 +8,9 @@ import java.lang.annotation.Target;
 import org.simulatest.environment.environment.Environment;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target({ ElementType.TYPE })
 public @interface UseEnvironment {
 
-	public Class<? extends Environment> value();
+	Class<? extends Environment> value();
 	
 }

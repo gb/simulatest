@@ -7,6 +7,10 @@ import org.simulatest.environment.environment.Environment;
 
 public class AnnotationUtils {
 	
+	private AnnotationUtils() { 
+		
+	}
+	
 	public static Class<? extends Environment> extractEnvironment(Class<?> testClass) {
 		if (testClass == BigBangEnvironment.class) return null;
 		UseEnvironment annotation = testClass.getAnnotation(UseEnvironment.class);
