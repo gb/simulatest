@@ -1,6 +1,7 @@
 package org.simulatest.springrunner.junit;
 
 import org.junit.runner.Runner;
+import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
@@ -17,6 +18,12 @@ public class SimulatestSpringRunner extends EnvironmentJUnitRunner {
 	@Override
 	protected Runner instanceTest(Class<?> test) throws InitializationError {
 		return new SimulatestSpringJUnit4Runner(this, test);
+	}
+	
+	@Override
+	public void run(final RunNotifier notifier) {
+		super.run(notifier);
+		SpringContext.destroy();
 	}
 	
 	@Override

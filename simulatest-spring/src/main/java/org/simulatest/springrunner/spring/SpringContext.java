@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class SpringContext implements ApplicationContextAware {
 	
 	private static ApplicationContext context;
+	private static ClassPathXmlApplicationContext classPath;
 
 	public void setApplicationContext(ApplicationContext context) throws BeansException {
 		SpringContext.context = context;
@@ -24,7 +25,11 @@ public class SpringContext implements ApplicationContextAware {
 	}
 	
 	public static void initializeSpring() {
-		new ClassPathXmlApplicationContext("simulatest-applicationContext.xml");
+		classPath = new ClassPathXmlApplicationContext("simulatest-applicationContext.xml");
+	}
+	
+	public static void destroy() {
+		classPath.close();
 	}
 	
 }
