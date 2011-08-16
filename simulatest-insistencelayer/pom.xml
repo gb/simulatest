@@ -42,6 +42,11 @@
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>uispec4j</groupId>
+			<artifactId>uispec4j</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 </project>

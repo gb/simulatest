@@ -51,7 +51,10 @@ public class InsistenceLayerManager {
 	}
 	
 	public void resetCurrentLevel() {
+		if (isDisabled()) return;
+		
 		rollbackSavepoint(savepoints.peek());
+		logger.info("[InsistenceLayer] Cleaned current level: " + getCurrentLevel());
 	}
 	
 	public void decreaseLevel() {

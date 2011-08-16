@@ -23,6 +23,7 @@ public class InsistenceLayerForm extends JFrame {
 	private JButton btnIncreaseLevel = new JButton("+");
 	private JButton btnDecreaseLevel = new JButton("-");
 	private JButton btnReset = new JButton("reset");
+	private JButton btnClear = new JButton("clear");
 	private JLabel lbCurrentLevel = new JLabel("Current Level");
 
 	public InsistenceLayerForm() throws SQLException {
@@ -39,7 +40,7 @@ public class InsistenceLayerForm extends JFrame {
 	}
 	
 	private void configureLayout() {
-		setSize(325, 60);
+		setSize(395, 60);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setResizable(false);
 		setTitle("Insistence Layer");
@@ -58,12 +59,19 @@ public class InsistenceLayerForm extends JFrame {
 		btnIncreaseLevel.setBounds(145, 5, 45, 25);
 		btnDecreaseLevel.setBounds(195, 5, 45, 25);
 		btnReset.setBounds(245, 5, 65, 25);
+		btnClear.setBounds(315, 5, 65, 25);
+		
+		btnIncreaseLevel.setToolTipText("Increase Level");
+		btnDecreaseLevel.setToolTipText("Decrease Level");
+		btnReset.setToolTipText("Reset all levels");
+		btnClear.setToolTipText("Clear current level");
 
 		add(lbCurrentLevel);
 		add(tfCurrentLevel);
 		add(btnIncreaseLevel);
 		add(btnDecreaseLevel);
 		add(btnReset);
+		add(btnClear);
 	}
 	
 	private void updateDisplayLevel() {
@@ -91,6 +99,14 @@ public class InsistenceLayerForm extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				insistenceLayerManager.decreaseAllLevels();
+				updateDisplayLevel();
+			}
+		});
+		
+		btnClear.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				insistenceLayerManager.resetCurrentLevel();
 				updateDisplayLevel();
 			}
 		});

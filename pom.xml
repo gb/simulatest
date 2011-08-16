@@ -104,6 +104,11 @@
 				<artifactId>simulatest-environment</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>uispec4j</groupId>
+				<artifactId>uispec4j</artifactId>
+				<version>1.5</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
