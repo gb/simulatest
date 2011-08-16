@@ -19,7 +19,7 @@ public class EnvironmentGrouperTests {
 	}
 	
 	public EnvironmentGrouperTests(Set<Class<?>> testClasses) {
-		for (Class<?> testClass : testClasses) testClasses.add(testClass);
+		for (Class<?> testClass : testClasses) this.testClasses.add(testClass);
 	}
 
 	public Collection<Class<?>> getTestClasses() {

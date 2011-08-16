@@ -18,12 +18,12 @@ public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerLis
 	@Override
 	public void beforeRun(EnvironmentDefinition definition) {
 		logger.debug("[InsistenceListener] beforeRun >> " + definition);
-		insistenceLayerManager.increaseLevel();
 	}
 
 	@Override
 	public void afterRun(EnvironmentDefinition definition) {
 		logger.debug("[InsistenceListener] afterRun >> " + definition);
+		insistenceLayerManager.increaseLevel();
 	}
 
 	@Override

@@ -102,7 +102,6 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 	
 	private void runTestCase(Class<?> testCase, RunNotifier notifier) {
 		environmentGrouperTests.get(testCase).run(notifier);
-		environmentRunner.insistenceLayer().resetCurrentLevel();
 	}
 
 	public EnvironmentDatabaseRunner getEnvironmentRunner() {
