@@ -9,7 +9,7 @@ import org.simulatest.environment.tree.Tree;
 
 public class TreeDepthFirstIteratorTest {
 		
-		Tree<Integer> tree = new Tree<Integer>(1);
+		private Tree<Integer> tree = new Tree<Integer>(1);
 		
 		@Before
 		public void createTree() {			
@@ -25,11 +25,12 @@ public class TreeDepthFirstIteratorTest {
 		}
 
 		@Test
-		public void iteratesThroughTheTree() {
+		public void testIteratesThroughTheTree() {
 			Integer expectedValue = 1;
 			for (Node<Integer> node : tree) {
 				assertEquals(expectedValue, node.getValue());
 				expectedValue++;
 			}
 		}
+		
 }

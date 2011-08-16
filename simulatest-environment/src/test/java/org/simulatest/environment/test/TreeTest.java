@@ -31,12 +31,12 @@ public class TreeTest {
 	}
 	
 	@Test
-	public void getRootValueTest() {
+	public void testGetRootValue() {
 		assertEquals("chuck", tree.getRootValue());
 	}
 
 	@Test
-	public void sizeTest() {
+	public void testSizeOfTree() {
 		assertEquals(8, tree.size());
 	}
 	
@@ -55,13 +55,13 @@ public class TreeTest {
 		try {
 			tree.addChild("maria", "jose");
 			fail();
-		} catch (Exception e) {
+		} catch (IllegalArgumentException e) {
 			assertEquals("The value \"jose\" already exists in Tree", e.getMessage());
 		}
 	}
 	
 	@Test
-	public void testaContem() {
+	public void testContains() {
 		assertTrue(tree.contains("chuck"));
 		assertTrue(tree.contains("jose"));
 		assertTrue(tree.contains("silvia"));
@@ -76,7 +76,7 @@ public class TreeTest {
 	}
 	
 	@Test
-	public void testaGetValoresDoPai() {
+	public void testGetValuesOfFather() {
 		List<String> filhosDeChuck = tree.getChildren("chuck");
 		
 		assertNotNull(filhosDeChuck);
@@ -101,16 +101,16 @@ public class TreeTest {
 	}
 	
 	@Test
-	public void getChildreWithUnexistParent() {
+	public void testGetChildreWithAnUnexistParent() {
 		try {
 			tree.getChildren("leonidas");
-		} catch (Exception e) {
+		} catch (IllegalArgumentException e) {
 			assertEquals("The parent \"leonidas\" doesn't exists in Tree", e.getMessage());
 		}
 	}
 
 	@Test
-	public void printTest() {
+	public void testPrint() {
 		String printEsperado =
 			"-chuck\n" +
 			"   -jose\n" +
@@ -125,7 +125,7 @@ public class TreeTest {
 	}
 	
 	@Test
-	public void getValuesTest() {
+	public void testGetValues() {
 		List<String> expectedItens = new ArrayList<String>();
 		expectedItens.add("chuck");
 		expectedItens.add("jose");

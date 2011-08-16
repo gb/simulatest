@@ -15,5 +15,15 @@ public class DummyTest {
 	public void testSubtract() {
 		assertEquals(2, 4 - 2);
 	}
+	
+	@Test
+	public void testMultiply() {
+		assertEquals(4, 2 * 2);
+	}
+	
+	@Test
+	public void testDivision() {
+		assertEquals(2, 4 / 2);
+	}
 
 }

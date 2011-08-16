@@ -12,7 +12,7 @@ import org.simulatest.environment.mock.DummyTest;
 
 public class EnvironmentJUnitRunnerTest {
 	
-	EnvironmentJUnitRunner runner;
+	private EnvironmentJUnitRunner runner;
 	
 	@Before
 	public void setup() throws InitializationError {
@@ -23,15 +23,21 @@ public class EnvironmentJUnitRunnerTest {
 	public void testDescriptions() {
 		Description root = Description.createSuiteDescription(BigBangEnvironment.class.getName());
 		Description son = Description.createSuiteDescription(DummyTest.class.getName());
+		
 		root.addChild(son);
+		
 		son.addChild(Description.createSuiteDescription("testSum(org.simulatest.environment.mock.DummyTest)"));
 		son.addChild(Description.createSuiteDescription("testSubtract(org.simulatest.environment.mock.DummyTest)"));
+		son.addChild(Description.createSuiteDescription("testMultiply(org.simulatest.environment.mock.DummyTest)"));
+		son.addChild(Description.createSuiteDescription("testDivision(org.simulatest.environment.mock.DummyTest)"));
 		
 		/*
 		 * -BigBang
 		 *     -DummyTest
 		 *         -testSum
 		 *         -testSubtract
+		 *         -testMultiply
+		 *         -testDivision
 		 */
 		
 		assertEquals(root, runner.getDescription());
