@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.commons.digester.Digester;
+import org.simulatest.insistencelayer.infra.InsistenceLayerException;
 import org.xml.sax.SAXException;
 
 public class ConnectionBeanDigester {
@@ -39,7 +40,7 @@ public class ConnectionBeanDigester {
 		try {
 			return tryDigesterStream(digester, new FileInputStream(file));
 		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new InsistenceLayerException("insistenceLayer.cfg.xml not found" , e);
 		}
 	}
 	
@@ -47,9 +48,9 @@ public class ConnectionBeanDigester {
 		try {
 			return (ConnectionBean) digester.parse(stream);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new InsistenceLayerException(e);
 		} catch (SAXException e) {
-			throw new RuntimeException(e);
+			throw new InsistenceLayerException(e);
 		} 
 	}
 	
