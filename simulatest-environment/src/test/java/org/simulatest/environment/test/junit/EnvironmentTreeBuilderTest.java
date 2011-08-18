@@ -1,4 +1,4 @@
-package org.simulatest.environment.test;
+package org.simulatest.environment.test.junit;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;

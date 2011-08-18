@@ -7,14 +7,14 @@ import org.junit.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.environment.Environment;
-import org.simulatest.environment.infra.AnnotationUtils;
+import org.simulatest.environment.infra.EnvironmentAnnotationUtils;
 import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaFisicaEnvironment;
 import org.simulatest.environment.mock.Environments.PessoaJuridicaEnvironment;
 import org.simulatest.environment.mock.Environments.Root;
 
-public class AnnotationUtilsTest {
+public class EnvironmentAnnotationUtilsTest {
 	
 	@Test
 	public void extractEnvironmentTest() {
@@ -22,7 +22,7 @@ public class AnnotationUtilsTest {
 		assertEnvironmentEquals(PessoaFisicaEnvironment.class, PessoaFisicaTest.class);
 		assertEnvironmentEquals(PessoaFisicaEnvironment.class, UsuarioTest.class);
 		assertEnvironmentEquals(EmpresaEnvironment.class, EmpresaTest.class);
-		assertNull(AnnotationUtils.extractEnvironment(BigBangEnvironment.class));
+		assertNull(EnvironmentAnnotationUtils.extractEnvironment(BigBangEnvironment.class));
 	}
 	
 	@Test
@@ -34,11 +34,11 @@ public class AnnotationUtilsTest {
 	}
 	
 	private void assertEnvironmentEquals(Class<?> expectedEnvironment, Class<?> clazz) {
-		assertEquals(expectedEnvironment, AnnotationUtils.extractEnvironment(clazz));
+		assertEquals(expectedEnvironment, EnvironmentAnnotationUtils.extractEnvironment(clazz));
 	}
 	
 	private void assertParentEnvirontmentEquals(Class<?> expectedEnvironment, Class<? extends Environment> clazz) {
-		assertEquals(expectedEnvironment, AnnotationUtils.extractEnvironmentParent(clazz));
+		assertEquals(expectedEnvironment, EnvironmentAnnotationUtils.extractEnvironmentParent(clazz));
 	}
 	
 	@UseEnvironment(PessoaFisicaEnvironment.class)

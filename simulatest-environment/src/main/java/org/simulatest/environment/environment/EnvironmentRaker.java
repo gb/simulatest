@@ -1,7 +1,7 @@
 package org.simulatest.environment.environment;
 
 import static org.simulatest.environment.environment.EnvironmentDefinition.create;
-import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironment;
+import static org.simulatest.environment.infra.EnvironmentAnnotationUtils.extractEnvironment;
 
 import java.util.Collection;
 import java.util.Collections;

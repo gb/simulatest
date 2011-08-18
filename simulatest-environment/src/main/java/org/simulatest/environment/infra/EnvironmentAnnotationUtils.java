@@ -5,11 +5,9 @@ import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.environment.Environment;
 
-public class AnnotationUtils {
+public class EnvironmentAnnotationUtils {
 	
-	private AnnotationUtils() { 
-		
-	}
+	private EnvironmentAnnotationUtils() { }
 	
 	public static Class<? extends Environment> extractEnvironment(Class<?> testClass) {
 		if (testClass == BigBangEnvironment.class) return null;

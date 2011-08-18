@@ -1,4 +1,4 @@
-package org.simulatest.environment.test;
+package org.simulatest.environment.test.environment;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
