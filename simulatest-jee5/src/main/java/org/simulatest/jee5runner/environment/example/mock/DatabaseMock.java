@@ -1,27 +1,14 @@
 package org.simulatest.jee5runner.environment.example.mock;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class DatabaseMock {
-	
-	private static List<String> messages;
+import javax.ejb.Local;
 
-	static {
-		reseta();
-	}
+@Local
+public interface DatabaseMock {
 
-	public static void reseta() {
-		messages = new ArrayList<String>();
-	}
-	
-	public static void addMessage(String message) {
-		messages.add(message);
-	}
-	
-	public static List<String> getMessages() {
-		return Collections.unmodifiableList(messages);
-	}
-	
+	void addMessage(String message);
+
+	List<String> getMessages();
+
 }
