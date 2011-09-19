@@ -1,4 +1,4 @@
-package org.simulatest.environment.mock;
+package org.simulatest.environment.test.testdouble;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

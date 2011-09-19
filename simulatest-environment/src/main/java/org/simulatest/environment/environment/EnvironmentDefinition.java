@@ -1,6 +1,6 @@
 package org.simulatest.environment.environment;
 
-import static org.simulatest.environment.infra.EnvironmentAnnotationUtils.extractEnvironmentParent;
+import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironmentParent;
 
 import com.google.common.base.Preconditions;
 

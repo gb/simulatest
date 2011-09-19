@@ -9,6 +9,7 @@ import java.sql.Statement;
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
 import org.simulatest.insistencelayer.connection.ConnectionFactory;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 
@@ -21,7 +22,7 @@ public class InsistenceLayerIntegrationTest {
 	@Before
 	public void setup() throws Exception {
 		connection = ConnectionFactory.getConnection();
-		insistenceLayerManager = new InsistenceLayerManager(connection);
+		insistenceLayerManager = InsistenceLayerManagerFactory.createInsistenceLayerManager(connection);
 		statement = connection.createStatement();
 		
 		statement.executeUpdate("CREATE TABLE IF NOT EXISTS LOG (NAME VARCHAR(50))");

@@ -1,4 +1,4 @@
-package org.simulatest.environment.test.environment.listener;
+package org.simulatest.environment.test;
 
 import java.sql.SQLException;
 

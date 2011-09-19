@@ -11,12 +11,9 @@ public class JEE5ExampleEnvironment implements JEE5ExampleEnvironmentLocal {
 	@EJB
 	LanguageTeacher languageTeacher;
 	
-	@EJB
-	private DatabaseMock databaseMock;
-	
 	@Override
 	public void run() {
-		databaseMock.addMessage(languageTeacher.sayHello());
+		DatabaseMock.addMessage(languageTeacher.sayHello());
 	}
 	
 }

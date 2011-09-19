@@ -12,7 +12,6 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import org.simulatest.insistencelayer.InsistenceLayerManager;
-import org.simulatest.insistencelayer.connection.ConnectionFactory;
 
 public class InsistenceLayerForm extends JFrame {
 	
@@ -26,17 +25,14 @@ public class InsistenceLayerForm extends JFrame {
 	private JButton btnClear = new JButton("clear");
 	private JLabel lbCurrentLevel = new JLabel("Current Level");
 
-	public InsistenceLayerForm() throws SQLException {
-		insistenceLayerManager = new InsistenceLayerManager(ConnectionFactory.getConnection());
+	public InsistenceLayerForm(InsistenceLayerManager insistenceLayerManager) throws SQLException {
+		this.insistenceLayerManager = insistenceLayerManager;
 		
 		addComponents();
 		configureLayout();
 		createEvents();
 		updateDisplayLevel();
-	}
-
-	public static void main(String[] args) throws SQLException {
-		new InsistenceLayerForm().setVisible(true);
+		setVisible(true);
 	}
 	
 	private void configureLayout() {
@@ -55,6 +51,11 @@ public class InsistenceLayerForm extends JFrame {
 		tfCurrentLevel.setEditable(false);
 		tfCurrentLevel.setBounds(95, 5, 35, 25);
 		tfCurrentLevel.setHorizontalAlignment(JTextField.CENTER);
+		
+		btnIncreaseLevel.setName("+");
+		btnDecreaseLevel.setName("-");
+		btnReset.setName("reset");
+		btnClear.setName("clear");
 		
 		btnIncreaseLevel.setBounds(145, 5, 45, 25);
 		btnDecreaseLevel.setBounds(195, 5, 45, 25);

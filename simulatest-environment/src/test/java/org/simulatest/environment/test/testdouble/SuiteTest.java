@@ -1,4 +1,4 @@
-package org.simulatest.environment.mock;
+package org.simulatest.environment.test.testdouble;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite.SuiteClasses;

@@ -13,12 +13,9 @@ public class JEE5ChildExampleEnvironment implements JEE5ChildExampleEnvironmentL
 	@EJB
 	private LanguageTeacher languageTeacher;
 	
-	@EJB
-	private DatabaseMock databaseMock;
-	
 	@Override
 	public void run() {
-		databaseMock.addMessage(languageTeacher.sayHello() + " by child");
+		DatabaseMock.addMessage(languageTeacher.sayHello() + " by child");
 	}
 
 }

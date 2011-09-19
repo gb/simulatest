@@ -18,7 +18,7 @@ public class InsistenceLayerManager {
 	private ConnectionWrapper connection;
 	private Stack<Savepoint> savepoints;
 
-	public InsistenceLayerManager(ConnectionWrapper connection) {
+	protected InsistenceLayerManager(ConnectionWrapper connection) {
 		Preconditions.checkNotNull(connection, "Connection is null");
 		this.connection = connection;
 		this.savepoints = new Stack<Savepoint>();

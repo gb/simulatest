@@ -9,21 +9,22 @@ import org.simulatest.jee5runner.environment.example.BritishTeacher;
 import org.simulatest.jee5runner.environment.example.JEE5ChildExampleEnvironment;
 import org.simulatest.jee5runner.environment.example.LanguageTeacher;
 import org.simulatest.jee5runner.environment.example.mock.DatabaseMock;
-import org.simulatest.jee5runner.environment.example.mock.DatabaseMockImpl;
 import org.simulatest.jee5runner.jee5.JEE5Context;
 import org.simulatest.jee5runner.junit.EnvironmentJEE5Runner;
 
 @RunWith(EnvironmentJEE5Runner.class)
 @UseEnvironment(JEE5ChildExampleEnvironment.class)
 public class SimpleJEE5Test {
-	
-	DatabaseMock databaseMock = (DatabaseMock) JEE5Context.lookup(DatabaseMockImpl.class);
 
 	@Test
 	public void testEnvironments() {
-		assertEquals(2, databaseMock.getMessages().size());
-		assertEquals(databaseMock.getMessages().get(0), "Hello");
-		assertEquals(databaseMock.getMessages().get(1), "Hello by child");
+		assertEquals(2, DatabaseMock.getMessages().size());
+		assertEquals(DatabaseMock.getMessages().get(0), "Hello");
+		assertEquals(DatabaseMock.getMessages().get(1), "Hello by child");
+		
+		DatabaseMock.reseta();
+		
+		assertEquals(0, DatabaseMock.getMessages().size());
 	}
 	
 	@Test
