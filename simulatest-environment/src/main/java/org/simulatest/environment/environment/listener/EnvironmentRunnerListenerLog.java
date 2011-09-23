@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentRunnerListener;
 
 public class EnvironmentRunnerListenerLog implements EnvironmentRunnerListener {
 	

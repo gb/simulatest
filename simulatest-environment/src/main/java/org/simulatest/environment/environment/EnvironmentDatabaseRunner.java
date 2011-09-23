@@ -3,7 +3,7 @@ package org.simulatest.environment.environment;
 import java.sql.SQLException;
 
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerInsistence;
-import org.simulatest.environment.infra.EnvironmentInstantiationException;
+import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.Tree;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;

@@ -7,17 +7,17 @@ import static org.junit.Assert.fail;
 import java.sql.SQLException;
 
 import org.junit.Test;
-import org.simulatest.environment.environment.EnvironmentDefinition;
+import static org.simulatest.environment.environment.EnvironmentDefinition.*;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerLog;
-import org.simulatest.environment.infra.EnvironmentExecutionException;
-import org.simulatest.environment.mock.Environments.ColaboradorEnvironment;
-import org.simulatest.environment.mock.Environments.DummyEnvironment;
-import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
-import org.simulatest.environment.mock.Environments.ProjetoEnvironment;
+import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
+import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.EmpresaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.ProjetoEnvironment;
 
 public class EnvironmentRunnerTest {
 
@@ -27,7 +27,7 @@ public class EnvironmentRunnerTest {
 
 	@Test
 	public void testListenerWithUniqueEnvironment() {
-		builder.add(EnvironmentDefinition.bigBang());
+		builder.add(bigBang());
 
 		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
 		runner.addListener(listenerLog);
@@ -45,9 +45,9 @@ public class EnvironmentRunnerTest {
 
 	@Test
 	public void testListenerWithMultiplesEnvironment() throws SQLException {
-		builder.add(EnvironmentDefinition.create(ColaboradorEnvironment.class));
-		builder.add(EnvironmentDefinition.create(EmpresaEnvironment.class));
-		builder.add(EnvironmentDefinition.create(ProjetoEnvironment.class));
+		builder.add(create(ColaboradorEnvironment.class));
+		builder.add(create(EmpresaEnvironment.class));
+		builder.add(create(ProjetoEnvironment.class));
 
 		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
 		runner.addListener(listenerLog);
@@ -85,7 +85,7 @@ public class EnvironmentRunnerTest {
 	
 	@Test
 	public void shouldThrowAnEnvironmentExecutionExceptionWhenSomethingWrongHappen() {
-		builder.add(EnvironmentDefinition.create(DummyEnvironment.class));
+		builder.add(create(DummyEnvironment.class));
 		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
 		runner.addListener(listenerLog);
 		

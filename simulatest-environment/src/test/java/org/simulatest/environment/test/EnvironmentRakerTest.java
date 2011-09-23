@@ -6,14 +6,13 @@ import static junit.framework.Assert.assertTrue;
 import java.util.LinkedList;
 import java.util.List;
 
-
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentRaker;
-import org.simulatest.environment.mock.Environments.PessoaEnvironment;
-import org.simulatest.environment.mock.Environments.Root;
+import org.simulatest.environment.test.testdouble.Environments.PessoaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.Root;
 
 public class EnvironmentRakerTest {
 	

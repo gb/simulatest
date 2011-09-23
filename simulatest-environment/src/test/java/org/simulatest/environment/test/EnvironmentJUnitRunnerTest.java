@@ -8,7 +8,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
-import org.simulatest.environment.mock.DummyTest;
+import org.simulatest.environment.test.testdouble.DummyTest;
 
 public class EnvironmentJUnitRunnerTest {
 	
@@ -26,10 +26,12 @@ public class EnvironmentJUnitRunnerTest {
 		
 		root.addChild(son);
 		
-		son.addChild(Description.createSuiteDescription("testSum(org.simulatest.environment.mock.DummyTest)"));
-		son.addChild(Description.createSuiteDescription("testSubtract(org.simulatest.environment.mock.DummyTest)"));
-		son.addChild(Description.createSuiteDescription("testMultiply(org.simulatest.environment.mock.DummyTest)"));
-		son.addChild(Description.createSuiteDescription("testDivision(org.simulatest.environment.mock.DummyTest)"));
+		String dummyTestQualifiedName = DummyTest.class.getName();
+		
+		son.addChild(Description.createSuiteDescription("testSum(" + dummyTestQualifiedName + ")"));
+		son.addChild(Description.createSuiteDescription("testSubtract(" + dummyTestQualifiedName + ")"));
+		son.addChild(Description.createSuiteDescription("testMultiply(" + dummyTestQualifiedName + ")"));
+		son.addChild(Description.createSuiteDescription("testDivision(" + dummyTestQualifiedName + ")"));
 		
 		/*
 		 * -BigBang
