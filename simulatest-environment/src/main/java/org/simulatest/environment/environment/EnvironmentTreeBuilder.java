@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.simulatest.environment.infra.EnvironmentCyclicException;
+import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 import org.simulatest.environment.tree.Tree;
 
 import com.google.common.base.Preconditions;
