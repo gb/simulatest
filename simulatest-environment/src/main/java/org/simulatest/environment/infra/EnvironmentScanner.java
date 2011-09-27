@@ -5,22 +5,23 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.Environment;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
-import org.springframework.util.ClassUtils;
 
 public class EnvironmentScanner extends ClassPathScanningCandidateComponentProvider {
-
-	private final Set<Class<? extends Environment>> environments = new HashSet<Class<? extends Environment>>();
+	
+	private final Logger logger = Logger.getLogger(EnvironmentScanner.class);
+	private final Set<Class<?>> environments = new HashSet<Class<?>>();
 
 	public EnvironmentScanner() {
 		this("");
 	}
 
 	public EnvironmentScanner(String basePackage) {
-		super(true);
+		super(false);
 		addIncludeFilter(new AssignableTypeFilter(Environment.class));
 		scan(basePackage);
 	}
@@ -30,12 +31,14 @@ public class EnvironmentScanner extends ClassPathScanningCandidateComponentProvi
 	}
 
 	private void add(BeanDefinition candidate) {
-		Class<?> clazz = ClassUtils.resolveClassName(candidate.getBeanClassName(), ClassUtils.getDefaultClassLoader());
-		if (!Environment.class.isAssignableFrom(clazz)) return;
-		environments.add((Class<? extends Environment>) clazz);
+		try {
+			environments.add(Class.forName(candidate.getBeanClassName()));
+		} catch (ClassNotFoundException exception) {
+			logger.error(exception);
+		}
 	}
 
-	public Collection<Class<? extends Environment>> getEnvironmentList() {
+	public Collection<Class<?>> getEnvironmentList() {
 		return Collections.unmodifiableSet(environments);
 	}
 
