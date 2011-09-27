@@ -8,11 +8,11 @@ import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.environment.Environment;
 import org.simulatest.environment.infra.AnnotationUtils;
-import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
-import org.simulatest.environment.mock.Environments.PessoaEnvironment;
-import org.simulatest.environment.mock.Environments.PessoaFisicaEnvironment;
-import org.simulatest.environment.mock.Environments.PessoaJuridicaEnvironment;
-import org.simulatest.environment.mock.Environments.Root;
+import org.simulatest.environment.test.testdouble.Environments.EmpresaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.PessoaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.PessoaFisicaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.PessoaJuridicaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.Root;
 
 public class AnnotationUtilsTest {
 	

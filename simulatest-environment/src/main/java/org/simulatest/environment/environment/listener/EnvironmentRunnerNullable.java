@@ -1,7 +1,6 @@
 package org.simulatest.environment.environment.listener;
 
 import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentRunnerListener;
 
 public class EnvironmentRunnerNullable implements EnvironmentRunnerListener {
 

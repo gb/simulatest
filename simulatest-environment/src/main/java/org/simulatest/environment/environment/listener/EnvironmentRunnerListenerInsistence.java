@@ -2,7 +2,6 @@ package org.simulatest.environment.environment.listener;
 
 import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentRunnerListener;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 
 public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerListener {
@@ -30,6 +29,9 @@ public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerLis
 	public void afterChildrenRun(EnvironmentDefinition definition) {
 		logger.debug("[InsistenceListener] afterChildrenRun >> " + definition);
 		insistenceLayerManager.decreaseLevel();
+		
+		// TODO - Only execute the next line, if the current environment has brothers 
+		insistenceLayerManager.resetCurrentLevel();
 	}
 
 }

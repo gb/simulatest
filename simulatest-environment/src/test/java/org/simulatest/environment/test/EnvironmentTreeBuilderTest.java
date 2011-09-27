@@ -3,24 +3,23 @@ package org.simulatest.environment.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-
+import static org.simulatest.environment.environment.EnvironmentDefinition.create;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.environment.environment.BigBangEnvironment;
-import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
-import org.simulatest.environment.infra.EnvironmentCyclicException;
-import org.simulatest.environment.mock.Environments.ColaboradorEnvironment;
-import org.simulatest.environment.mock.Environments.CyclicEnvironmentA;
-import org.simulatest.environment.mock.Environments.CyclicEnvironmentOne;
-import org.simulatest.environment.mock.Environments.EmpresaEnvironment;
-import org.simulatest.environment.mock.Environments.PessoaEnvironment;
-import org.simulatest.environment.mock.Environments.PessoaFisicaEnvironment;
-import org.simulatest.environment.mock.Environments.PessoaJuridicaEnvironment;
-import org.simulatest.environment.mock.Environments.ProjetoEnvironment;
-import org.simulatest.environment.mock.Environments.ProjetoEnvironmentCiclico;
-import org.simulatest.environment.mock.Environments.Root;
+import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
+import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.CyclicEnvironmentA;
+import org.simulatest.environment.test.testdouble.Environments.CyclicEnvironmentOne;
+import org.simulatest.environment.test.testdouble.Environments.EmpresaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.PessoaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.PessoaFisicaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.PessoaJuridicaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.ProjetoEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.ProjetoEnvironmentCiclico;
+import org.simulatest.environment.test.testdouble.Environments.Root;
 
 public class EnvironmentTreeBuilderTest {
 	
@@ -33,9 +32,9 @@ public class EnvironmentTreeBuilderTest {
 	
 	@Test
 	public void testPrint() {
-		builder.add(EnvironmentDefinition.create(ColaboradorEnvironment.class));
-		builder.add(EnvironmentDefinition.create(EmpresaEnvironment.class));
-		builder.add(EnvironmentDefinition.create(ProjetoEnvironment.class));
+		builder.add(create(ColaboradorEnvironment.class));
+		builder.add(create(EmpresaEnvironment.class));
+		builder.add(create(ProjetoEnvironment.class));
 		
 		String expectedPrint = 
 			"-BigBangEnvironment\n" +
@@ -52,11 +51,11 @@ public class EnvironmentTreeBuilderTest {
 
 	@Test
 	public void testAddSingleRootEnvironment() {
-		builder.add(EnvironmentDefinition.create(Root.class));
+		builder.add(create(Root.class));
 
 		Object[] expectedDefinitions = new Object[] {
-				EnvironmentDefinition.create(BigBangEnvironment.class),
-				EnvironmentDefinition.create(Root.class)
+				create(BigBangEnvironment.class),
+				create(Root.class)
 		};
 		
 		Object[] definitions = builder.getTree().getValues().toArray();
@@ -67,14 +66,14 @@ public class EnvironmentTreeBuilderTest {
 
 	@Test
 	public void testAddSingleLeafEnvironment() {
-		builder.add(EnvironmentDefinition.create(EmpresaEnvironment.class));
+		builder.add(create(EmpresaEnvironment.class));
 
 		Object[] expectedDefinitions = new Object[] {
-				EnvironmentDefinition.create(BigBangEnvironment.class),
-				EnvironmentDefinition.create(Root.class),
-				EnvironmentDefinition.create(PessoaEnvironment.class),
-				EnvironmentDefinition.create(PessoaJuridicaEnvironment.class),
-				EnvironmentDefinition.create(EmpresaEnvironment.class)
+				create(BigBangEnvironment.class),
+				create(Root.class),
+				create(PessoaEnvironment.class),
+				create(PessoaJuridicaEnvironment.class),
+				create(EmpresaEnvironment.class)
 		};
 		
 		Object[] definitions = builder.getTree().getValues().toArray();
@@ -85,19 +84,19 @@ public class EnvironmentTreeBuilderTest {
 
 	@Test
 	public void testAddMultiplesEnvironments() {
-		builder.add(EnvironmentDefinition.create(ColaboradorEnvironment.class));
-		builder.add(EnvironmentDefinition.create(EmpresaEnvironment.class));
-		builder.add(EnvironmentDefinition.create(ProjetoEnvironment.class));
+		builder.add(create(ColaboradorEnvironment.class));
+		builder.add(create(EmpresaEnvironment.class));
+		builder.add(create(ProjetoEnvironment.class));
 
 		Object[] expectedDefinitions = new Object[] {
-				EnvironmentDefinition.create(BigBangEnvironment.class),
-				EnvironmentDefinition.create(Root.class),
-				EnvironmentDefinition.create(PessoaEnvironment.class),
-				EnvironmentDefinition.create(PessoaFisicaEnvironment.class),
-				EnvironmentDefinition.create(ColaboradorEnvironment.class),
-				EnvironmentDefinition.create(PessoaJuridicaEnvironment.class),
-				EnvironmentDefinition.create(EmpresaEnvironment.class),
-				EnvironmentDefinition.create(ProjetoEnvironment.class)
+				create(BigBangEnvironment.class),
+				create(Root.class),
+				create(PessoaEnvironment.class),
+				create(PessoaFisicaEnvironment.class),
+				create(ColaboradorEnvironment.class),
+				create(PessoaJuridicaEnvironment.class),
+				create(EmpresaEnvironment.class),
+				create(ProjetoEnvironment.class)
 		};
 		
 		Object[] definitions = builder.getTree().getValues().toArray();
@@ -108,7 +107,7 @@ public class EnvironmentTreeBuilderTest {
 	@Test
 	public void testSimpleCyclicEnvironment() {
 		try {
-			builder.add(EnvironmentDefinition.create(ProjetoEnvironmentCiclico.class));
+			builder.add(create(ProjetoEnvironmentCiclico.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
 			String expectedMessage = "The environment \"ProjetoEnvironmentCiclico\" is cyclicity referenced";
@@ -119,7 +118,7 @@ public class EnvironmentTreeBuilderTest {
 	@Test
 	public void testCyclicEnvironment() {
 		try {
-			builder.add(EnvironmentDefinition.create(CyclicEnvironmentOne.class));
+			builder.add(create(CyclicEnvironmentOne.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
 			String expectedMessage = "The environment \"CyclicEnvironmentOne\" is cyclicity referenced";
@@ -130,7 +129,7 @@ public class EnvironmentTreeBuilderTest {
 	@Test
 	public void testComplexCyclicEnvironment() {
 		try {
-			builder.add(EnvironmentDefinition.create(CyclicEnvironmentA.class));
+			builder.add(create(CyclicEnvironmentA.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
 			String expectedMessage = "The environment \"CyclicEnvironmentA\" is cyclicity referenced";
