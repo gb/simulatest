@@ -16,7 +16,7 @@
 		<module>simulatest-insistencelayer</module>
 		<module>simulatest-environment</module>
 		<module>simulatest-spring</module>
-		<module>simulatest-jee5</module>
+		<!-- <module>simulatest-jee5</module> -->
 	</modules>
 
 	<developers>

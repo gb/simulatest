@@ -21,7 +21,7 @@ public class InsistenceLayerDataSource implements DataSource {
 	private ConnectionBean connectionBean;
 	
 	public InsistenceLayerDataSource() { 
-		// if used, the standard constructor the xml config will be used.
+		// if used, the xml config will be used.
 	}
 	
 	public InsistenceLayerDataSource(ConnectionBean connectionBean) {

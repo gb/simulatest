@@ -49,8 +49,7 @@ public class ConnectionMock extends ConnectionWrapper implements Connection {
 
 	@Override
 	public void rollback(Savepoint savepoint) throws SQLException {
-		while (!savepoints.isEmpty()) 
-			if (savepoints.pop().equals(savepoint)) break;
+		savepoints.remove(savepoint);
 	}
 
 	@Override
