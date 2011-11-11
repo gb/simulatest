@@ -1,16 +1,18 @@
 package org.simulatest.environment.environment.facade;
 
-import static org.simulatest.environment.environment.EnvironmentDefinition.create;
-
 import java.util.ServiceLoader;
 
 import org.simulatest.environment.environment.Environment;
+import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentFactory;
+import org.simulatest.environment.environment.EnvironmentRunner;
+import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.infra.exception.EnvironmentGeneralException;
 
 public class EnvironmentRunnerFacade {
 
 	private EnvironmentFactory environmentFactory;
+	private EnvironmentTreeBuilder builder = new EnvironmentTreeBuilder();
 
 	public EnvironmentRunnerFacade() {
 		ServiceLoader<EnvironmentFactory> loader = ServiceLoader.load(EnvironmentFactory.class);
@@ -24,7 +26,8 @@ public class EnvironmentRunnerFacade {
 	}
 
 	public void runEnvironment(Class<? extends Environment> environment) {
-		environmentFactory.create(create(environment)).run();
+		builder.add(EnvironmentDefinition.create(environment));
+		new EnvironmentRunner(environmentFactory, builder).run();
 	}
 
 }
