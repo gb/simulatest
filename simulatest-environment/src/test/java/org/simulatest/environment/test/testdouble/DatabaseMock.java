@@ -16,7 +16,7 @@ public class DatabaseMock {
 		return Collections.unmodifiableList(messages);
 	}
 	
-	public void reset() {
+	public static void reset() {
 		messages = new ArrayList<String>();
 	}
 

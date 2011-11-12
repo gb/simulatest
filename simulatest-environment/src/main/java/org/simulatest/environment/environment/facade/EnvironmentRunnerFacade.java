@@ -9,6 +9,8 @@ import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.infra.exception.EnvironmentGeneralException;
 
+import com.google.common.base.Preconditions;
+
 public class EnvironmentRunnerFacade {
 
 	private EnvironmentFactory environmentFactory;
@@ -19,6 +21,11 @@ public class EnvironmentRunnerFacade {
 		for (EnvironmentFactory factory : loader) environmentFactory = factory;
 		assertEnvironmentFactoryNotNull();
 	}
+	
+	public EnvironmentRunnerFacade(EnvironmentFactory environmentFactory) {
+		Preconditions.checkNotNull(environmentFactory);
+		this.environmentFactory = environmentFactory;
+	}
 
 	private void assertEnvironmentFactoryNotNull() {
 		if (environmentFactory != null) return;
@@ -26,7 +33,11 @@ public class EnvironmentRunnerFacade {
 	}
 
 	public void runEnvironment(Class<? extends Environment> environment) {
-		builder.add(EnvironmentDefinition.create(environment));
+		runEnvironment(EnvironmentDefinition.create(environment));
+	}
+	
+	public void runEnvironment(EnvironmentDefinition environmentDefinition) {
+		builder.add(environmentDefinition);
 		new EnvironmentRunner(environmentFactory, builder).run();
 	}
 

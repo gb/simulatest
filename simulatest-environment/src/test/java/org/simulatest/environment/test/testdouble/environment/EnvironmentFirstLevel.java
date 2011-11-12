@@ -7,6 +7,7 @@ public class EnvironmentFirstLevel implements Environment {
 
 	@Override
 	public void run() {
+		DatabaseMock.reset();
 		DatabaseMock.addMessage("first");
 	}
 
