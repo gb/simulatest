@@ -5,12 +5,10 @@
 	<parent>
 		<artifactId>simulatest</artifactId>
 		<groupId>org.simulatest</groupId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.2</version>
 	</parent>
 
-	<groupId>org.simulatest</groupId>
 	<artifactId>simulatest-insistencelayer</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>Simulatest - Insistence Layer</name>
 
 	<dependencies>

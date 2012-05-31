@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<datasource>
-    <driver>org.h2.Driver</driver>
-    <url>jdbc:h2:~/.h2/test</url>
-    <username>sa</username>
-    <password></password>
-</datasource>

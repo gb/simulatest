@@ -14,7 +14,7 @@ public class InsistenceLayerManagerFactory {
 		cache = new HashMap<Connection, InsistenceLayerManager>();
 	}
 	
-	public static InsistenceLayerManager createInsistenceLayerManager(ConnectionWrapper connection) {
+	public static InsistenceLayerManager build(ConnectionWrapper connection) {
 		if (cache.get(connection) == null) cache.put(connection, new InsistenceLayerManager(connection));
 		
 		return cache.get(connection);

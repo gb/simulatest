@@ -1,7 +1,6 @@
 package org.simulatest.environment.junit;
 
 import org.junit.runner.Runner;
-import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentReflectionFactory;
@@ -19,7 +18,7 @@ public class EnvironmentJUnitRunner extends AbstractEnvironmentJUnitRunner {
 
 	@Override
 	protected Runner instanceTest(Class<?> test) throws InitializationError {
-		return new BlockJUnit4ClassRunner(test);
+		return new SimulatestJUnit4ClassRunner(this, test);
 	}
 
 }

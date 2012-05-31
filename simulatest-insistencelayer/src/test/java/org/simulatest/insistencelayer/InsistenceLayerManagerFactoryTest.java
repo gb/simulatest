@@ -12,13 +12,13 @@ public class InsistenceLayerManagerFactoryTest {
 	
 	@Test
 	public void testSimpleCreate() {
-		assertNotNull(InsistenceLayerManagerFactory.createInsistenceLayerManager(connectionWrapper));
+		assertNotNull(InsistenceLayerManagerFactory.build(connectionWrapper));
 	}
 	
 	@Test
 	public void testCache() {
-		InsistenceLayerManager instance1 = InsistenceLayerManagerFactory.createInsistenceLayerManager(connectionWrapper);
-		InsistenceLayerManager instance2 = InsistenceLayerManagerFactory.createInsistenceLayerManager(connectionWrapper);
+		InsistenceLayerManager instance1 = InsistenceLayerManagerFactory.build(connectionWrapper);
+		InsistenceLayerManager instance2 = InsistenceLayerManagerFactory.build(connectionWrapper);
 	
 		assertTrue(instance1 == instance2);
 	}

@@ -22,7 +22,7 @@ public class InsistenceLayerIntegrationTest {
 	@Before
 	public void setup() throws Exception {
 		connection = ConnectionFactory.getConnection();
-		insistenceLayerManager = InsistenceLayerManagerFactory.createInsistenceLayerManager(connection);
+		insistenceLayerManager = InsistenceLayerManagerFactory.build(connection);
 		statement = connection.createStatement();
 		
 		statement.executeUpdate("CREATE TABLE IF NOT EXISTS LOG (NAME VARCHAR(50))");

@@ -32,7 +32,7 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 	
 	private InsistenceLayerManager getInsistenceLayerManager() {
 		try {
-			return InsistenceLayerManagerFactory.createInsistenceLayerManager(ConnectionFactory.getConnection());
+			return InsistenceLayerManagerFactory.build(ConnectionFactory.getConnection());
 		} catch (SQLException exception) {
 			String message = "Error trying get the instance of InsistenceLayer";
 			throw new EnvironmentInstantiationException(message, exception);
