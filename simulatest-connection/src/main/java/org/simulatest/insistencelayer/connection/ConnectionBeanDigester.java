@@ -6,7 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.digester.Digester;
+import org.apache.commons.digester3.Digester;
+import org.apache.commons.digester3.ObjectCreateRule;
 import org.xml.sax.SAXException;
 
 public class ConnectionBeanDigester {
@@ -24,13 +25,15 @@ public class ConnectionBeanDigester {
 	}
 	
 	private Digester getDigester() {
-		Digester digester = new Digester();
+		ObjectCreateRule rule = new ObjectCreateRule( ConnectionBean.class );
+		rule.setConstructorArgumentTypes(String.class, String.class, String.class, String.class);
 		
-		digester.addObjectCreate("datasource", ConnectionBean.class);
-		digester.addCallMethod("datasource/driver", "setDriver", 0);
-		digester.addCallMethod("datasource/url", "setUrl", 0);
-		digester.addCallMethod("datasource/username", "setUsername", 0);
-		digester.addCallMethod("datasource/password", "setPassword", 0);
+		Digester digester = new Digester();
+		digester.addRule("datasource", rule);
+		digester.addCallParam("datasource/driver", 0);
+		digester.addCallParam("datasource/url", 1);
+		digester.addCallParam("datasource/username", 2);
+		digester.addCallParam("datasource/password", 3);
 		
 		return digester;
 	}
