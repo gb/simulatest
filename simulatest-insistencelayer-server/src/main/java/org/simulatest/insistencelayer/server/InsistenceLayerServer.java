@@ -30,7 +30,7 @@ public class InsistenceLayerServer {
 		}
 	}
 
-	public static void shutdown() throws Exception {
+	public static void shutdown() {
 		logger.info("Shutdowning InsistenceLayerServer!");
 		
 		try {

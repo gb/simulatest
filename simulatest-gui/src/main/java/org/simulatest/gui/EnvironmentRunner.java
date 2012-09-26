@@ -49,7 +49,7 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
         
         this.setLayout(new BorderLayout());
         
-       // facade = new EnvironmentRunnerFacade(insistenceLayerManager);
+        facade = new EnvironmentRunnerFacade();
 
         listModel = new DefaultListModel();
         

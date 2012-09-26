@@ -3,12 +3,15 @@ package org.simulatest.environment.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
 
 public class EnvironmentRunner {
+	
+	private static Logger logger = Logger.getLogger(EnvironmentRunner.class);
 	
 	private EnvironmentFactory factory;
 	private Tree<EnvironmentDefinition> tree;
@@ -60,6 +63,8 @@ public class EnvironmentRunner {
 	}
 
 	private void runEnvironment(EnvironmentDefinition definition) {
+		logger.info("[Run Environment] >> " + definition.getName());
+		
 		fireBeforeRun(definition);
 		if (!definition.equals(EnvironmentDefinition.bigBang())) executeEnvironment(definition);
 		fireAfterRun(definition);

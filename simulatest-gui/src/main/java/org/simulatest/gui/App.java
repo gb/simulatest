@@ -27,7 +27,9 @@ public class App implements Startable {
 		container.addComponent(EnvironmentRunner.class);
 		container.addComponent(InsistenceLayerForm.class);
 		container.addComponent(App.class);
-		container.addComponent(SimulatestHub.class);		
+		container.addComponent(SimulatestHub.class);	
+		container.addComponent(SimulatestSQLWindow.class);
+		container.addComponent(InsistenceLayerServerForm.class);
 		
 		container.start();
 	}

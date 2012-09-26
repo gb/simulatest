@@ -19,11 +19,17 @@ public class SimulatestHub extends JFrame {
 	
 	private final EnvironmentRunner environmentRunner;
 	private final InsistenceLayerForm insistenceLayerForm;
+	private final SimulatestSQLWindow simulatestSQLWindow;
+	private final InsistenceLayerServerForm insistenceLayerServerForm;
 
-	public SimulatestHub(EnvironmentRunner environmentRunner, InsistenceLayerForm insistenceLayerForm) {		
+	public SimulatestHub(EnvironmentRunner environmentRunner, InsistenceLayerForm insistenceLayerForm,
+			SimulatestSQLWindow simulatestSQLWindow, InsistenceLayerServerForm insistenceLayerServerForm) {		
 		super("Simulatest Hub");
+		
 		this.environmentRunner = environmentRunner;
 		this.insistenceLayerForm = insistenceLayerForm;
+		this.simulatestSQLWindow = simulatestSQLWindow;
+		this.insistenceLayerServerForm = insistenceLayerServerForm;
 		
 		addComponents();
 		configureLayout();
@@ -42,7 +48,11 @@ public class SimulatestHub extends JFrame {
 		}});
 		
 		sqlWindow.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			new SimulatestSQLWindow().showMe();
+			simulatestSQLWindow.showMe();
+		}});
+		
+		insistenceLayerServerButton.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
+			insistenceLayerServerForm.showMe();
 		}});
 	}
 
