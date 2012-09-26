@@ -11,16 +11,15 @@ import org.simulatest.insistencelayer.connection.ConnectionFactory;
 
 public class App implements Startable {
 	
-	private final TestToolsForm testToolsForm;
+	private final SimulatestHub hub;
 
-	public App(TestToolsForm testToolsForm) {
-		this.testToolsForm = testToolsForm;		
+	public App(SimulatestHub hub) {
+		this.hub = hub;		
 	}
 	
 	public static void main(String[] args) throws SQLException {
 		InsistenceLayerManager insistenceLayer = 
 				InsistenceLayerManagerFactory.build(ConnectionFactory.getConnection());
-		
 		
 		DefaultPicoContainer container = new DefaultPicoContainer(new Caching());	
 		
@@ -28,15 +27,14 @@ public class App implements Startable {
 		container.addComponent(EnvironmentRunner.class);
 		container.addComponent(InsistenceLayerForm.class);
 		container.addComponent(App.class);
-		container.addComponent(TestToolsForm.class);		
+		container.addComponent(SimulatestHub.class);		
 		
 		container.start();
 	}
-
 	
 	@Override
 	public void start() {
-		testToolsForm.setVisible(true);
+		hub.setVisible(true);
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <datasource>
-    <driver>oracle.jdbc.driver.OracleDriver</driver>
-    <url>jdbc:oracle:thin:@10.42.12.10:1521:Jira</url>
-    <username>jiraintegrate</username>
-    <password>jiraintegrate</password>
+    <driver>org.h2.Driver</driver>
+    <url>jdbc:h2:~/.h2/test</url>
+    <username>sa</username>
+    <password></password>
 </datasource>

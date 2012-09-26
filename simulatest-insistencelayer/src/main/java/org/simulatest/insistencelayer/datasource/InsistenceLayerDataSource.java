@@ -10,6 +10,8 @@ import javax.sql.DataSource;
 import org.simulatest.insistencelayer.connection.ConnectionBean;
 import org.simulatest.insistencelayer.connection.ConnectionBeanDigester;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.InsistenceLayerException;
+import org.simulatest.insistencelayer.server.InsistenceLayerServer;
 
 import com.google.common.base.Preconditions;
 
@@ -21,7 +23,7 @@ public class InsistenceLayerDataSource implements DataSource {
 	private ConnectionBean connectionBean;
 	
 	public InsistenceLayerDataSource() { 
-		// if used, the xml config will be used.
+		// if used, the config will be loaded from XML.
 	}
 	
 	public InsistenceLayerDataSource(ConnectionBean connectionBean) {
@@ -67,9 +69,23 @@ public class InsistenceLayerDataSource implements DataSource {
 	@Override
 	public Connection getConnection() throws SQLException {
 		if (connectionBean == null) initializeConnectionBeanByDefaultXML();
-		return getConnectionWrapper();
+		return tryGetConnectionOfServer();
 	}
 	
+	private Connection tryGetConnectionOfServer() throws SQLException {
+		if (InsistenceLayerServer.isAvailable()) return getServerConnection();
+		return getConnectionWrapper();
+	}
+
+	private Connection getServerConnection() {
+		try {
+			InsistenceLayerServer.registerConnectionBean(connectionBean);
+			return InsistenceLayerServer.getConnection();
+		} catch (Exception e) {
+			throw new InsistenceLayerException(e);
+		}
+	}
+
 	private void initializeConnectionBeanByDefaultXML() {
 		connectionBean = connectionBeanDigester.digesterDefault();
 	}

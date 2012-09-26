@@ -60,6 +60,7 @@ public class InsistenceLayerForm extends JFrame {
 		btnDecreaseLevel.setName("-");
 		btnReset.setName("reset");
 		btnClear.setName("clear");
+		btnClear.setVisible(true);
 		
 		btnIncreaseLevel.setBounds(145, 5, 45, 25);
 		btnDecreaseLevel.setBounds(195, 5, 45, 25);
@@ -84,37 +85,25 @@ public class InsistenceLayerForm extends JFrame {
 	}
 	
 	private void createEvents() {
-		btnIncreaseLevel.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				insistenceLayerManager.increaseLevel();
-				updateDisplayLevel();
-			}
-		});
+		btnIncreaseLevel.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
+			insistenceLayerManager.increaseLevel();
+			updateDisplayLevel();
+		}});
 		
-		btnDecreaseLevel.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				insistenceLayerManager.decreaseLevel();
-				updateDisplayLevel();
-			}
-		});
+		btnDecreaseLevel.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
+			insistenceLayerManager.decreaseLevel();
+			updateDisplayLevel();
+		}});
 		
-		btnReset.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				insistenceLayerManager.decreaseAllLevels();
-				updateDisplayLevel();
-			}
-		});
+		btnReset.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
+			insistenceLayerManager.decreaseAllLevels();
+			updateDisplayLevel();
+		}});
 		
-		btnClear.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				insistenceLayerManager.resetCurrentLevel();
-				updateDisplayLevel();
-			}
-		});
+		btnClear.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
+			insistenceLayerManager.resetCurrentLevel();
+			updateDisplayLevel();
+		}});
 	}
 
 }

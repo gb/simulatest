@@ -77,8 +77,7 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
         employeeName = new JTextField(10);
         employeeName.addActionListener(hireListener);
         employeeName.getDocument().addDocumentListener(hireListener);
-        String name = listModel.getElementAt(
-                              list.getSelectedIndex()).toString();
+//        String name = listModel.getElementAt(list.getSelectedIndex()).toString();
 
         //Create a panel that uses BoxLayout.
         JPanel buttonPane = new JPanel();
@@ -97,13 +96,13 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
     }
 
     class FireListener implements ActionListener {
-        public void actionPerformed(ActionEvent e) {
+        @SuppressWarnings("unchecked")
+		public void actionPerformed(ActionEvent e) {
             int index = list.getSelectedIndex();
             Class<? extends Environment> clazz = null;
 			try {
 				clazz = (Class<? extends Environment>) Class.forName((String) listModel.get(index));
 			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
             facade.runEnvironment(clazz);

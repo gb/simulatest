@@ -10,11 +10,13 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
+import org.apache.log4j.Logger;
 import org.simulatest.insistencelayer.connection.ConnectionFactory;
 
 class QueryTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 2437918897585160122L;
+	private static Logger logger = Logger.getLogger(QueryTableModel.class);
 
 	private Vector<Object> cache;
 	private int colCount;
@@ -72,7 +74,7 @@ class QueryTableModel extends AbstractTableModel {
 			
 			fireTableChanged(null);
 		} catch (Exception e) {
-			cache = new Vector<Object>(); // blank it out and keep going.
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -82,7 +84,7 @@ class QueryTableModel extends AbstractTableModel {
 			db = DriverManager.getConnection(url);
 			statement = db.createStatement();
 		} catch (Exception e) {
-			System.out.println("Could not initialize the database.");
+			logger.error("Could not initialize the database.");
 			e.printStackTrace();
 		}
 	}
@@ -92,7 +94,7 @@ class QueryTableModel extends AbstractTableModel {
 			if (statement != null) statement.close();
 			if (db != null) db.close();
 		} catch (Exception e) {
-			System.out.println("Could not close the current connection.");
+			logger.error("Could not close the current connection.");
 			e.printStackTrace();
 		}
 	}
