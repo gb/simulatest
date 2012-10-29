@@ -73,7 +73,7 @@ public class InsistenceLayerDataSource implements DataSource {
 	}
 	
 	private Connection tryGetConnectionOfServer() throws SQLException {
-		if (InsistenceLayerServer.isAvailable()) return getServerConnection();
+		//if (InsistenceLayerServer.isAvailable()) return getServerConnection();
 		return getConnectionWrapper();
 	}
 
