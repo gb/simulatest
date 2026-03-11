@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
@@ -26,6 +27,14 @@ public class InsistenceLayerIntegrationTest {
 		statement = connection.createStatement();
 		
 		statement.executeUpdate("CREATE TABLE IF NOT EXISTS LOG (NAME VARCHAR(50))");
+	}
+
+	@After
+	public void teardown() throws Exception {
+		while (insistenceLayerManager.getCurrentLevel() > 0) {
+			insistenceLayerManager.decreaseLevel();
+		}
+		statement.executeUpdate("DELETE FROM LOG");
 	}
 	
 	@Test
