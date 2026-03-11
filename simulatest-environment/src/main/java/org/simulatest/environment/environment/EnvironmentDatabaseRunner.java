@@ -24,8 +24,10 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 		insistenceLayer.increaseLevel();
 		try {
 			super.run();
-		} finally {
 			insistenceLayer.decreaseLevel();
+		} catch (RuntimeException exception) {
+			insistenceLayer.decreaseAllLevels();
+			throw exception;
 		}
 	}
 	

@@ -14,7 +14,9 @@ import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerInsistence;
+import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.EmpresaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.ProjetoEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
@@ -60,6 +62,27 @@ public class EnvironmentRunnerListenerInsistenceTest {
 		// Only PessoaFisica/PessoaJuridica are siblings, so resetCurrentLevel
 		// should fire exactly once (to clean PessoaEnvironment's level between siblings)
 		verify(insistenceLayerManager, times(1)).resetCurrentLevel();
+	}
+
+	@Test
+	public void shouldStillDecreaseOnEnvironmentFailure() {
+		builder.add(create(DummyEnvironment.class));
+
+		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
+		runner.addListener(insistenceListener);
+
+		try {
+			runner.run();
+		} catch (EnvironmentExecutionException expected) {
+			// DummyEnvironment throws during run()
+		}
+
+		// BigBang fires afterRun → increaseLevel, then DummyEnvironment fails
+		// before its afterRun fires. The listener should have received
+		// increaseLevel from BigBang's afterRun but no matching decreaseLevel,
+		// demonstrating that the caller (EnvironmentDatabaseRunner) must handle cleanup.
+		verify(insistenceLayerManager, times(1)).increaseLevel();
+		verify(insistenceLayerManager, never()).decreaseLevel();
 	}
 
 }
