@@ -37,12 +37,12 @@ public class ConnectionLayer implements Connection {
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		return null;
+		return connection.unwrap(iface);
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		return false;
+		return connection.isWrapperFor(iface);
 	}
 
 	@Override
@@ -57,12 +57,12 @@ public class ConnectionLayer implements Connection {
 
 	@Override
 	public CallableStatement prepareCall(String sql) throws SQLException {
-		return null;
+		return connection.prepareCall(sql);
 	}
 
 	@Override
 	public String nativeSQL(String sql) throws SQLException {
-		return null;
+		return connection.nativeSQL(sql);
 	}
 
 	@Override
@@ -141,13 +141,13 @@ public class ConnectionLayer implements Connection {
 	@Override
 	public Statement createStatement(int resultSetType, int resultSetConcurrency)
 			throws SQLException {
-		return connection.createStatement();
+		return connection.createStatement(resultSetType, resultSetConcurrency);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, int resultSetType,
 			int resultSetConcurrency) throws SQLException {
-		return connection.prepareStatement(sql);
+		return connection.prepareStatement(sql, resultSetType, resultSetConcurrency);
 	}
 
 	@Override
@@ -200,14 +200,14 @@ public class ConnectionLayer implements Connection {
 	public Statement createStatement(int resultSetType,
 			int resultSetConcurrency, int resultSetHoldability)
 			throws SQLException {
-		return connection.createStatement();
+		return connection.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, int resultSetType,
 			int resultSetConcurrency, int resultSetHoldability)
 			throws SQLException {
-		return connection.prepareStatement(sql);
+		return connection.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 
 	@Override
