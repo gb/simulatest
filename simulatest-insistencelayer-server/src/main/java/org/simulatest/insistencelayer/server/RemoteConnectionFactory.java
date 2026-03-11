@@ -31,7 +31,7 @@ public class RemoteConnectionFactory extends UnicastRemoteObject implements RMIC
 		Preconditions.checkNotNull(connectionBean, "ConnectionBean should be registered before getConnection");
 		
 		try {
-			Class.forName("org.objectweb.rmijdbc.Driver").newInstance();
+			Class.forName("org.objectweb.rmijdbc.Driver").getDeclaredConstructor().newInstance();
 			
 			String rmiHost = "jdbc:rmi://" + InetAddress.getLocalHost().getHostName();
 			String url = connectionBean.getUrl();
