@@ -21,11 +21,13 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 
 public class ConnectionLayer implements Connection {
-	
+
 	private static final Logger logger = Logger.getLogger(ConnectionLayer.class);
-	
+	private static final String USER_COMMIT_SAVEPOINT = "USER_COMMIT";
+
 	private Connection connection;
-	
+	private Savepoint lastCommitSavepoint;
+
 	public ConnectionLayer(Connection connection) {
 		try {
 			connection.setAutoCommit(false);
@@ -77,12 +79,19 @@ public class ConnectionLayer implements Connection {
 
 	@Override
 	public void commit() throws SQLException {
-		logger.info("FAKE Commit");
+		logger.info("[ConnectionLayer] Commit (bumping savepoint)");
+		if (lastCommitSavepoint != null) {
+			connection.releaseSavepoint(lastCommitSavepoint);
+		}
+		lastCommitSavepoint = connection.setSavepoint(USER_COMMIT_SAVEPOINT);
 	}
 
 	@Override
 	public void rollback() throws SQLException {
-		logger.info("FAKE Rollback");
+		logger.info("[ConnectionLayer] Rollback");
+		if (lastCommitSavepoint != null) {
+			connection.rollback(lastCommitSavepoint);
+		}
 	}
 
 	@Override
