@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DatabaseMock {
-	
-	private List<String> messages = new ArrayList<String>();
+
+	private final List<String> messages = new ArrayList<>();
 
 	public void addMessage(String message) {
 		messages.add(message);

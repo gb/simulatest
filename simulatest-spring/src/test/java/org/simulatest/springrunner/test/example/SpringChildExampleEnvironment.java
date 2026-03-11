@@ -7,15 +7,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@EnvironmentParent(value = SpringExampleEnvironment.class)
+@EnvironmentParent(SpringExampleEnvironment.class)
 public class SpringChildExampleEnvironment implements Environment {
 
 	@Autowired
-	LanguageTeacher languageTeacher;
-	
+	private LanguageTeacher languageTeacher;
+
 	@Autowired
-	DatabaseMock databaseMock;
-	
+	private DatabaseMock databaseMock;
+
 	@Override
 	public void run() {
 		databaseMock.addMessage(languageTeacher.sayHello() + " by child");

@@ -9,26 +9,29 @@ import org.simulatest.springrunner.environment.EnvironmentSpringFactory;
 import org.simulatest.springrunner.spring.SpringContext;
 
 public class SimulatestSpringRunner extends EnvironmentJUnitRunner {
-	
-	public SimulatestSpringRunner(Class<?> clazz) throws InitializationError {
-		super(clazz);
-		SpringContext.initializeFromTestClass(clazz);
+
+	public SimulatestSpringRunner(Class<?> testClass) throws InitializationError {
+		super(testClass);
+		SpringContext.initializeFromTestClass(testClass);
 	}
-	
-	@Override
-	protected Runner instanceTest(Class<?> test) throws InitializationError {
-		return new SimulatestSpringJUnit4Runner(this, test);
-	}
-	
-	@Override
-	public void run(final RunNotifier notifier) {
-		super.run(notifier);
-		SpringContext.destroy();
-	}
-	
+
 	@Override
 	protected EnvironmentFactory getEnvironmentFactory() {
 		return new EnvironmentSpringFactory();
 	}
-	
+
+	@Override
+	protected Runner instanceTest(Class<?> test) throws InitializationError {
+		return new SimulatestSpringJUnit4Runner(this, test);
+	}
+
+	@Override
+	public void run(RunNotifier notifier) {
+		try {
+			super.run(notifier);
+		} finally {
+			SpringContext.destroy();
+		}
+	}
+
 }

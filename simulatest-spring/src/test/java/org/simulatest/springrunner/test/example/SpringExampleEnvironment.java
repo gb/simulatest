@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 public class SpringExampleEnvironment implements Environment {
 
 	@Autowired
-	LanguageTeacher languageTeacher;
-	
+	private LanguageTeacher languageTeacher;
+
 	@Autowired
-	DatabaseMock databaseMock;
-	
+	private DatabaseMock databaseMock;
+
 	@Override
 	public void run() {
 		databaseMock.addMessage(languageTeacher.sayHello());
