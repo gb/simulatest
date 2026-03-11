@@ -36,19 +36,37 @@ public class EnvironmentRunner {
 	}
 	
 	private void fireBeforeRun(EnvironmentDefinition definition) {
-		for (EnvironmentRunnerListener listener : listeners) listener.beforeRun(definition);
+		fireEvent(definition, EnvironmentRunnerListener::beforeRun);
 	}
-	
+
 	private void fireAfterRun(EnvironmentDefinition definition) {
-		for (EnvironmentRunnerListener listener : listeners) listener.afterRun(definition);
+		fireEvent(definition, EnvironmentRunnerListener::afterRun);
 	}
-	
+
 	private void fireAfterChildrenRun(EnvironmentDefinition definition) {
-		for (EnvironmentRunnerListener listener : listeners) listener.afterChildrenRun(definition);
+		fireEvent(definition, EnvironmentRunnerListener::afterChildrenRun);
 	}
 
 	private void fireAfterSiblingCleanup(EnvironmentDefinition definition) {
-		for (EnvironmentRunnerListener listener : listeners) listener.afterSiblingCleanup(definition);
+		fireEvent(definition, EnvironmentRunnerListener::afterSiblingCleanup);
+	}
+
+	private void fireEvent(EnvironmentDefinition definition, ListenerAction action) {
+		RuntimeException firstException = null;
+		for (EnvironmentRunnerListener listener : listeners) {
+			try {
+				action.execute(listener, definition);
+			} catch (RuntimeException exception) {
+				logger.error("Listener " + listener.getClass().getName() + " threw exception", exception);
+				if (firstException == null) firstException = exception;
+			}
+		}
+		if (firstException != null) throw firstException;
+	}
+
+	@FunctionalInterface
+	private interface ListenerAction {
+		void execute(EnvironmentRunnerListener listener, EnvironmentDefinition definition);
 	}
 	
 	public void run() {

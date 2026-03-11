@@ -22,8 +22,11 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 	@Override
 	public void run() {
 		insistenceLayer.increaseLevel();
-		super.run();
-		insistenceLayer.decreaseLevel();
+		try {
+			super.run();
+		} finally {
+			insistenceLayer.decreaseLevel();
+		}
 	}
 	
 	public InsistenceLayerManager insistenceLayer() {

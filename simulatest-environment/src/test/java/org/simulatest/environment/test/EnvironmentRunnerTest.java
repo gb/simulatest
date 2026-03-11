@@ -2,17 +2,20 @@ package org.simulatest.environment.test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
 
 import org.junit.Test;
 import static org.simulatest.environment.environment.EnvironmentDefinition.*;
+import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerLog;
+import org.simulatest.environment.environment.listener.EnvironmentRunnerNullable;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;
@@ -84,6 +87,32 @@ public class EnvironmentRunnerTest {
 		assertArrayEquals(expectedLogs, listenerLog.getLogs().toArray());
 	}
 	
+	@Test
+	public void subsequentListenersShouldFireEvenWhenAPreviousListenerThrows() {
+		builder.add(bigBang());
+
+		EnvironmentRunnerListenerLog secondListener = new EnvironmentRunnerListenerLog();
+
+		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
+		runner.addListener(new EnvironmentRunnerNullable() {
+			@Override
+			public void afterRun(EnvironmentDefinition definition) {
+				throw new RuntimeException("listener failure");
+			}
+		});
+		runner.addListener(secondListener);
+
+		try {
+			runner.run();
+			fail("should propagate the listener exception");
+		} catch (RuntimeException exception) {
+			assertEquals("listener failure", exception.getMessage());
+		}
+
+		assertTrue("second listener should have received afterRun despite first listener throwing",
+				secondListener.getLogs().contains("[BigBangEnvironment] afterRun"));
+	}
+
 	@Test
 	public void shouldThrowAnEnvironmentExecutionExceptionWhenSomethingWrongHappen() {
 		builder.add(create(DummyEnvironment.class));
