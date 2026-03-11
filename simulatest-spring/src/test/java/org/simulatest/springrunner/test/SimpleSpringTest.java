@@ -2,8 +2,10 @@ package org.simulatest.springrunner.test;
 
 import static junit.framework.Assert.assertEquals;
 
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
+import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 import org.simulatest.springrunner.junit.SpringTestHarness;
 import org.simulatest.springrunner.test.example.LanguageTeacher;
 import org.simulatest.springrunner.test.example.SpringChildExampleEnvironment;
@@ -12,6 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @UseEnvironment(SpringChildExampleEnvironment.class)
 public class SimpleSpringTest extends SpringTestHarness {
+
+	static {
+		JdbcDataSource h2 = new JdbcDataSource();
+		h2.setURL("jdbc:h2:~/.h2/test");
+		h2.setUser("sa");
+		InsistenceLayerDataSource.configure(h2);
+	}
 	
 	@Autowired
 	private LanguageTeacher languageTeacher;

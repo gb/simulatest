@@ -5,9 +5,12 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
+import org.simulatest.environment.test.TestSetup;
 
 @RunWith(EnvironmentJUnitRunner.class)
 public class DummyTest {
+
+	static { TestSetup.configure(); }
 	
 	@Test
 	public void testSum() {

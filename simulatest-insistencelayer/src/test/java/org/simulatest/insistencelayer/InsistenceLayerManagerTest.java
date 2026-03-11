@@ -10,22 +10,23 @@ import static org.mockito.Mockito.verify;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 
-
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.mock.ConnectionMock;
 
 public class InsistenceLayerManagerTest {
 
-	private ConnectionMock connection;
+	private ConnectionMock connectionMock;
+	private ConnectionWrapper connection;
 	private InsistenceLayerManager insistenceLayerManager;
-	
-	@Before 
+
+	@Before
 	public void setup() throws SQLException {
-		connection = new ConnectionMock();
-        insistenceLayerManager = new InsistenceLayerManager(connection);
-    }
+		connectionMock = new ConnectionMock();
+		connection = new ConnectionWrapper(connectionMock.getConnection());
+		insistenceLayerManager = new InsistenceLayerManager(connection);
+	}
 
 	@Test
 	public void shouldNotBePossibleCreateAnInstanceWithANullConnection() {
@@ -36,58 +37,58 @@ public class InsistenceLayerManagerTest {
 			assertEquals("Connection is null", e.getMessage());
 		}
 	}
-	
+
 	@Test
 	public void initialValueShouldBeZero() {
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());
 	}
-	
+
 	@Test
-	public void shouldIncreaseLevel() {	
+	public void shouldIncreaseLevel() {
 		insistenceLayerManager.increaseLevel();
 		assertEquals(1, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.increaseLevel();
 		assertEquals(2, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.increaseLevel();
 		assertEquals(3, insistenceLayerManager.getCurrentLevel());
-		
-		assertEquals(3, connection.getSavepoints().size());
+
+		assertEquals(3, connectionMock.getSavepoints().size());
 	}
-	
+
 	@Test
 	public void shouldDecreaseLevel() {
 		insistenceLayerManager.setLevelTo(3);
 		assertEquals(3, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.decreaseLevel();
 		assertEquals(2, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.decreaseLevel();
 		assertEquals(1, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.decreaseLevel();
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());
-		
-		assertEquals(0, connection.getSavepoints().size());
+
+		assertEquals(0, connectionMock.getSavepoints().size());
 	}
-	
+
 	@Test
 	public void shouldDecreaseAllLevels() {
 		insistenceLayerManager.setLevelTo(5);
 		assertEquals(5, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.decreaseAllLevels();
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());
-		
-		assertEquals(0, connection.getSavepoints().size());
+
+		assertEquals(0, connectionMock.getSavepoints().size());
 	}
-	
+
 	@Test
 	public void shouldNotSetLevelToNegativeValue() {
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());
-		
+
 		try {
 			insistenceLayerManager.setLevelTo(-1);
 			fail("was possible set a negative level!");
@@ -95,47 +96,47 @@ public class InsistenceLayerManagerTest {
 			assertEquals("Level cannot be negative", e.getMessage());
 		}
 	}
-	
+
 	@Test
 	public void shouldSetLevel() {
 		insistenceLayerManager.setLevelTo(3);
 		assertEquals(3, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.setLevelTo(4);
 		assertEquals(4, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.setLevelTo(2);
 		assertEquals(2, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.setLevelTo(3);
 		assertEquals(3, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.setLevelTo(0);
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.setLevelTo(1);
 		assertEquals(1, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.setLevelTo(0);
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());
-		
-		assertEquals(0, connection.getSavepoints().size());
+
+		assertEquals(0, connectionMock.getSavepoints().size());
 	}
-	
+
 	@Test
 	public void shouldCallRollbackLevelJustOnceWhenUseSetLevel() throws SQLException {
-		ConnectionMock spyConnectionMock = spy(connection);
-		insistenceLayerManager = new InsistenceLayerManager(spyConnectionMock);
-		
+		ConnectionWrapper spyConnection = spy(connection);
+		insistenceLayerManager = new InsistenceLayerManager(spyConnection);
+
 		insistenceLayerManager.setLevelTo(9);
 		assertEquals(9, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.setLevelTo(1);
 		assertEquals(1, insistenceLayerManager.getCurrentLevel());
-		
-		verify(spyConnectionMock, atMost(1)).rollback((Savepoint) any());
+
+		verify(spyConnection, atMost(1)).rollback((Savepoint) any());
 	}
-	
+
 	@Test(expected = IllegalStateException.class)
 	public void shouldThrowWhenDecreasingLevelAtZero() {
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());

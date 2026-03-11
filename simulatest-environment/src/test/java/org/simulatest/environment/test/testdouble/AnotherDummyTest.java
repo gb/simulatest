@@ -6,9 +6,12 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
+import org.simulatest.environment.test.TestSetup;
 
 @RunWith(EnvironmentJUnitRunner.class)
 public class AnotherDummyTest {
+
+	static { TestSetup.configure(); }
 	
 	@Test
 	public void testTrue() {

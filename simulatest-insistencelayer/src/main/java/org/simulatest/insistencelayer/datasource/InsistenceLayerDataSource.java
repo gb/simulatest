@@ -2,104 +2,87 @@ package org.simulatest.insistencelayer.datasource;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
-import org.simulatest.insistencelayer.connection.ConnectionBean;
-import org.simulatest.insistencelayer.connection.ConnectionBeanDigester;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
-import org.simulatest.insistencelayer.infra.InsistenceLayerException;
-import org.simulatest.insistencelayer.server.InsistenceLayerServer;
-
-import java.sql.SQLFeatureNotSupportedException;
-import java.util.logging.Logger;
 
 import com.google.common.base.Preconditions;
 
 public class InsistenceLayerDataSource implements DataSource {
-	
-	private static ConnectionWrapper connectionWrapper;
-	
-	private ConnectionBeanDigester connectionBeanDigester = new ConnectionBeanDigester();
-	private ConnectionBean connectionBean;
-	
-	public InsistenceLayerDataSource() { 
-		// if used, the config will be loaded from XML.
+
+	private static InsistenceLayerDataSource defaultInstance;
+
+	private final DataSource delegate;
+	private final ConnectionWrapper connectionWrapper;
+
+	public InsistenceLayerDataSource(DataSource delegate) {
+		Preconditions.checkNotNull(delegate, "DataSource is null");
+		this.delegate = delegate;
+		this.connectionWrapper = new ConnectionWrapper(delegate);
 	}
-	
-	public InsistenceLayerDataSource(ConnectionBean connectionBean) {
-		Preconditions.checkNotNull(connectionBean, "ConnectionBean is null");
-		this.connectionBean = connectionBean;
+
+	public static void configure(DataSource dataSource) {
+		defaultInstance = new InsistenceLayerDataSource(dataSource);
+	}
+
+	public static InsistenceLayerDataSource getDefault() {
+		if (defaultInstance == null) {
+			throw new IllegalStateException(
+				"InsistenceLayerDataSource not configured. Call InsistenceLayerDataSource.configure(dataSource) first.");
+		}
+		return defaultInstance;
+	}
+
+	public static void reset() {
+		defaultInstance = null;
+	}
+
+	public ConnectionWrapper getConnectionWrapper() {
+		return connectionWrapper;
 	}
 
 	@Override
-	public PrintWriter getLogWriter() throws SQLException {
-		return DriverManager.getLogWriter();
-	}
-
-	@Override
-	public void setLogWriter(PrintWriter out) throws SQLException {
-		DriverManager.setLogWriter(out);
-	}
-
-	@Override
-	public void setLoginTimeout(int seconds) throws SQLException {
-		DriverManager.setLoginTimeout(seconds);
-	}
-
-	@Override
-	public int getLoginTimeout() throws SQLException {
-		return DriverManager.getLoginTimeout();
-	}
-
-	@Override
-	public <T> T unwrap(Class<T> iface) throws SQLException {
-		throw new UnsupportedOperationException("unwrap");
-	}
-
-	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		throw new UnsupportedOperationException("isWrapperFor");
+	public Connection getConnection() throws SQLException {
+		return connectionWrapper.getConnection();
 	}
 
 	@Override
 	public Connection getConnection(String username, String password) throws SQLException {
 		return getConnection();
 	}
-	
+
 	@Override
-	public Connection getConnection() throws SQLException {
-		if (connectionBean == null) initializeConnectionBeanByDefaultXML();
-		return tryGetConnectionOfServer();
-	}
-	
-	private Connection tryGetConnectionOfServer() throws SQLException {
-		//if (InsistenceLayerServer.isAvailable()) return getServerConnection();
-		return getConnectionWrapper();
+	public PrintWriter getLogWriter() throws SQLException {
+		return delegate.getLogWriter();
 	}
 
-	private Connection getServerConnection() {
-		try {
-			InsistenceLayerServer.registerConnectionBean(connectionBean);
-			return InsistenceLayerServer.getConnection();
-		} catch (Exception e) {
-			throw new InsistenceLayerException(e);
-		}
+	@Override
+	public void setLogWriter(PrintWriter out) throws SQLException {
+		delegate.setLogWriter(out);
 	}
 
-	private void initializeConnectionBeanByDefaultXML() {
-		connectionBean = connectionBeanDigester.digesterDefault();
+	@Override
+	public void setLoginTimeout(int seconds) throws SQLException {
+		delegate.setLoginTimeout(seconds);
 	}
-	
-	private Connection getConnectionWrapper() throws SQLException {
-		if (connectionWrapper == null) connectionWrapper = new ConnectionWrapper(newConnection());
-		return connectionWrapper;
+
+	@Override
+	public int getLoginTimeout() throws SQLException {
+		return delegate.getLoginTimeout();
 	}
-	
-	private Connection newConnection() throws SQLException {
-		return DriverManager.getConnection(connectionBean.getUrl(), connectionBean.getUsername(), connectionBean.getPassword());
+
+	@Override
+	public <T> T unwrap(Class<T> iface) throws SQLException {
+		return delegate.unwrap(iface);
+	}
+
+	@Override
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		return delegate.isWrapperFor(iface);
 	}
 
 	@Override

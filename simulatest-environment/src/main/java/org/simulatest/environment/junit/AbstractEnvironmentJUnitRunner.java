@@ -83,6 +83,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 
 	@Override
 	public void run(final RunNotifier notifier) {
+		initializeTestClasses();
 		environmentRunner = new EnvironmentDatabaseRunner(getEnvironmentFactory(), environmentTree);
 
 		environmentRunner.addListener(new EnvironmentRunnerNullable() {
@@ -107,5 +108,15 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 	public EnvironmentDatabaseRunner getEnvironmentRunner() {
 		return environmentRunner;
 	}
-	
+
+	private void initializeTestClasses() {
+		for (Class<?> testClass : environmentGrouperTests.getTestClasses()) {
+			try {
+				Class.forName(testClass.getName(), true, testClass.getClassLoader());
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
 }

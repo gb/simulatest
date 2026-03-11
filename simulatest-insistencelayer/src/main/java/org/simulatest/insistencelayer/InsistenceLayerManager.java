@@ -14,7 +14,7 @@ public class InsistenceLayerManager {
 
 	private static final String PREFIX_SAVEPOINT = "LAYER";
 	private static final Logger logger = Logger.getLogger(InsistenceLayerManager.class);
-	
+
 	private ConnectionWrapper connection;
 	private Stack<Savepoint> savepoints;
 
@@ -23,7 +23,7 @@ public class InsistenceLayerManager {
 		this.connection = connection;
 		this.savepoints = new Stack<Savepoint>();
 	}
-	
+
 	public int getCurrentLevel() {
 		return savepoints.size();
 	}
@@ -31,17 +31,17 @@ public class InsistenceLayerManager {
 	public void increaseLevel() {
 		setup();
 		createSavepoint();
-		
+
 		logger.info("[InsistenceLayer] Level increased to " + getCurrentLevel());
 	}
-	
+
 	private void setup() {
 		if (isDisabled()) connection.wrap();
 	}
 
-	private void createSavepoint() { 
+	private void createSavepoint() {
 		String savePointName = PREFIX_SAVEPOINT + (getCurrentLevel() + 1);
-		
+
 		try {
 			savepoints.add(connection.setSavepoint(savePointName));
 		} catch (SQLException exception) {
@@ -49,14 +49,14 @@ public class InsistenceLayerManager {
 			throw new InsistenceLayerException(message, exception);
 		}
 	}
-	
+
 	public void resetCurrentLevel() {
 		if (isDisabled()) return;
-		
+
 		rollbackSavepoint(savepoints.peek());
 		logger.info("[InsistenceLayer] Cleaned current level: " + getCurrentLevel());
 	}
-	
+
 	public void decreaseLevel() {
 		if (isDisabled()) {
 			throw new IllegalStateException("Cannot decrease level: already at level 0");
@@ -64,14 +64,14 @@ public class InsistenceLayerManager {
 
 		rollbackSavepoint(savepoints.pop());
 		tearDown();
-		
+
 		logger.info("[InsistenceLayer] Level decreased to " + getCurrentLevel());
 	}
-	
+
 	private void tearDown() {
 		if (isDisabled()) connection.unwrap();
 	}
-	
+
 	public void decreaseAllLevels() {
 		setLevelTo(0);
 	}
@@ -79,7 +79,7 @@ public class InsistenceLayerManager {
 	public void setLevelTo(int level) {
 		Preconditions.checkArgument(level >= 0, "Level cannot be negative");
 		logger.info("[InsistenceLayer] Setting level " + getCurrentLevel() + " to " + level);
-		
+
 		if (getCurrentLevel() > level) decreaseToLevel(level);
 		else if (getCurrentLevel() < level ) increaseToLevel(level);
 	}
@@ -92,7 +92,7 @@ public class InsistenceLayerManager {
 		while (getCurrentLevel() - 1 > level) dropCurrentLevel();
 		if (getCurrentLevel() == level + 1) decreaseLevel();
 	}
-	
+
 	private void dropCurrentLevel() {
 		try {
 			connection.releaseSavepoint(savepoints.pop());
@@ -100,7 +100,7 @@ public class InsistenceLayerManager {
 			throw new InsistenceLayerException("Error dropping the current level", exception);
 		}
 	}
-	
+
 	private void rollbackSavepoint(Savepoint savepoint) {
 		try {
 			connection.rollback(savepoint);
@@ -108,9 +108,9 @@ public class InsistenceLayerManager {
 			throw new InsistenceLayerException("Error rollbacking the savepoint", exception);
 		}
 	}
-	
+
 	private boolean isDisabled() {
 		return getCurrentLevel() == 0;
 	}
-	
+
 }

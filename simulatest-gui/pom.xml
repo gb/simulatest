@@ -37,6 +37,10 @@
 			<artifactId>simulatest-environment</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-insistencelayer-server</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
 		</dependency>

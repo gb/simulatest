@@ -7,19 +7,20 @@ import org.picocontainer.Startable;
 import org.picocontainer.behaviors.Caching;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
-import org.simulatest.insistencelayer.connection.ConnectionFactory;
+import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 public class App implements Startable {
-	
+
 	private final SimulatestHub hub;
 
 	public App(SimulatestHub hub) {
-		this.hub = hub;		
+		this.hub = hub;
 	}
-	
+
 	public static void main(String[] args) throws SQLException {
-		InsistenceLayerManager insistenceLayer = 
-				InsistenceLayerManagerFactory.build(ConnectionFactory.getConnection());
+		InsistenceLayerManager insistenceLayer =
+				InsistenceLayerManagerFactory.build(
+					InsistenceLayerDataSource.getDefault().getConnectionWrapper());
 		
 		DefaultPicoContainer container = new DefaultPicoContainer(new Caching());	
 		

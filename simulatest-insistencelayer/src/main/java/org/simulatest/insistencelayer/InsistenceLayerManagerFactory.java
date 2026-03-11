@@ -1,17 +1,16 @@
 package org.simulatest.insistencelayer;
 
-import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 
 public class InsistenceLayerManagerFactory {
-	
-	private static Map<Connection, InsistenceLayerManager> cache;
-	
+
+	private static Map<ConnectionWrapper, InsistenceLayerManager> cache;
+
 	static {
-		cache = new HashMap<Connection, InsistenceLayerManager>();
+		cache = new HashMap<ConnectionWrapper, InsistenceLayerManager>();
 	}
 	
 	public static InsistenceLayerManager build(ConnectionWrapper connection) {

@@ -14,12 +14,10 @@
 	</properties>
 
 	<modules>
-		<module>simulatest-connection</module>
 		<module>simulatest-insistencelayer</module>
 		<module>simulatest-insistencelayer-server</module>
 		<module>simulatest-environment</module>
 		<module>simulatest-spring</module>
-		<!-- <module>simulatest-hibernate</module> -->
 		<module>simulatest-gui</module>
 		<!-- <module>simulatest-jee5</module> -->
 	</modules>
@@ -98,11 +96,6 @@
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-beans</artifactId>
 				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.simulatest</groupId>
-				<artifactId>simulatest-connection</artifactId>
-				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.simulatest</groupId>

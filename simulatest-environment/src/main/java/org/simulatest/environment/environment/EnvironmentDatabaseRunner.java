@@ -1,26 +1,29 @@
 package org.simulatest.environment.environment;
 
-import java.sql.SQLException;
-
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerInsistence;
-import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
-import org.simulatest.environment.tree.Tree;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
-import org.simulatest.insistencelayer.connection.ConnectionFactory;
+import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.environment.tree.Tree;
 
 public class EnvironmentDatabaseRunner extends EnvironmentRunner {
-	
+
 	private InsistenceLayerManager insistenceLayer;
+	private boolean initialized;
 
 	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
 		super(factory, environmentTree);
-		this.insistenceLayer = getInsistenceLayerManager();
-		this.addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
 	}
-	
+
+	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree,
+			InsistenceLayerManager insistenceLayer) {
+		super(factory, environmentTree);
+		this.insistenceLayer = insistenceLayer;
+	}
+
 	@Override
 	public void run() {
+		ensureInitialized();
 		insistenceLayer.increaseLevel();
 		try {
 			super.run();
@@ -30,18 +33,20 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 			throw exception;
 		}
 	}
-	
+
 	public InsistenceLayerManager insistenceLayer() {
 		return insistenceLayer;
 	}
-	
-	private InsistenceLayerManager getInsistenceLayerManager() {
-		try {
-			return InsistenceLayerManagerFactory.build(ConnectionFactory.getConnection());
-		} catch (SQLException exception) {
-			String message = "Error trying get the instance of InsistenceLayer";
-			throw new EnvironmentInstantiationException(message, exception);
+
+	private void ensureInitialized() {
+		if (initialized) return;
+		if (insistenceLayer == null) {
+			insistenceLayer = InsistenceLayerManagerFactory.build(
+				InsistenceLayerDataSource.getDefault().getConnectionWrapper()
+			);
 		}
+		this.addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
+		initialized = true;
 	}
-	
+
 }

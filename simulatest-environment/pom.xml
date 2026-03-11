@@ -47,10 +47,6 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.simulatest</groupId>
-			<artifactId>simulatest-connection</artifactId>
-		</dependency>
 	</dependencies>
 
 </project>
