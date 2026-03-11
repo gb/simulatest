@@ -37,4 +37,9 @@ public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerLis
 		insistenceLayerManager.resetCurrentLevel();
 	}
 
+	@Override
+	public ListenerPhase getPhase() {
+		return ListenerPhase.INFRASTRUCTURE;
+	}
+
 }

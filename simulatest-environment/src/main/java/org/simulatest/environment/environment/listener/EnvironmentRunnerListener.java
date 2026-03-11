@@ -12,4 +12,8 @@ public interface EnvironmentRunnerListener {
 
 	void afterSiblingCleanup(EnvironmentDefinition definition);
 
+	default ListenerPhase getPhase() {
+		return ListenerPhase.APPLICATION;
+	}
+
 }

@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 import static org.simulatest.environment.environment.EnvironmentDefinition.*;
@@ -14,8 +16,10 @@ import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
+import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerLog;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerNullable;
+import org.simulatest.environment.environment.listener.ListenerPhase;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;
@@ -111,6 +115,41 @@ public class EnvironmentRunnerTest {
 
 		assertTrue("second listener should have received afterRun despite first listener throwing",
 				secondListener.getLogs().contains("[BigBangEnvironment] afterRun"));
+	}
+
+	@Test
+	public void infrastructureListenersShouldFireBeforeApplicationListeners() {
+		builder.add(bigBang());
+
+		List<String> firingOrder = new ArrayList<>();
+
+		EnvironmentRunnerListener appListener = new EnvironmentRunnerNullable() {
+			@Override
+			public void afterRun(EnvironmentDefinition definition) {
+				firingOrder.add("APPLICATION");
+			}
+		};
+
+		EnvironmentRunnerListener infraListener = new EnvironmentRunnerNullable() {
+			@Override
+			public void afterRun(EnvironmentDefinition definition) {
+				firingOrder.add("INFRASTRUCTURE");
+			}
+
+			@Override
+			public ListenerPhase getPhase() {
+				return ListenerPhase.INFRASTRUCTURE;
+			}
+		};
+
+		// Add APPLICATION first, then INFRASTRUCTURE — should still fire infra first
+		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
+		runner.addListener(appListener);
+		runner.addListener(infraListener);
+		runner.run();
+
+		assertEquals("INFRASTRUCTURE", firingOrder.get(0));
+		assertEquals("APPLICATION", firingOrder.get(1));
 	}
 
 	@Test

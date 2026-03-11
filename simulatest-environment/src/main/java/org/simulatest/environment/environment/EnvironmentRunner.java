@@ -28,7 +28,13 @@ public class EnvironmentRunner {
 	}
 
 	public void addListener(EnvironmentRunnerListener listener) {
-		listeners.add(listener);
+		int insertIndex = 0;
+		for (int i = 0; i < listeners.size(); i++) {
+			if (listeners.get(i).getPhase().ordinal() <= listener.getPhase().ordinal()) {
+				insertIndex = i + 1;
+			}
+		}
+		listeners.add(insertIndex, listener);
 	}
 	
 	public void removeListener(EnvironmentRunnerListener listener) {
