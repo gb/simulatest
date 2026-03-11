@@ -1,5 +1,6 @@
 package org.simulatest.gui;
 
+import java.io.Serial;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -10,13 +11,15 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.apache.log4j.Logger;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class QueryTableModel extends AbstractTableModel {
 
+	@Serial
 	private static final long serialVersionUID = 2437918897585160122L;
-	private static Logger logger = Logger.getLogger(QueryTableModel.class);
+	private static final Logger logger = LoggerFactory.getLogger(QueryTableModel.class);
 
 	private Vector<Object> cache;
 	private int colCount;

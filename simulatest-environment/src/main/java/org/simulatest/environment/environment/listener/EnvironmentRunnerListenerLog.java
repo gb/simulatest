@@ -4,17 +4,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.EnvironmentDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EnvironmentRunnerListenerLog implements EnvironmentRunnerListener {
 	
-	private Logger logger = Logger.getLogger(EnvironmentRunnerListenerLog.class);
+	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunnerListenerLog.class);
 	
 	private final List<String> logs;
 	
 	public EnvironmentRunnerListenerLog() {
-		logs = new ArrayList<String>();
+		logs = new ArrayList<>();
 	}
 	
 	@Override

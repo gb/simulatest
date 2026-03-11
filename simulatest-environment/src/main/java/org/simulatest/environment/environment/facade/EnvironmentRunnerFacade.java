@@ -1,5 +1,6 @@
 package org.simulatest.environment.environment.facade;
 
+import java.util.Objects;
 import java.util.ServiceLoader;
 
 import org.simulatest.environment.environment.Environment;
@@ -8,8 +9,6 @@ import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.infra.exception.EnvironmentGeneralException;
-
-import com.google.common.base.Preconditions;
 
 public class EnvironmentRunnerFacade {
 
@@ -23,7 +22,7 @@ public class EnvironmentRunnerFacade {
 	}
 	
 	public EnvironmentRunnerFacade(EnvironmentFactory environmentFactory) {
-		Preconditions.checkNotNull(environmentFactory);
+		Objects.requireNonNull(environmentFactory);
 		this.environmentFactory = environmentFactory;
 	}
 

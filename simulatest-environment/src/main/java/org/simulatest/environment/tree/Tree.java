@@ -5,19 +5,19 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import com.google.common.base.Preconditions;
 
 public class Tree<T> implements Iterable<Node<T>> {
 	
-	private Map<T, Node<T>> nodesByValue;
-	private Node<T> rootNode;
+	private final Map<T, Node<T>> nodesByValue;
+	private final Node<T> rootNode;
 
-	public Tree(T rootValue) { 
-		Preconditions.checkNotNull(rootValue, "The root can't be a null value");
+	public Tree(T rootValue) {
+		Objects.requireNonNull(rootValue, "The root can't be a null value");
 		
-		nodesByValue = new HashMap<T, Node<T>>();
-		rootNode = new Node<T>(rootValue);
+		nodesByValue = new HashMap<>();
+		rootNode = new Node<>(rootValue);
 		nodesByValue.put(rootValue, rootNode);
 	}
 	
@@ -36,8 +36,8 @@ public class Tree<T> implements Iterable<Node<T>> {
 	}
 
 	public T addChild(T parent, T child) {
-		Preconditions.checkArgument(contains(parent), "The parent \"%s\" doesn't exists in Tree", parent);
-		Preconditions.checkArgument(!contains(child), "The value \"%s\" already exists in Tree", child);
+		if (!contains(parent)) throw new IllegalArgumentException(String.format("The parent \"%s\" doesn't exists in Tree", parent));
+		if (contains(child)) throw new IllegalArgumentException(String.format("The value \"%s\" already exists in Tree", child));
 
 		Node<T> parentNode = getNode(parent);
 		Node<T> childNode = new Node<T>(child);
@@ -49,7 +49,7 @@ public class Tree<T> implements Iterable<Node<T>> {
 	}
 	
 	public List<T> getChildren(T parent) {
-		Preconditions.checkArgument(contains(parent), "The parent \"%s\" doesn't exists in Tree", parent);
+		if (!contains(parent)) throw new IllegalArgumentException(String.format("The parent \"%s\" doesn't exists in Tree", parent));
 		
 		List<T> children = new ArrayList<T>();
 		for (Node<T> childNode : getNode(parent).getChildren()) children.add(childNode.getValue());		

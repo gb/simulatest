@@ -1,8 +1,9 @@
 package org.simulatest.environment.environment;
 
+import java.util.Objects;
+
 import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironmentParent;
 
-import com.google.common.base.Preconditions;
 
 public class EnvironmentDefinition {
 
@@ -10,7 +11,7 @@ public class EnvironmentDefinition {
 	private final Class<? extends Environment> parentClass;
 	
 	public static EnvironmentDefinition create(Class<? extends Environment> environmentClass) {
-		Preconditions.checkNotNull(environmentClass, "Null Argument! Don't you want create a Definition?");
+		Objects.requireNonNull(environmentClass, "Null Argument! Don't you want create a Definition?");
 		return new EnvironmentDefinition(environmentClass);
 	}
 

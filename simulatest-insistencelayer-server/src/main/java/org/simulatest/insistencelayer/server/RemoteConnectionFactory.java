@@ -1,18 +1,20 @@
 package org.simulatest.insistencelayer.server;
 
+import java.io.Serial;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Objects;
 
 import org.simulatest.insistencelayer.connection.ConnectionBean;
 import org.simulatest.insistencelayer.server.infra.InsistenceLayerServerException;
 
-import com.google.common.base.Preconditions;
 
 public class RemoteConnectionFactory extends UnicastRemoteObject implements RMIConnectionFactory {
 
+	@Serial
 	private static final long serialVersionUID = -5926268020903095808L;
 	
 	private ConnectionBean connectionBean;
@@ -28,7 +30,7 @@ public class RemoteConnectionFactory extends UnicastRemoteObject implements RMIC
 	}
 
 	private void initializeConnection() {
-		Preconditions.checkNotNull(connectionBean, "ConnectionBean should be registered before getConnection");
+		Objects.requireNonNull(connectionBean, "ConnectionBean should be registered before getConnection");
 		
 		try {
 			Class.forName("org.objectweb.rmijdbc.Driver").getDeclaredConstructor().newInstance();

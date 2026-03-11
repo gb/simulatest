@@ -1,14 +1,15 @@
 package org.simulatest.environment.environment.listener;
 
-import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerListener {
 	
-	private Logger logger = Logger.getLogger(EnvironmentRunnerListenerInsistence.class);
+	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunnerListenerInsistence.class);
 
-	private InsistenceLayerManager insistenceLayerManager;
+	private final InsistenceLayerManager insistenceLayerManager;
 
 	public EnvironmentRunnerListenerInsistence(InsistenceLayerManager insistenceLayerManager) {
 		this.insistenceLayerManager = insistenceLayerManager;

@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.junit.runners.Suite.SuiteClasses;
 
-import com.google.common.base.Preconditions;
 
 public class TestCaseRaker {
 	
@@ -21,7 +20,7 @@ public class TestCaseRaker {
 	}
 		
 	private void digesterSuite(Class<?> suite) {
-		Preconditions.checkArgument(isSuiteCase(suite), "TestCaseRaker demands a SuiteTest Class");
+		if (!isSuiteCase(suite)) throw new IllegalArgumentException("TestCaseRaker demands a SuiteTest Class");
 		for (Class<?> clazz : getSuiteClasses(suite)) addTest(clazz);
 	}
 

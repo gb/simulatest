@@ -3,18 +3,18 @@ package org.simulatest.environment.environment;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 import org.simulatest.environment.tree.Tree;
 
-import com.google.common.base.Preconditions;
 
 public class EnvironmentTreeBuilder  {
 	
 	private Tree<EnvironmentDefinition> tree;
 
 	public EnvironmentTreeBuilder() {
-		this.tree = new Tree<EnvironmentDefinition>(EnvironmentDefinition.bigBang());
+		this.tree = new Tree<>(EnvironmentDefinition.bigBang());
 	}
 	
 	public EnvironmentTreeBuilder(Collection<EnvironmentDefinition> environments) {
@@ -23,7 +23,7 @@ public class EnvironmentTreeBuilder  {
 	}
 
 	public void add(EnvironmentDefinition definition) {
-		Preconditions.checkNotNull(definition);
+		Objects.requireNonNull(definition);
 		addChild(definition, new LinkedList<EnvironmentDefinition>());
 	}
 	

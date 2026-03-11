@@ -2,26 +2,27 @@ package org.simulatest.insistencelayer;
 
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.Objects;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.infra.InsistenceLayerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
 
 public class InsistenceLayerManager {
 
 	private static final String PREFIX_SAVEPOINT = "LAYER";
-	private static final Logger logger = Logger.getLogger(InsistenceLayerManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerManager.class);
 
-	private ConnectionWrapper connection;
-	private Stack<Savepoint> savepoints;
+	private final ConnectionWrapper connection;
+	private final Stack<Savepoint> savepoints;
 
 	protected InsistenceLayerManager(ConnectionWrapper connection) {
-		Preconditions.checkNotNull(connection, "Connection is null");
+		Objects.requireNonNull(connection, "Connection is null");
 		this.connection = connection;
-		this.savepoints = new Stack<Savepoint>();
+		this.savepoints = new Stack<>();
 	}
 
 	public int getCurrentLevel() {
@@ -77,7 +78,7 @@ public class InsistenceLayerManager {
 	}
 
 	public void setLevelTo(int level) {
-		Preconditions.checkArgument(level >= 0, "Level cannot be negative");
+		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
 		logger.info("[InsistenceLayer] Setting level " + getCurrentLevel() + " to " + level);
 
 		if (getCurrentLevel() > level) decreaseToLevel(level);

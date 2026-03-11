@@ -5,16 +5,17 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.sql.Connection;
 
-import org.apache.log4j.Logger;
 import org.objectweb.rmijdbc.RJDriverServer;
 import org.objectweb.rmijdbc.RMIRepository;
 import org.simulatest.insistencelayer.connection.ConnectionBean;
 import org.simulatest.insistencelayer.server.infra.InsistenceLayerServerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InsistenceLayerServer {
 
 	private static final int PORT = 1099;
-	private static final Logger logger = Logger.getLogger(RMIRepository.class);
+	private static final Logger logger = LoggerFactory.getLogger(RMIRepository.class);
 
 	public static void start() {
 		logger.info("Starting InsistenceLayerServer!");

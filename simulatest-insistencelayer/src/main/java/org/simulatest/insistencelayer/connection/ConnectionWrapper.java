@@ -1,5 +1,8 @@
 package org.simulatest.insistencelayer.connection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -7,15 +10,14 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.Objects;
 
 import javax.sql.DataSource;
-import org.apache.log4j.Logger;
 
-import com.google.common.base.Preconditions;
 
 public class ConnectionWrapper {
 
-	private static final Logger logger = Logger.getLogger(ConnectionWrapper.class);
+	private static final Logger logger = LoggerFactory.getLogger(ConnectionWrapper.class);
 
 	private static final String METHOD_COMMIT = "commit";
 	private static final String METHOD_ROLLBACK = "rollback";
@@ -31,17 +33,19 @@ public class ConnectionWrapper {
 	private Savepoint lastCommitSavepoint;
 
 	public ConnectionWrapper(DataSource source) {
-		Preconditions.checkNotNull(source, "DataSource is null");
+		Objects.requireNonNull(source, "DataSource is null");
+
 		try {
 			this.realConnection = source.getConnection();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
+
 		this.proxy = createProxy();
 	}
 
 	public ConnectionWrapper(Connection realConnection) {
-		Preconditions.checkNotNull(realConnection, "Connection is null");
+		Objects.requireNonNull(realConnection, "Connection is null");
 		this.realConnection = realConnection;
 		this.proxy = createProxy();
 	}

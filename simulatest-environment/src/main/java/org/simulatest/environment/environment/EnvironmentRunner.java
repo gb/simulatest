@@ -3,19 +3,20 @@ package org.simulatest.environment.environment;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EnvironmentRunner {
 	
-	private static Logger logger = Logger.getLogger(EnvironmentRunner.class);
+	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunner.class);
 	
-	private EnvironmentFactory factory;
-	private Tree<EnvironmentDefinition> tree;
-	private List<EnvironmentRunnerListener> listeners;
+	private final EnvironmentFactory factory;
+	private final Tree<EnvironmentDefinition> tree;
+	private final List<EnvironmentRunnerListener> listeners;
 
 	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
 		this.factory = factory;

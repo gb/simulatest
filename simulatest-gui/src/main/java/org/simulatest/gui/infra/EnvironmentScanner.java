@@ -5,15 +5,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.simulatest.environment.environment.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
 public class EnvironmentScanner extends ClassPathScanningCandidateComponentProvider {
 
-	private final Logger logger = Logger.getLogger(EnvironmentScanner.class);
+	private static final Logger logger = LoggerFactory.getLogger(EnvironmentScanner.class);
 	private final Set<Class<?>> environments = new HashSet<>();
 
 	public EnvironmentScanner() {
@@ -34,7 +35,7 @@ public class EnvironmentScanner extends ClassPathScanningCandidateComponentProvi
 		try {
 			environments.add(Class.forName(candidate.getBeanClassName()));
 		} catch (ClassNotFoundException exception) {
-			logger.error(exception);
+			logger.error("Error adding environment", exception);
 		}
 	}
 

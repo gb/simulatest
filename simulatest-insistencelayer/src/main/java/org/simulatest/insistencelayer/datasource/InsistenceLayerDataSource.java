@@ -4,13 +4,12 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
-
-import com.google.common.base.Preconditions;
 
 public class InsistenceLayerDataSource implements DataSource {
 
@@ -20,7 +19,7 @@ public class InsistenceLayerDataSource implements DataSource {
 	private final ConnectionWrapper connectionWrapper;
 
 	public InsistenceLayerDataSource(DataSource delegate) {
-		Preconditions.checkNotNull(delegate, "DataSource is null");
+		Objects.requireNonNull(delegate, "DataSource is null");
 		this.delegate = delegate;
 		this.connectionWrapper = new ConnectionWrapper(delegate);
 	}

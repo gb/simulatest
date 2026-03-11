@@ -30,7 +30,7 @@ public class EnvironmentReflectionFactoryTest {
 			environmentReflection.create(create(PrivateConstructorEnvironment.class));
 			fail("should throw an EnvironmentInstantiationException");
 		} catch (EnvironmentInstantiationException exception) {
-			String expectedMessage = "Error in instanciation of environment: PrivateConstructorEnvironment";
+			String expectedMessage = "Error in instantiation of environment: PrivateConstructorEnvironment";
 			assertEquals(expectedMessage, exception.getMessage());
 		}
 	}
