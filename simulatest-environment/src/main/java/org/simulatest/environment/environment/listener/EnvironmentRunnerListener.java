@@ -10,4 +10,6 @@ public interface EnvironmentRunnerListener {
 
 	void afterChildrenRun(EnvironmentDefinition definition);
 
+	void afterSiblingCleanup(EnvironmentDefinition definition);
+
 }

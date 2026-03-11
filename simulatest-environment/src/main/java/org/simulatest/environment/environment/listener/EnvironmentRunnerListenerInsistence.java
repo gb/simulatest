@@ -29,8 +29,11 @@ public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerLis
 	public void afterChildrenRun(EnvironmentDefinition definition) {
 		logger.debug("[InsistenceListener] afterChildrenRun >> " + definition);
 		insistenceLayerManager.decreaseLevel();
-		
-		// TODO - Only execute the next line, if the current environment has brothers 
+	}
+
+	@Override
+	public void afterSiblingCleanup(EnvironmentDefinition definition) {
+		logger.debug("[InsistenceListener] afterSiblingCleanup >> " + definition);
 		insistenceLayerManager.resetCurrentLevel();
 	}
 

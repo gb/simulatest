@@ -46,6 +46,10 @@ public class EnvironmentRunner {
 	private void fireAfterChildrenRun(EnvironmentDefinition definition) {
 		for (EnvironmentRunnerListener listener : listeners) listener.afterChildrenRun(definition);
 	}
+
+	private void fireAfterSiblingCleanup(EnvironmentDefinition definition) {
+		for (EnvironmentRunnerListener listener : listeners) listener.afterSiblingCleanup(definition);
+	}
 	
 	public void run() {
 		for (Node<EnvironmentDefinition> node : tree) run(node);
@@ -60,6 +64,7 @@ public class EnvironmentRunner {
 		if (!node.getChildren().isEmpty()) return;
 		fireAfterChildrenRun(node.getValue());
 		if (node.isLastChild()) fireAfterChildrenRunForParent(node.getParent());
+		else if (node.hasParent()) fireAfterSiblingCleanup(node.getParentValue());
 	}
 
 	private void runEnvironment(EnvironmentDefinition definition) {
@@ -81,7 +86,9 @@ public class EnvironmentRunner {
 	
 	private void fireAfterChildrenRunForParent(Node<EnvironmentDefinition> parent) {
 		fireAfterChildrenRun(parent.getValue());
+		if (!parent.hasParent()) return;
 		if (parent.isLastChild()) fireAfterChildrenRunForParent(parent.getParent());
+		else fireAfterSiblingCleanup(parent.getParentValue());
 	}
 
 }

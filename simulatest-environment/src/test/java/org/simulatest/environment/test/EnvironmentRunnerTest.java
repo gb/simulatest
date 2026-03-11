@@ -66,6 +66,7 @@ public class EnvironmentRunnerTest {
 								"[ColaboradorEnvironment] afterRun",
 								"[ColaboradorEnvironment] afterChildrenRun",
 							"[PessoaFisicaEnvironment] afterChildrenRun",
+							"[PessoaEnvironment] afterSiblingCleanup",
 							"[PessoaJuridicaEnvironment] beforeRun",
 							"[PessoaJuridicaEnvironment] afterRun",
 								"[EmpresaEnvironment] beforeRun",

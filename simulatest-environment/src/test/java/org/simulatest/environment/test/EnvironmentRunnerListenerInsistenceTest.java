@@ -48,9 +48,18 @@ public class EnvironmentRunnerListenerInsistenceTest {
 	@Test
 	public void testCallsToListenerInsistence() throws SQLException {
 		listenerWithMultiplesEnvironmentTest();
-		
+
 		verify(insistenceLayerManager, times(8)).increaseLevel();
 		verify(insistenceLayerManager, times(8)).decreaseLevel();
+	}
+
+	@Test
+	public void resetCurrentLevelShouldOnlyBeCalledWhenSiblingsExist() throws SQLException {
+		listenerWithMultiplesEnvironmentTest();
+
+		// Only PessoaFisica/PessoaJuridica are siblings, so resetCurrentLevel
+		// should fire exactly once (to clean PessoaEnvironment's level between siblings)
+		verify(insistenceLayerManager, times(1)).resetCurrentLevel();
 	}
 
 }

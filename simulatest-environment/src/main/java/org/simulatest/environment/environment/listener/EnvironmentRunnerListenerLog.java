@@ -34,6 +34,12 @@ public class EnvironmentRunnerListenerLog implements EnvironmentRunnerListener {
 		logger.debug("[LogListener] afterChildrenRun >> " + definition);
 		logs.add(String.format("[%s] afterChildrenRun", definition));
 	}
+
+	@Override
+	public void afterSiblingCleanup(EnvironmentDefinition definition) {
+		logger.debug("[LogListener] afterSiblingCleanup >> " + definition);
+		logs.add(String.format("[%s] afterSiblingCleanup", definition));
+	}
 	
 	public List<String> getLogs() {
 		return Collections.unmodifiableList(logs);
