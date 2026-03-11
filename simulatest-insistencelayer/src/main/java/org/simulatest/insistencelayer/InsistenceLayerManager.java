@@ -58,8 +58,10 @@ public class InsistenceLayerManager {
 	}
 	
 	public void decreaseLevel() {
-		if (isDisabled()) return;
-		
+		if (isDisabled()) {
+			throw new IllegalStateException("Cannot decrease level: already at level 0");
+		}
+
 		rollbackSavepoint(savepoints.pop());
 		tearDown();
 		

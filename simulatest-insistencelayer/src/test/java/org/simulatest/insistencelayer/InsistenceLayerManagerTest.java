@@ -136,13 +136,11 @@ public class InsistenceLayerManagerTest {
 		verify(spyConnectionMock, atMost(1)).rollback((Savepoint) any());
 	}
 	
-	@Test
-	public void shouldNotDecreaseLevelLesserThanZero() {
+	@Test(expected = IllegalStateException.class)
+	public void shouldThrowWhenDecreasingLevelAtZero() {
 		assertEquals(0, insistenceLayerManager.getCurrentLevel());
-		
+
 		insistenceLayerManager.decreaseLevel();
-		
-		assertEquals(0, insistenceLayerManager.getCurrentLevel());
 	}
-	
+
 }
