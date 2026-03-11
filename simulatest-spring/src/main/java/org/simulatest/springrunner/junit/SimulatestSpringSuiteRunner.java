@@ -12,7 +12,7 @@ public class SimulatestSpringSuiteRunner extends EnvironmentJUnitSuite {
 
 	public SimulatestSpringSuiteRunner(Class<?> suiteClass, RunnerBuilder builder) throws InitializationError {
 		super(suiteClass, builder);
-		SpringContext.initializeSpring();
+		SpringContext.initializeFromTestClass(suiteClass);
 	}
 
 	@Override

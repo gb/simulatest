@@ -12,7 +12,7 @@ public class SimulatestSpringRunner extends EnvironmentJUnitRunner {
 	
 	public SimulatestSpringRunner(Class<?> clazz) throws InitializationError {
 		super(clazz);
-		SpringContext.initializeSpring();
+		SpringContext.initializeFromTestClass(clazz);
 	}
 	
 	@Override
