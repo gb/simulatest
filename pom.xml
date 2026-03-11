@@ -19,7 +19,7 @@
 		<module>simulatest-environment</module>
 		<module>simulatest-spring</module>
 		<module>simulatest-gui</module>
-		<!-- <module>simulatest-jee5</module> -->
+		<module>simulatest-jee</module>
 	</modules>
 
 	<developers>
