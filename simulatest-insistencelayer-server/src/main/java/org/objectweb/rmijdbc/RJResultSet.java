@@ -2020,4 +2020,14 @@ public class RJResultSet implements java.sql.ResultSet, java.io.Serializable {
 
 	}
 
+	// JDBC 4.1 methods
+	@Override
+	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+		throw new SQLFeatureNotSupportedException("getObject(int, Class<T>)");
+	}
+
+	@Override
+	public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+		throw new SQLFeatureNotSupportedException("getObject(String, Class<T>)");
+	}
 };

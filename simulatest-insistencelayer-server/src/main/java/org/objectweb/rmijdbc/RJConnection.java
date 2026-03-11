@@ -676,4 +676,29 @@ public class RJConnection implements java.sql.Connection, java.io.Serializable {
 		return null;
 	}
 
+	// JDBC 4.1 methods
+	@Override
+	public void setSchema(String schema) throws SQLException {
+		throw new SQLFeatureNotSupportedException("setSchema");
+	}
+
+	@Override
+	public String getSchema() throws SQLException {
+		throw new SQLFeatureNotSupportedException("getSchema");
+	}
+
+	@Override
+	public void abort(java.util.concurrent.Executor executor) throws SQLException {
+		throw new SQLFeatureNotSupportedException("abort");
+	}
+
+	@Override
+	public void setNetworkTimeout(java.util.concurrent.Executor executor, int milliseconds) throws SQLException {
+		throw new SQLFeatureNotSupportedException("setNetworkTimeout");
+	}
+
+	@Override
+	public int getNetworkTimeout() throws SQLException {
+		throw new SQLFeatureNotSupportedException("getNetworkTimeout");
+	}
 };

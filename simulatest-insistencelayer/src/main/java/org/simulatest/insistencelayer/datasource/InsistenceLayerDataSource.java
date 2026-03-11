@@ -13,6 +13,9 @@ import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.infra.InsistenceLayerException;
 import org.simulatest.insistencelayer.server.InsistenceLayerServer;
 
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.logging.Logger;
+
 import com.google.common.base.Preconditions;
 
 public class InsistenceLayerDataSource implements DataSource {
@@ -97,6 +100,11 @@ public class InsistenceLayerDataSource implements DataSource {
 	
 	private Connection newConnection() throws SQLException {
 		return DriverManager.getConnection(connectionBean.getUrl(), connectionBean.getUsername(), connectionBean.getPassword());
+	}
+
+	@Override
+	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+		throw new SQLFeatureNotSupportedException();
 	}
 
 }

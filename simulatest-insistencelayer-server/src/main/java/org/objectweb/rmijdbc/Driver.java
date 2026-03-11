@@ -321,4 +321,9 @@ public class Driver implements java.sql.Driver, Serializable {
 		return true;
 	}
 
+	// JDBC 4.1 methods
+	@Override
+	public java.util.logging.Logger getParentLogger() throws java.sql.SQLFeatureNotSupportedException {
+		throw new java.sql.SQLFeatureNotSupportedException("getParentLogger");
+	}
 };

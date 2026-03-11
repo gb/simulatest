@@ -1105,7 +1105,17 @@ public class RJCallableStatement extends RJPreparedStatement implements
 	public void setNClob(String parameterName, Reader reader)
 			throws SQLException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
+	// JDBC 4.1 methods
+	@Override
+	public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
+		throw new SQLFeatureNotSupportedException("getObject(int, Class<T>)");
+	}
+
+	@Override
+	public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
+		throw new SQLFeatureNotSupportedException("getObject(String, Class<T>)");
+	}
 };

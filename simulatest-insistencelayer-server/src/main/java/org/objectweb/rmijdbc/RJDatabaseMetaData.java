@@ -2858,4 +2858,15 @@ public class RJDatabaseMetaData implements java.sql.DatabaseMetaData, java.io.Se
 		return null;
 	}
 
+	// JDBC 4.1 methods
+	@Override
+	public boolean generatedKeyAlwaysReturned() throws SQLException {
+		throw new SQLFeatureNotSupportedException("generatedKeyAlwaysReturned");
+	}
+
+	@Override
+	public ResultSet getPseudoColumns(String catalog, String schemaPattern,
+			String tableNamePattern, String columnNamePattern) throws SQLException {
+		throw new SQLFeatureNotSupportedException("getPseudoColumns");
+	}
 };

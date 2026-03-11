@@ -557,4 +557,15 @@ public class RJStatement implements java.sql.Statement, java.io.Serializable {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	// JDBC 4.1 methods
+	@Override
+	public void closeOnCompletion() throws SQLException {
+		throw new SQLFeatureNotSupportedException("closeOnCompletion");
+	}
+
+	@Override
+	public boolean isCloseOnCompletion() throws SQLException {
+		throw new SQLFeatureNotSupportedException("isCloseOnCompletion");
+	}
 };

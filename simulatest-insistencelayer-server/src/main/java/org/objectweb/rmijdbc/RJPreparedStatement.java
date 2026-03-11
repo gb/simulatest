@@ -850,4 +850,14 @@ public class RJPreparedStatement extends RJStatement implements PreparedStatemen
 
 	}
 
+	// JDBC 4.1 methods
+	@Override
+	public void closeOnCompletion() throws SQLException {
+		throw new SQLFeatureNotSupportedException("closeOnCompletion");
+	}
+
+	@Override
+	public boolean isCloseOnCompletion() throws SQLException {
+		throw new SQLFeatureNotSupportedException("isCloseOnCompletion");
+	}
 };

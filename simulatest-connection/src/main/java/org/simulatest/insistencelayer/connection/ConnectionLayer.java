@@ -294,6 +294,31 @@ public class ConnectionLayer implements Connection {
 		return connection.createStruct(typeName, attributes);
 	}
 	
+	@Override
+	public void setSchema(String schema) throws SQLException {
+		connection.setSchema(schema);
+	}
+
+	@Override
+	public String getSchema() throws SQLException {
+		return connection.getSchema();
+	}
+
+	@Override
+	public void abort(java.util.concurrent.Executor executor) throws SQLException {
+		connection.abort(executor);
+	}
+
+	@Override
+	public void setNetworkTimeout(java.util.concurrent.Executor executor, int milliseconds) throws SQLException {
+		connection.setNetworkTimeout(executor, milliseconds);
+	}
+
+	@Override
+	public int getNetworkTimeout() throws SQLException {
+		return connection.getNetworkTimeout();
+	}
+
 	public Connection getConnection() {
 		return connection;
 	}

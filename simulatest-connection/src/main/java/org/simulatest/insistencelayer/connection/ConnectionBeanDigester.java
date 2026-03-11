@@ -3,57 +3,47 @@ package org.simulatest.insistencelayer.connection;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.digester3.Digester;
-import org.apache.commons.digester3.ObjectCreateRule;
-import org.xml.sax.SAXException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class ConnectionBeanDigester {
-	
+
 	public ConnectionBean digesterDefault() {
 		return digesterByStream(getClass().getClassLoader().getResourceAsStream("insistenceLayer.cfg.xml"));
 	}
 
 	public ConnectionBean digesterByStream(InputStream stream) {
-		return tryDigesterStream(getDigester(), stream);
-	}
-	
-	public ConnectionBean digesterByFile(File file) {
-		return tryDigesterFile(getDigester(), file);
-	}
-	
-	private Digester getDigester() {
-		ObjectCreateRule rule = new ObjectCreateRule( ConnectionBean.class );
-		rule.setConstructorArgumentTypes(String.class, String.class, String.class, String.class);
-		
-		Digester digester = new Digester();
-		digester.addRule("datasource", rule);
-		digester.addCallParam("datasource/driver", 0);
-		digester.addCallParam("datasource/url", 1);
-		digester.addCallParam("datasource/username", 2);
-		digester.addCallParam("datasource/password", 3);
-		
-		return digester;
-	}
-	
-	private ConnectionBean tryDigesterFile(Digester digester, File file) {
 		try {
-			return tryDigesterStream(digester, new FileInputStream(file));
+			DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			Document doc = builder.parse(stream);
+			Element root = doc.getDocumentElement();
+
+			String driver = getTextContent(root, "driver");
+			String url = getTextContent(root, "url");
+			String username = getTextContent(root, "username");
+			String password = getTextContent(root, "password");
+
+			return new ConnectionBean(driver, url, username, password);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public ConnectionBean digesterByFile(File file) {
+		try {
+			return digesterByStream(new FileInputStream(file));
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	private ConnectionBean tryDigesterStream(Digester digester, InputStream stream) {
-		try {
-			return (ConnectionBean) digester.parse(stream);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} catch (SAXException e) {
-			throw new RuntimeException(e);
-		} 
+
+	private String getTextContent(Element parent, String tagName) {
+		return parent.getElementsByTagName(tagName).item(0).getTextContent().trim();
 	}
-	
+
 }
