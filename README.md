@@ -1,9 +1,5 @@
 # Simulatest
 
-*Insist, insist, insist — but never persist.*
-
----
-
 If you've ever worked on a project with heavy relational database usage, you know the pain. Every test needs data. Setting up that data takes longer than the test itself. And cleaning it up? Even worse. You write `DELETE FROM` scripts, `@Before` and `@After` blocks, truncate-and-reseed routines. All fragile, all slow, all repeated across every test class.
 
 Simulatest makes all of that disappear.
@@ -11,6 +7,8 @@ Simulatest makes all of that disappear.
 ---
 
 ## The Insistence Layer
+
+*Insist, insist, insist — but never persist.*
 
 Imagine you could tell your relational database: *"Remember this moment."*
 
@@ -29,8 +27,6 @@ The Insistence Layer is not a test tool. It's a standalone sandbox. You can use 
 For **testing**, it gives you automatic isolation between test cases with zero cleanup code. For **local development**, when your relational database is empty and you need data to explore the app, you push a checkpoint, populate it, play around, and pop the checkpoint when you're done. For **production**, when you're about to run a risky data migration, you push a checkpoint first, inspect the results, and if something looks wrong, pop it. The relational database is untouched.
 
 Yes, production. If your relational database supports savepoints, the Insistence Layer works there. It's not magic. It's just a well-managed transaction that never commits.
-
-*Insist, insist, insist — but never persist.*
 
 ---
 
@@ -64,4 +60,4 @@ Environments define *what* data to create. The Insistence Layer sandbox ensures 
 
 ---
 
-*This project is inspired by an existing Smalltalk implementation.*
+*This project was inspired by an existing Smalltalk implementation from Objective Solutions.*
