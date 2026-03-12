@@ -9,11 +9,11 @@ import org.junit.platform.launcher.PostDiscoveryFilter;
 import org.simulatest.environment.annotation.UseEnvironment;
 
 /**
- * Prunes {@link UseEnvironment @UseEnvironment} classes from Jupiter's test tree
+ * Prunes {@link UseEnvironment @UseEnvironment} classes from non-Simulatest engines
  * so they are only run by the Simulatest engine.
  *
- * <p>Without this filter, both Jupiter and Simulatest would discover the same
- * {@code @UseEnvironment} test classes. Jupiter would run them without environment
+ * <p>Without this filter, other engines (e.g. Jupiter) would also discover
+ * {@code @UseEnvironment} test classes and run them without environment
  * setup, causing failures or polluting shared state.</p>
  *
  * <p>Registered automatically via
@@ -23,7 +23,7 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 
 	@Override
 	public FilterResult apply(TestDescriptor descriptor) {
-		if (!isJupiterDescriptor(descriptor)) {
+		if (!isExternalEngine(descriptor)) {
 			return FilterResult.includedIf(true);
 		}
 
@@ -50,9 +50,10 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 		return null;
 	}
 
-	private static boolean isJupiterDescriptor(TestDescriptor descriptor) {
-		return descriptor.getUniqueId().getSegments().stream()
-				.anyMatch(s -> "engine".equals(s.getType()) && "junit-jupiter".equals(s.getValue()));
+	private static boolean isExternalEngine(TestDescriptor descriptor) {
+		return descriptor.getUniqueId().getEngineId()
+				.filter(id -> !SimulatestTestEngine.ENGINE_ID.equals(id))
+				.isPresent();
 	}
 
 }

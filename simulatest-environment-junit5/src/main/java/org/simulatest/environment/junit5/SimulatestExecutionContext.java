@@ -19,8 +19,7 @@ public class SimulatestExecutionContext implements EngineExecutionContext {
 	private final EnvironmentFactory factory;
 	private final List<SimulatestEnginePlugin> plugins;
 
-	public SimulatestExecutionContext(InsistenceLayerManager insistenceLayer, EnvironmentFactory factory,
-			List<SimulatestEnginePlugin> plugins) {
+	public SimulatestExecutionContext(InsistenceLayerManager insistenceLayer, EnvironmentFactory factory, List<SimulatestEnginePlugin> plugins) {
 		this.insistenceLayer = insistenceLayer;
 		this.factory = factory;
 		this.plugins = plugins;

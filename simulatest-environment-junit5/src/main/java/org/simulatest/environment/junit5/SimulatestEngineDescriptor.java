@@ -1,10 +1,5 @@
 package org.simulatest.environment.junit5;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ServiceLoader;
-
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
@@ -14,6 +9,11 @@ import org.simulatest.environment.junit5.plugin.SimulatestEnginePlugin;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.ServiceLoader;
 
 /**
  * Root descriptor for the Simulatest test engine.
@@ -47,8 +47,7 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 
 		InsistenceLayerManager insistenceLayer = null;
 		if (InsistenceLayerDataSource.isConfigured()) {
-			insistenceLayer = InsistenceLayerManagerFactory.build(
-					InsistenceLayerDataSource.getDefault().getConnectionWrapper());
+			insistenceLayer = InsistenceLayerManagerFactory.build(InsistenceLayerDataSource.getDefault().getConnectionWrapper());
 			insistenceLayer.increaseLevel();
 		}
 
@@ -57,28 +56,22 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
-		if (context.insistenceLayer() != null) {
-			context.insistenceLayer().decreaseLevel();
-		}
-		for (SimulatestEnginePlugin plugin : context.plugins()) {
-			plugin.destroy();
-		}
+		if (context.insistenceLayer() != null) context.insistenceLayer().decreaseLevel();
+		for (SimulatestEnginePlugin plugin : context.plugins()) plugin.destroy();
 	}
 
 	private List<SimulatestEnginePlugin> loadPlugins() {
-		List<SimulatestEnginePlugin> plugins = new ArrayList<>();
-		for (SimulatestEnginePlugin plugin : ServiceLoader.load(SimulatestEnginePlugin.class)) {
-			plugins.add(plugin);
-		}
-		return plugins;
+		return ServiceLoader.load(SimulatestEnginePlugin.class).stream()
+				.map(ServiceLoader.Provider::get)
+				.toList();
 	}
 
 	private EnvironmentFactory resolveEnvironmentFactory(List<SimulatestEnginePlugin> plugins) {
-		for (SimulatestEnginePlugin plugin : plugins) {
-			EnvironmentFactory factory = plugin.getEnvironmentFactory();
-			if (factory != null) return factory;
-		}
-		return new EnvironmentReflectionFactory();
+		return plugins.stream()
+				.map(SimulatestEnginePlugin::getEnvironmentFactory)
+				.filter(Objects::nonNull)
+				.findFirst()
+				.orElseGet(EnvironmentReflectionFactory::new);
 	}
 
 }

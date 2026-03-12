@@ -11,12 +11,10 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 	private final InsistenceLayerManager insistenceLayer;
 
 	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
-		this(factory, environmentTree,
-			InsistenceLayerManagerFactory.build(InsistenceLayerDataSource.getDefault().getConnectionWrapper()));
+		this(factory, environmentTree, InsistenceLayerManagerFactory.build(InsistenceLayerDataSource.getDefault().getConnectionWrapper()));
 	}
 
-	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree,
-			InsistenceLayerManager insistenceLayer) {
+	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree, InsistenceLayerManager insistenceLayer) {
 		super(factory, environmentTree);
 		this.insistenceLayer = insistenceLayer;
 		this.addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
@@ -25,6 +23,7 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 	@Override
 	public void run() {
 		insistenceLayer.increaseLevel();
+
 		try {
 			super.run();
 			insistenceLayer.decreaseLevel();
