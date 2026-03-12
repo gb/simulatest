@@ -15,8 +15,10 @@ public class EnvironmentDefinition {
 		return new EnvironmentDefinition(environmentClass);
 	}
 
+	private static final EnvironmentDefinition BIG_BANG = create(BigBangEnvironment.class);
+
 	public static EnvironmentDefinition bigBang() {
-		return create(BigBangEnvironment.class);
+		return BIG_BANG;
 	}
 	
 	private EnvironmentDefinition(Class<? extends Environment> environmentClass) {

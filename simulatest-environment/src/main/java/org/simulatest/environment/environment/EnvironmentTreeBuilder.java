@@ -1,15 +1,15 @@
 package org.simulatest.environment.environment;
 
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 import org.simulatest.environment.tree.Tree;
 
 
-public class EnvironmentTreeBuilder  {
+public class EnvironmentTreeBuilder {
 	
 	private Tree<EnvironmentDefinition> tree;
 
@@ -24,7 +24,7 @@ public class EnvironmentTreeBuilder  {
 
 	public void add(EnvironmentDefinition definition) {
 		Objects.requireNonNull(definition);
-		addChild(definition, new LinkedList<EnvironmentDefinition>());
+		addChild(definition, new HashSet<>());
 	}
 	
 	public void addAll(Collection<EnvironmentDefinition> definitions) {
@@ -35,20 +35,20 @@ public class EnvironmentTreeBuilder  {
 		return tree;
 	}
 	
-	private void addChild(EnvironmentDefinition definition, List<EnvironmentDefinition> environmentQueue) {
+	private void addChild(EnvironmentDefinition definition, Set<EnvironmentDefinition> visited) {
 		if (tree.contains(definition)) return;
-		cyclicSanityTest(definition, environmentQueue);
-		
-		environmentQueue.add(definition);
+		cyclicSanityTest(definition, visited);
+
+		visited.add(definition);
 		EnvironmentDefinition parentDefinition = EnvironmentDefinition.create(definition.getParentClass());
-		
-		if (!tree.contains(parentDefinition)) addChild(parentDefinition, environmentQueue);
+
+		if (!tree.contains(parentDefinition)) addChild(parentDefinition, visited);
 		tree.addChild(parentDefinition, definition);
 	}
 
-	private void cyclicSanityTest(EnvironmentDefinition definition,	List<EnvironmentDefinition> environmentQueue) {
-		if (!environmentQueue.contains(definition)) return;
-		String message = String.format("The environment \"%s\" is cyclicity referenced", definition.getName());
+	private void cyclicSanityTest(EnvironmentDefinition definition, Set<EnvironmentDefinition> visited) {
+		if (!visited.contains(definition)) return;
+		String message = String.format("The environment \"%s\" is cyclically referenced", definition.getName());
 		throw new EnvironmentCyclicException(message);
 	}
 	

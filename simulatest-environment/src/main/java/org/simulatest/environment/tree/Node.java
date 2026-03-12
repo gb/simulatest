@@ -14,8 +14,6 @@ public class Node<T> {
 	}
 
 	public void addChild(Node<T> child) {
-		if (children.contains(child)) return;
-		
 		child.setParent(this);
 		children.add(child);
 	}

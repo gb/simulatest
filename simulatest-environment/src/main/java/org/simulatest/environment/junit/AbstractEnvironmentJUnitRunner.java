@@ -10,8 +10,9 @@ import org.simulatest.environment.environment.EnvironmentDatabaseRunner;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentRaker;
+import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
-import org.simulatest.environment.environment.listener.EnvironmentRunnerNullable;
+import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.tree.Tree;
 
 public abstract class AbstractEnvironmentJUnitRunner extends Runner {
@@ -32,9 +33,13 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 		setup();
 	}
 	
-	protected abstract EnvironmentFactory getEnvironmentFactory();
-	
-	protected abstract Runner instanceTest(Class<?> test) throws InitializationError;
+	protected EnvironmentFactory getEnvironmentFactory() {
+		return new EnvironmentReflectionFactory();
+	}
+
+	protected Runner instanceTest(Class<?> test) throws InitializationError {
+		return new SimulatestJUnit4ClassRunner(this, test);
+	}
 
 	private void setup() throws InitializationError {
 		initializeEnvironmentRaker();
@@ -86,7 +91,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 		initializeTestClasses();
 		environmentRunner = new EnvironmentDatabaseRunner(getEnvironmentFactory(), environmentTree);
 
-		environmentRunner.addListener(new EnvironmentRunnerNullable() {
+		environmentRunner.addListener(new EnvironmentRunnerListener() {
 			@Override
 			public void afterRun(EnvironmentDefinition environment) {
 				runTestOfEnvironment(notifier, environment);

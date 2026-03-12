@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class EnvironmentRunner {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunner.class);
-	
+
 	private final EnvironmentFactory factory;
 	private final Tree<EnvironmentDefinition> tree;
 	private final List<EnvironmentRunnerListener> listeners;
@@ -21,7 +21,7 @@ public class EnvironmentRunner {
 	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
 		this.factory = factory;
 		this.tree = environmentTree;
-		this.listeners = new ArrayList<EnvironmentRunnerListener>();
+		this.listeners = new ArrayList<>();
 	}
 	
 	public EnvironmentRunner(EnvironmentFactory factory, EnvironmentTreeBuilder builder) {
@@ -64,7 +64,7 @@ public class EnvironmentRunner {
 			try {
 				action.execute(listener, definition);
 			} catch (RuntimeException exception) {
-				logger.error("Listener " + listener.getClass().getName() + " threw exception", exception);
+				logger.error("Listener {} threw exception", listener.getClass().getName(), exception);
 				if (firstException == null) firstException = exception;
 			}
 		}
@@ -93,7 +93,7 @@ public class EnvironmentRunner {
 	}
 
 	private void runEnvironment(EnvironmentDefinition definition) {
-		logger.info("[Run Environment] >> " + definition.getName());
+		logger.info("[Run Environment] >> {}", definition.getName());
 		
 		fireBeforeRun(definition);
 		if (!definition.equals(EnvironmentDefinition.bigBang())) executeEnvironment(definition);

@@ -18,7 +18,6 @@ import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerLog;
-import org.simulatest.environment.environment.listener.EnvironmentRunnerNullable;
 import org.simulatest.environment.environment.listener.ListenerPhase;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
@@ -98,7 +97,7 @@ public class EnvironmentRunnerTest {
 		EnvironmentRunnerListenerLog secondListener = new EnvironmentRunnerListenerLog();
 
 		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
-		runner.addListener(new EnvironmentRunnerNullable() {
+		runner.addListener(new EnvironmentRunnerListener() {
 			@Override
 			public void afterRun(EnvironmentDefinition definition) {
 				throw new RuntimeException("listener failure");
@@ -123,14 +122,14 @@ public class EnvironmentRunnerTest {
 
 		List<String> firingOrder = new ArrayList<>();
 
-		EnvironmentRunnerListener appListener = new EnvironmentRunnerNullable() {
+		EnvironmentRunnerListener appListener = new EnvironmentRunnerListener() {
 			@Override
 			public void afterRun(EnvironmentDefinition definition) {
 				firingOrder.add("APPLICATION");
 			}
 		};
 
-		EnvironmentRunnerListener infraListener = new EnvironmentRunnerNullable() {
+		EnvironmentRunnerListener infraListener = new EnvironmentRunnerListener() {
 			@Override
 			public void afterRun(EnvironmentDefinition definition) {
 				firingOrder.add("INFRASTRUCTURE");

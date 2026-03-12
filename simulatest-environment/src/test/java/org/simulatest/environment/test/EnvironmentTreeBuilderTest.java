@@ -110,7 +110,7 @@ public class EnvironmentTreeBuilderTest {
 			builder.add(create(ProjetoEnvironmentCiclico.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
-			String expectedMessage = "The environment \"ProjetoEnvironmentCiclico\" is cyclicity referenced";
+			String expectedMessage = "The environment \"ProjetoEnvironmentCiclico\" is cyclically referenced";
 			assertEquals(expectedMessage, exception.getMessage());
 		}
 	}
@@ -121,7 +121,7 @@ public class EnvironmentTreeBuilderTest {
 			builder.add(create(CyclicEnvironmentOne.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
-			String expectedMessage = "The environment \"CyclicEnvironmentOne\" is cyclicity referenced";
+			String expectedMessage = "The environment \"CyclicEnvironmentOne\" is cyclically referenced";
 			assertEquals(expectedMessage, exception.getMessage());
 		}
 	}
@@ -132,7 +132,7 @@ public class EnvironmentTreeBuilderTest {
 			builder.add(create(CyclicEnvironmentA.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
-			String expectedMessage = "The environment \"CyclicEnvironmentA\" is cyclicity referenced";
+			String expectedMessage = "The environment \"CyclicEnvironmentA\" is cyclically referenced";
 			assertEquals(expectedMessage, exception.getMessage());
 		}
 	}

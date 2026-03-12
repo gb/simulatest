@@ -4,13 +4,13 @@ import org.simulatest.environment.environment.EnvironmentDefinition;
 
 public interface EnvironmentRunnerListener {
 
-	void beforeRun(EnvironmentDefinition definition);
+	default void beforeRun(EnvironmentDefinition definition) { }
 
-	void afterRun(EnvironmentDefinition definition);
+	default void afterRun(EnvironmentDefinition definition) { }
 
-	void afterChildrenRun(EnvironmentDefinition definition);
+	default void afterChildrenRun(EnvironmentDefinition definition) { }
 
-	void afterSiblingCleanup(EnvironmentDefinition definition);
+	default void afterSiblingCleanup(EnvironmentDefinition definition) { }
 
 	default ListenerPhase getPhase() {
 		return ListenerPhase.APPLICATION;

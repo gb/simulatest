@@ -11,15 +11,15 @@ import org.junit.runner.Runner;
 
 public class EnvironmentGrouperTests {
 	
-	private Map<Class<?>, Runner> runnersByTest = new HashMap<Class<?>, Runner>();
-	private Set<Class<?>> testClasses = new HashSet<Class<?>>();
-	
+	private final Map<Class<?>, Runner> runnersByTest = new HashMap<>();
+	private final Set<Class<?>> testClasses = new HashSet<>();
+
 	public EnvironmentGrouperTests(Class<?> testClass) {
 		testClasses.add(testClass);
 	}
-	
+
 	public EnvironmentGrouperTests(Set<Class<?>> testClasses) {
-		for (Class<?> testClass : testClasses) this.testClasses.add(testClass);
+		this.testClasses.addAll(testClasses);
 	}
 
 	public Collection<Class<?>> getTestClasses() {

@@ -57,8 +57,8 @@ public class Tree<T> implements Iterable<Node<T>> {
 		return children;
 	}
 	
-	public boolean contains(T valor) {
-		return nodesByValue.containsKey(valor);
+	public boolean contains(T value) {
+		return nodesByValue.containsKey(value);
 	}
 	
 	private Node<T> getNode(T value) {
