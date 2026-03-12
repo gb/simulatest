@@ -11,15 +11,17 @@
 	<artifactId>simulatest-gui</artifactId>
 	<name>Simulatest - GUI</name>
 
+	<properties>
+		<fest-swing.version>1.2.1</fest-swing.version>
+		<miglayout.version>3.7.4</miglayout.version>
+		<picocontainer.version>2.14</picocontainer.version>
+	</properties>
+
 	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.easytesting</groupId>
 			<artifactId>fest-swing</artifactId>
+			<version>${fest-swing.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -41,16 +43,14 @@
 			<artifactId>simulatest-insistencelayer-server</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.picocontainer</groupId>
 			<artifactId>picocontainer</artifactId>
+			<version>${picocontainer.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.miglayout</groupId>
 			<artifactId>miglayout</artifactId>
+			<version>${miglayout.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>

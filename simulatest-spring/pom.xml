@@ -11,6 +11,10 @@
 	<artifactId>simulatest-spring</artifactId>
 	<name>Simulatest - Spring Environment Runner</name>
 
+	<properties>
+		<spring.version>6.2.7</spring.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.simulatest</groupId>
@@ -19,6 +23,7 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
+			<version>${spring.version}</version>
 		</dependency>
 
 		<dependency>

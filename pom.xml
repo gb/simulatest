@@ -10,7 +10,10 @@
 	<name>Simulatest - Integration Test Harness Framework</name>
 
 	<properties>
-		<spring.version>6.2.7</spring.version>
+		<h2.version>2.2.224</h2.version>
+		<junit.version>4.13.2</junit.version>
+		<mockito.version>4.11.0</mockito.version>
+		<slf4j.version>2.0.17</slf4j.version>
 	</properties>
 
 	<modules>
@@ -39,38 +42,19 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>2.0.17</version>
+			<version>${slf4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
-			<version>2.0.17</version>
+			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
-			<dependency>
-				<groupId>com.h2database</groupId>
-				<artifactId>h2</artifactId>
-				<version>2.2.224</version>
-			</dependency>
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>4.13.2</version>
-			</dependency>
-			<dependency>
-				<groupId>org.mockito</groupId>
-				<artifactId>mockito-core</artifactId>
-				<version>4.11.0</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-context</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
+			<!-- Internal modules -->
 			<dependency>
 				<groupId>org.simulatest</groupId>
 				<artifactId>simulatest-insistencelayer</artifactId>
@@ -86,25 +70,21 @@
 				<artifactId>simulatest-environment</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<!-- Testing -->
 			<dependency>
-				<groupId>uispec4j</groupId>
-				<artifactId>uispec4j</artifactId>
-				<version>1.5</version>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${junit.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.picocontainer</groupId>
-				<artifactId>picocontainer</artifactId>
-				<version>2.14</version>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>${mockito.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.miglayout</groupId>
-				<artifactId>miglayout</artifactId>
-				<version>3.7.4</version>
-			</dependency>
-			<dependency>
-				<groupId>org.easytesting</groupId>
-				<artifactId>fest-swing</artifactId>
-				<version>1.2.1</version>
+				<groupId>com.h2database</groupId>
+				<artifactId>h2</artifactId>
+				<version>${h2.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
