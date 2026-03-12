@@ -8,22 +8,22 @@ import org.simulatest.environment.tree.Tree;
 
 public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 
-	private InsistenceLayerManager insistenceLayer;
-	private boolean initialized;
+	private final InsistenceLayerManager insistenceLayer;
 
 	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
-		super(factory, environmentTree);
+		this(factory, environmentTree,
+			InsistenceLayerManagerFactory.build(InsistenceLayerDataSource.getDefault().getConnectionWrapper()));
 	}
 
 	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree,
 			InsistenceLayerManager insistenceLayer) {
 		super(factory, environmentTree);
 		this.insistenceLayer = insistenceLayer;
+		this.addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
 	}
 
 	@Override
 	public void run() {
-		ensureInitialized();
 		insistenceLayer.increaseLevel();
 		try {
 			super.run();
@@ -36,17 +36,6 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 
 	public InsistenceLayerManager insistenceLayer() {
 		return insistenceLayer;
-	}
-
-	private void ensureInitialized() {
-		if (initialized) return;
-		if (insistenceLayer == null) {
-			insistenceLayer = InsistenceLayerManagerFactory.build(
-				InsistenceLayerDataSource.getDefault().getConnectionWrapper()
-			);
-		}
-		this.addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
-		initialized = true;
 	}
 
 }

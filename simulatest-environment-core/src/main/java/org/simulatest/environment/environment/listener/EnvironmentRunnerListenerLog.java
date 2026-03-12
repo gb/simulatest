@@ -12,12 +12,8 @@ public class EnvironmentRunnerListenerLog implements EnvironmentRunnerListener {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunnerListenerLog.class);
 	
-	private final List<String> logs;
-	
-	public EnvironmentRunnerListenerLog() {
-		logs = new ArrayList<>();
-	}
-	
+	private final List<String> logs = new ArrayList<>();
+
 	@Override
 	public void beforeRun(EnvironmentDefinition definition) {
 		logger.debug("[LogListener] beforeRun >> {}", definition);

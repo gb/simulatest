@@ -49,10 +49,8 @@ public class SimulatestSpringPluginTest {
 				System.err.println(f.getTestIdentifier().getDisplayName() + ": " + f.getException()));
 		}
 
-		assertEquals(0, summary.getTestsFailedCount(),
-				"All Spring tests should pass");
-		assertEquals(2, summary.getTestsSucceededCount(),
-				"Should run 2 test methods");
+		assertEquals(0, summary.getTestsFailedCount(), "All Spring tests should pass");
+		assertEquals(2, summary.getTestsSucceededCount(), "Should run 2 test methods");
 	}
 
 }
