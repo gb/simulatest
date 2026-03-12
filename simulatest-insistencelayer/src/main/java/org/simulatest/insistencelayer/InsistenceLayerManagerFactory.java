@@ -7,16 +7,10 @@ import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 
 public class InsistenceLayerManagerFactory {
 
-	private static Map<ConnectionWrapper, InsistenceLayerManager> cache;
+	private static final Map<ConnectionWrapper, InsistenceLayerManager> cache = new HashMap<>();
 
-	static {
-		cache = new HashMap<ConnectionWrapper, InsistenceLayerManager>();
-	}
-	
 	public static InsistenceLayerManager build(ConnectionWrapper connection) {
-		if (cache.get(connection) == null) cache.put(connection, new InsistenceLayerManager(connection));
-		
-		return cache.get(connection);
+		return cache.computeIfAbsent(connection, InsistenceLayerManager::new);
 	}
 
 }

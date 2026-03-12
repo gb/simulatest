@@ -14,6 +14,8 @@ import java.util.Objects;
 
 import javax.sql.DataSource;
 
+import org.simulatest.insistencelayer.infra.InsistenceLayerException;
+
 
 public class ConnectionWrapper {
 
@@ -38,7 +40,7 @@ public class ConnectionWrapper {
 		try {
 			this.realConnection = source.getConnection();
 		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			throw new InsistenceLayerException("Error obtaining connection from DataSource", e);
 		}
 
 		this.proxy = createProxy();
@@ -58,7 +60,7 @@ public class ConnectionWrapper {
 		try {
 			realConnection.setAutoCommit(false);
 		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			throw new InsistenceLayerException("Error enabling insistence layer", e);
 		}
 		active = true;
 	}
@@ -68,8 +70,8 @@ public class ConnectionWrapper {
 		lastCommitSavepoint = null;
 		try {
 			realConnection.setAutoCommit(true);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		} catch (SQLException e) {
+			throw new InsistenceLayerException("Error disabling insistence layer", e);
 		}
 	}
 

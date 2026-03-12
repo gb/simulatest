@@ -2,14 +2,14 @@ package org.simulatest.insistencelayer;
 
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Objects;
-import java.util.Stack;
 
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.infra.InsistenceLayerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class InsistenceLayerManager {
 
@@ -17,12 +17,12 @@ public class InsistenceLayerManager {
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerManager.class);
 
 	private final ConnectionWrapper connection;
-	private final Stack<Savepoint> savepoints;
+	private final Deque<Savepoint> savepoints;
 
 	protected InsistenceLayerManager(ConnectionWrapper connection) {
 		Objects.requireNonNull(connection, "Connection is null");
 		this.connection = connection;
-		this.savepoints = new Stack<>();
+		this.savepoints = new ArrayDeque<>();
 	}
 
 	public int getCurrentLevel() {
@@ -33,7 +33,7 @@ public class InsistenceLayerManager {
 		setup();
 		createSavepoint();
 
-		logger.info("[InsistenceLayer] Level increased to " + getCurrentLevel());
+		logger.info("[InsistenceLayer] Level increased to {}", getCurrentLevel());
 	}
 
 	private void setup() {
@@ -44,7 +44,7 @@ public class InsistenceLayerManager {
 		String savePointName = PREFIX_SAVEPOINT + (getCurrentLevel() + 1);
 
 		try {
-			savepoints.add(connection.setSavepoint(savePointName));
+			savepoints.push(connection.setSavepoint(savePointName));
 		} catch (SQLException exception) {
 			String message = "Error creating the savepoint: " + savePointName;
 			throw new InsistenceLayerException(message, exception);
@@ -55,7 +55,7 @@ public class InsistenceLayerManager {
 		if (isDisabled()) return;
 
 		rollbackSavepoint(savepoints.peek());
-		logger.info("[InsistenceLayer] Cleaned current level: " + getCurrentLevel());
+		logger.info("[InsistenceLayer] Cleaned current level: {}", getCurrentLevel());
 	}
 
 	public void decreaseLevel() {
@@ -66,7 +66,7 @@ public class InsistenceLayerManager {
 		rollbackSavepoint(savepoints.pop());
 		tearDown();
 
-		logger.info("[InsistenceLayer] Level decreased to " + getCurrentLevel());
+		logger.info("[InsistenceLayer] Level decreased to {}", getCurrentLevel());
 	}
 
 	private void tearDown() {
@@ -79,7 +79,7 @@ public class InsistenceLayerManager {
 
 	public void setLevelTo(int level) {
 		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
-		logger.info("[InsistenceLayer] Setting level " + getCurrentLevel() + " to " + level);
+		logger.info("[InsistenceLayer] Setting level {} to {}", getCurrentLevel(), level);
 
 		if (getCurrentLevel() > level) decreaseToLevel(level);
 		else if (getCurrentLevel() < level ) increaseToLevel(level);
