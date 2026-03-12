@@ -35,7 +35,7 @@ public class SpringContext {
 	}
 
 	public static void initializeFromTestClass(Class<?> testClass) {
-		SimulatestSpringConfig config = findConfig(testClass);
+		SimulatestSpringConfig config = testClass.getAnnotation(SimulatestSpringConfig.class);
 
 		if (config == null) {
 			throw new IllegalStateException(
@@ -52,15 +52,6 @@ public class SpringContext {
 				+ "Use @RunWith(SimulatestSpringRunner.class) to bootstrap it.");
 		}
 		return context;
-	}
-
-	private static SimulatestSpringConfig findConfig(Class<?> clazz) {
-		while (clazz != null) {
-			SimulatestSpringConfig config = clazz.getAnnotation(SimulatestSpringConfig.class);
-			if (config != null) return config;
-			clazz = clazz.getSuperclass();
-		}
-		return null;
 	}
 
 }
