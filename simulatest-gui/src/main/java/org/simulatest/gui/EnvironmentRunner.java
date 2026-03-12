@@ -25,7 +25,7 @@ import javax.swing.event.ListSelectionListener;
 
 import org.simulatest.environment.environment.Environment;
 import org.simulatest.environment.environment.facade.EnvironmentRunnerFacade;
-import org.simulatest.gui.infra.EnvironmentScanner;
+import org.simulatest.environment.environment.EnvironmentScanner;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 
 public class EnvironmentRunner extends JFrame implements ListSelectionListener {
