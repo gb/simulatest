@@ -1,79 +1,68 @@
 package org.simulatest.insistencelayer.server;
 
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.sql.Connection;
+import java.util.Objects;
 
-import org.objectweb.rmijdbc.RJDriverServer;
-import org.objectweb.rmijdbc.RMIRepository;
-import org.simulatest.insistencelayer.connection.ConnectionBean;
+import com.sun.net.httpserver.HttpServer;
+
+import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.connection.ConnectionWrapper;
+import org.simulatest.insistencelayer.server.handler.LevelHandler;
+import org.simulatest.insistencelayer.server.handler.SqlExecuteHandler;
+import org.simulatest.insistencelayer.server.handler.SqlQueryHandler;
 import org.simulatest.insistencelayer.server.infra.InsistenceLayerServerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class InsistenceLayerServer {
 
-	private static final int PORT = 1099;
-	private static final Logger logger = LoggerFactory.getLogger(RMIRepository.class);
+	private final int port;
+	private final Connection connection;
+	private final Object lock = new Object();
+	private HttpServer httpServer;
 
-	public static void start() {
-		logger.info("Starting InsistenceLayerServer!");
-		initializeServer();
+	public InsistenceLayerServer(int port, Connection connection) {
+		this.port = port;
+		this.connection = Objects.requireNonNull(connection, "Connection must not be null");
 	}
 
-	public static boolean isAvailable() {
+	public void start() {
+		if (httpServer != null) {
+			throw new InsistenceLayerServerException("Server is already running");
+		}
+
+		ConnectionWrapper wrapper = new ConnectionWrapper(connection);
+		InsistenceLayerManager manager = InsistenceLayerManagerFactory.build(wrapper);
+
 		try {
-			RMIConnectionFactory rmi = (RMIConnectionFactory) registry().lookup("InsistenceLayer");
-			return rmi.isServerAvailable();
-		} catch (Exception e) {
-			return false;
+			httpServer = HttpServer.create(new InetSocketAddress(port), 0);
+		} catch (IOException e) {
+			throw new InsistenceLayerServerException("Failed to start HTTP server on port " + port, e);
+		}
+
+		httpServer.createContext("/level", new LevelHandler(manager, lock));
+		httpServer.createContext("/sql/execute", new SqlExecuteHandler(wrapper.getConnection(), lock));
+		httpServer.createContext("/sql/query", new SqlQueryHandler(wrapper.getConnection(), lock));
+		httpServer.setExecutor(null);
+		httpServer.start();
+	}
+
+	public void stop() {
+		if (httpServer != null) {
+			httpServer.stop(0);
+			httpServer = null;
 		}
 	}
 
-	public static void shutdown() {
-		logger.info("Shutdowning InsistenceLayerServer!");
-		
-		try {
-			registry().unbind("RmiJdbcServer");
-			registry().unbind("InsistenceLayer");
-		} catch (Throwable e) {
-			throw new InsistenceLayerServerException("InsistenceLayerServer is already down", e);
+	public int getPort() {
+		if (httpServer != null) {
+			return httpServer.getAddress().getPort();
 		}
-	}
-	
-	private static void initializeServer() {
-		try {
-			logger.info("Binding InsistenceLayer...");
-
-			Registry registry = LocateRegistry.createRegistry(PORT);
-			registry.bind("RmiJdbcServer", new RJDriverServer(null));
-			registry.bind("InsistenceLayer", new RemoteConnectionFactory());
-
-			logger.info("InsistenceLayer has been bound in RMI registry");
-		} catch (Exception e) {
-			throw new InsistenceLayerServerException("Error initializing InsistenceLayerServer", e);
-		}
-	}
-	
-	private static Registry registry() throws RemoteException {
-		return LocateRegistry.getRegistry(PORT);
-	}
-	
-	public static void registerConnectionBean(ConnectionBean connectionBean) throws RemoteException {
-		rmiConnectionFactory().registerConnectionBean(connectionBean);
-	}
-	
-	public static Connection getConnection() throws RemoteException {
-		return rmiConnectionFactory().getConnection();
+		return port;
 	}
 
-	private static RMIConnectionFactory rmiConnectionFactory() {
-		try {
-			return (RMIConnectionFactory) LocateRegistry.getRegistry(1099).lookup("InsistenceLayer");
-		} catch (Exception e) {
-			throw new InsistenceLayerServerException(e);
-		}
+	public boolean isRunning() {
+		return httpServer != null;
 	}
-
 }
