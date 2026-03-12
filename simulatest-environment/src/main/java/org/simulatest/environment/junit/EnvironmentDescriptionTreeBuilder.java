@@ -10,8 +10,8 @@ import org.simulatest.environment.tree.Tree;
 
 public class EnvironmentDescriptionTreeBuilder {
 
-	private Tree<EnvironmentDefinition> environments;
-	private Map<EnvironmentDefinition, Description> descriptions = new HashMap<EnvironmentDefinition, Description>();
+	private final Tree<EnvironmentDefinition> environments;
+	private final Map<EnvironmentDefinition, Description> descriptions = new HashMap<>();
 
 	public EnvironmentDescriptionTreeBuilder(Tree<EnvironmentDefinition> environments) {
 		this.environments = environments;

@@ -36,6 +36,10 @@ public class InsistenceLayerDataSource implements DataSource {
 		return defaultInstance;
 	}
 
+	public static boolean isConfigured() {
+		return defaultInstance != null;
+	}
+
 	public static void reset() {
 		defaultInstance = null;
 	}

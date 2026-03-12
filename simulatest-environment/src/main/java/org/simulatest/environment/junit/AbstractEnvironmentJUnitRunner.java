@@ -17,7 +17,7 @@ import org.simulatest.environment.tree.Tree;
 
 public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 	
-	private EnvironmentGrouperTests environmentGrouperTests;
+	private final EnvironmentGrouperTests environmentGrouperTests;
 	private Tree<EnvironmentDefinition> environmentTree;
 	private EnvironmentRaker environmentRaker;
 	private EnvironmentDescriptionTreeBuilder descriptionTreeBuilder;
