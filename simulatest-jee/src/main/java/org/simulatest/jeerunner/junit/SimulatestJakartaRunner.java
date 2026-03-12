@@ -27,8 +27,11 @@ public class SimulatestJakartaRunner extends EnvironmentJUnitRunner {
 
 	@Override
 	public void run(RunNotifier notifier) {
-		super.run(notifier);
-		CdiContext.destroy();
+		try {
+			super.run(notifier);
+		} finally {
+			CdiContext.destroy();
+		}
 	}
 
 }
