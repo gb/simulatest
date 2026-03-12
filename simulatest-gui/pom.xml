@@ -14,7 +14,7 @@
 	<properties>
 		<fest-swing.version>1.2.1</fest-swing.version>
 		<miglayout.version>3.7.4</miglayout.version>
-		<picocontainer.version>2.14</picocontainer.version>
+		<picocontainer.version>2.15.2</picocontainer.version>
 	</properties>
 
 	<dependencies>
