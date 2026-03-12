@@ -11,16 +11,16 @@
 	<artifactId>simulatest-environment</artifactId>
 	<name>Simulatest - Environment</name>
 
-	<properties>
-		<classgraph.version>4.8.179</classgraph.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
-			<groupId>io.github.classgraph</groupId>
-			<artifactId>classgraph</artifactId>
-			<version>${classgraph.version}</version>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-environment-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
@@ -30,15 +30,6 @@
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.simulatest</groupId>
-			<artifactId>simulatest-insistencelayer</artifactId>
 		</dependency>
 	</dependencies>
 
