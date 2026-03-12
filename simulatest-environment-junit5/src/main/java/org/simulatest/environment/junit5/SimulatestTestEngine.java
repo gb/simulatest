@@ -60,22 +60,25 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		if (testClasses.isEmpty()) return engineDescriptor;
 
 		EnvironmentRaker raker = new EnvironmentRaker(testClasses);
-		EnvironmentTreeBuilder treeBuilder = new EnvironmentTreeBuilder(raker.getEnvironments());
-		Tree<EnvironmentDefinition> envTree = treeBuilder.getTree();
+		Tree<EnvironmentDefinition> envTree = new EnvironmentTreeBuilder(raker.getEnvironments()).getTree();
 
+		buildDescriptorTree(engineDescriptor, envTree, raker);
+
+		return engineDescriptor;
+	}
+
+	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor,
+			Tree<EnvironmentDefinition> envTree, EnvironmentRaker raker) {
 		Map<EnvironmentDefinition, EnvironmentTestDescriptor> envDescriptors = new HashMap<>();
 
 		for (var node : envTree) {
-			EnvironmentDefinition def = node.getValue();
-
 			EnvironmentTestDescriptor parentDesc = node.hasParent()
 					? envDescriptors.get(node.getParentValue())
 					: null;
-			UniqueId parentId = (parentDesc != null) ? parentDesc.getUniqueId() : uniqueId;
-			UniqueId envId = parentId.append("environment", def.getName());
 
-			EnvironmentTestDescriptor envDesc = new EnvironmentTestDescriptor(envId, def);
-			envDescriptors.put(def, envDesc);
+			EnvironmentTestDescriptor envDesc = createEnvironmentDescriptor(
+					node.getValue(), parentDesc, engineDescriptor.getUniqueId());
+			envDescriptors.put(node.getValue(), envDesc);
 
 			if (parentDesc != null) {
 				parentDesc.addChild(envDesc);
@@ -83,21 +86,29 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 				engineDescriptor.addChild(envDesc);
 			}
 
-			if (raker.hasEnvironment(def)) {
-				for (Class<?> testClass : raker.getTests(def)) {
-					UniqueId classId = envId.append("class", testClass.getName());
-					ClassTestDescriptor classDesc = new ClassTestDescriptor(classId, testClass);
-					envDesc.addChild(classDesc);
-
-					for (Method method : findTestMethods(testClass)) {
-						UniqueId methodId = classId.append("method", method.getName());
-						classDesc.addChild(new MethodTestDescriptor(methodId, testClass, method));
-					}
-				}
+			if (raker.hasEnvironment(node.getValue())) {
+				addTestClassDescriptors(envDesc, raker.getTests(node.getValue()));
 			}
 		}
+	}
 
-		return engineDescriptor;
+	private EnvironmentTestDescriptor createEnvironmentDescriptor(
+			EnvironmentDefinition def, EnvironmentTestDescriptor parentDesc, UniqueId engineId) {
+		UniqueId parentId = (parentDesc != null) ? parentDesc.getUniqueId() : engineId;
+		return new EnvironmentTestDescriptor(parentId.append("environment", def.getName()), def);
+	}
+
+	private void addTestClassDescriptors(EnvironmentTestDescriptor envDesc, List<Class<?>> testClasses) {
+		for (Class<?> testClass : testClasses) {
+			UniqueId classId = envDesc.getUniqueId().append("class", testClass.getName());
+			ClassTestDescriptor classDesc = new ClassTestDescriptor(classId, testClass);
+			envDesc.addChild(classDesc);
+
+			for (Method method : findTestMethods(testClass)) {
+				UniqueId methodId = classId.append("method", method.getName());
+				classDesc.addChild(new MethodTestDescriptor(methodId, testClass, method));
+			}
+		}
 	}
 
 	private Set<Class<?>> collectTestClasses(EngineDiscoveryRequest request) {
