@@ -23,10 +23,8 @@ public class SimulatestSpringPlugin implements SimulatestEnginePlugin {
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
-		for (Class<?> testClass : testClasses) {
-			SpringContext.initializeFromTestClass(testClass);
-			return;
-		}
+		testClasses.stream().findFirst()
+				.ifPresent(SpringContext::initializeFromTestClass);
 	}
 
 	@Override

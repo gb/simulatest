@@ -9,12 +9,12 @@ import org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelE
 public class FirstLevelTest {
 
 	@Test
-	public void shouldHaveFirstLevelEnvironment() {
+	void shouldHaveFirstLevelEnvironment() {
 		Assertions.assertTrue(EnvironmentTracker.getEvents().contains("FirstLevel"));
 	}
 
 	@Test
-	public void shouldNotHaveSecondLevel() {
+	void shouldNotHaveSecondLevel() {
 		Assertions.assertFalse(EnvironmentTracker.getEvents().contains("SecondLevel"));
 	}
 

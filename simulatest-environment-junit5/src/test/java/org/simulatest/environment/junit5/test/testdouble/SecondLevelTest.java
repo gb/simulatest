@@ -9,7 +9,7 @@ import org.simulatest.environment.junit5.test.testdouble.environment.SecondLevel
 public class SecondLevelTest {
 
 	@Test
-	public void shouldHaveBothEnvironments() {
+	void shouldHaveBothEnvironments() {
 		Assertions.assertTrue(EnvironmentTracker.getEvents().contains("FirstLevel"));
 		Assertions.assertTrue(EnvironmentTracker.getEvents().contains("SecondLevel"));
 	}

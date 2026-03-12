@@ -38,8 +38,10 @@ public interface SimulatestEnginePlugin {
 	/**
 	 * Creates a test class instance, or returns {@code null} to let the engine
 	 * use default reflection-based instantiation.
+	 *
+	 * @throws TestInstantiationException if the instance cannot be created
 	 */
-	default Object createTestInstance(Class<?> clazz) throws Exception {
+	default Object createTestInstance(Class<?> clazz) {
 		return null;
 	}
 

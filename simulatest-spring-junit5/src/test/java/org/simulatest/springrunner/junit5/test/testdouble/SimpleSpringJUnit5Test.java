@@ -19,12 +19,12 @@ public class SimpleSpringJUnit5Test {
 	private DatabaseMock databaseMock;
 
 	@Test
-	public void springDIShouldWork() {
+	void springDIShouldWork() {
 		Assertions.assertEquals("Hello", languageTeacher.sayHello());
 	}
 
 	@Test
-	public void environmentsShouldHaveRun() {
+	void environmentsShouldHaveRun() {
 		Assertions.assertEquals(2, databaseMock.getMessages().size());
 		Assertions.assertEquals("Hello", databaseMock.getMessages().get(0));
 		Assertions.assertEquals("Hello by child", databaseMock.getMessages().get(1));

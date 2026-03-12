@@ -21,12 +21,12 @@ public class SimpleJakartaJUnit5Test {
 	BritishTeacher teacher;
 
 	@Test
-	public void environmentsShouldHaveRun() {
+	void environmentsShouldHaveRun() {
 		assertEquals(2, databaseMock.getMessages().size());
 	}
 
 	@Test
-	public void cdiLookupShouldWork() {
+	void cdiLookupShouldWork() {
 		assertEquals("Hello", teacher.sayHello());
 	}
 

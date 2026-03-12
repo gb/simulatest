@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.junit5.plugin.SimulatestEnginePlugin;
+import org.simulatest.environment.junit5.plugin.TestInstantiationException;
 import org.simulatest.jeerunner.cdi.CdiContext;
 import org.simulatest.jeerunner.environment.EnvironmentCdiFactory;
 
@@ -42,7 +43,7 @@ public class SimulatestJakartaPlugin implements SimulatestEnginePlugin {
 				try {
 					field.set(instance, CdiContext.getBean(field.getType()));
 				} catch (IllegalAccessException e) {
-					throw new RuntimeException("Failed to inject CDI bean into field: " + field.getName(), e);
+					throw new TestInstantiationException("Failed to inject CDI bean into field: " + field.getName(), e);
 				}
 			}
 		}

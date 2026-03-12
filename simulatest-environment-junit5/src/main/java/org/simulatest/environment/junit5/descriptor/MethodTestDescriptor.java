@@ -9,6 +9,7 @@ import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.engine.support.hierarchical.Node;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 import org.simulatest.environment.junit5.plugin.SimulatestEnginePlugin;
+import org.simulatest.environment.junit5.plugin.TestInstantiationException;
 
 /**
  * Describes a single test method. Executes the test and resets
@@ -64,12 +65,16 @@ public class MethodTestDescriptor extends AbstractTestDescriptor
 		}
 	}
 
-	private Object createTestInstance(SimulatestExecutionContext context) throws Exception {
+	private Object createTestInstance(SimulatestExecutionContext context) {
 		for (SimulatestEnginePlugin plugin : context.plugins()) {
 			Object instance = plugin.createTestInstance(testClass);
 			if (instance != null) return instance;
 		}
-		return testClass.getDeclaredConstructor().newInstance();
+		try {
+			return testClass.getDeclaredConstructor().newInstance();
+		} catch (ReflectiveOperationException e) {
+			throw new TestInstantiationException("Failed to instantiate test class: " + testClass.getName(), e);
+		}
 	}
 
 }

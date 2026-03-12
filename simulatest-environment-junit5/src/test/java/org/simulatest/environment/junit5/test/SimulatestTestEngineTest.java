@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
@@ -30,7 +29,7 @@ import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
  * Integration test for the Simulatest JUnit 5 TestEngine.
  * Uses the JUnit Platform Launcher API to programmatically run the engine.
  */
-public class SimulatestTestEngineTest {
+class SimulatestTestEngineTest {
 
 	@BeforeAll
 	static void configureDataSource() {

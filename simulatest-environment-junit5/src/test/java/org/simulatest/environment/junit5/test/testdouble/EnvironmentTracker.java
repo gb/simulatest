@@ -11,7 +11,7 @@ public class EnvironmentTracker {
 
 	private static final List<String> events = new ArrayList<>();
 
-	public static void record(String event) {
+	public static void trackEvent(String event) {
 		events.add(event);
 	}
 

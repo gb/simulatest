@@ -9,7 +9,7 @@ public class SecondLevelEnvironment implements Environment {
 
 	@Override
 	public void run() {
-		EnvironmentTracker.record("SecondLevel");
+		EnvironmentTracker.trackEvent("SecondLevel");
 	}
 
 }

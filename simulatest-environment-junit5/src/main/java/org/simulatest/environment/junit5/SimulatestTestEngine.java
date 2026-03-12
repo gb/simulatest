@@ -1,6 +1,5 @@
 package org.simulatest.environment.junit5;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -146,18 +145,11 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		return result;
 	}
 
-	/**
-	 * Discovers test methods by checking for annotations named "Test" (any framework).
-	 * This avoids a compile-time dependency on JUnit Jupiter.
-	 */
 	private List<Method> findTestMethods(Class<?> testClass) {
 		List<Method> testMethods = new ArrayList<>();
 		for (Method method : testClass.getDeclaredMethods()) {
-			for (Annotation annotation : method.getAnnotations()) {
-				if ("Test".equals(annotation.annotationType().getSimpleName())) {
-					testMethods.add(method);
-					break;
-				}
+			if (method.isAnnotationPresent(org.junit.jupiter.api.Test.class)) {
+				testMethods.add(method);
 			}
 		}
 		return testMethods;

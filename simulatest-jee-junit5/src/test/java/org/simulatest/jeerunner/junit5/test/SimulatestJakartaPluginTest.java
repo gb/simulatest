@@ -21,7 +21,7 @@ import org.simulatest.jeerunner.junit5.test.testdouble.SimpleJakartaJUnit5Test;
  * Integration test verifying that the Jakarta CDI plugin correctly
  * initializes the CDI container and creates CDI-managed environments.
  */
-public class SimulatestJakartaPluginTest {
+class SimulatestJakartaPluginTest {
 
 	@BeforeAll
 	static void configureDataSource() {

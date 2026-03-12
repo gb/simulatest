@@ -7,7 +7,7 @@ public class FirstLevelEnvironment implements Environment {
 
 	@Override
 	public void run() {
-		EnvironmentTracker.record("FirstLevel");
+		EnvironmentTracker.trackEvent("FirstLevel");
 	}
 
 }

@@ -1,6 +1,7 @@
 package org.simulatest.environment.tree;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public class Node<T> {
 	
@@ -34,7 +35,7 @@ public class Node<T> {
 		return parent != null;
 	}
 
-	public LinkedList<Node<T>> getChildren() {
+	public List<Node<T>> getChildren() {
 		return children;
 	}
 	
@@ -47,7 +48,7 @@ public class Node<T> {
 	}
 	
 	public boolean isLastChild() {
-		return hasParent() ? isTheLastChildOfParent() : false;
+		return hasParent() && isTheLastChildOfParent();
 	}
 	
 	private boolean isTheLastChildOfParent() {

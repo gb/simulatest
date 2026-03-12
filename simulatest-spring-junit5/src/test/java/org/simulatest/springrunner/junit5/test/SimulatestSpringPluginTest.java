@@ -21,7 +21,7 @@ import org.simulatest.springrunner.junit5.test.testdouble.SimpleSpringJUnit5Test
  * Integration test verifying that the Spring plugin correctly autowires
  * test instances and creates Spring-managed environments.
  */
-public class SimulatestSpringPluginTest {
+class SimulatestSpringPluginTest {
 
 	@BeforeAll
 	static void configureDataSource() {

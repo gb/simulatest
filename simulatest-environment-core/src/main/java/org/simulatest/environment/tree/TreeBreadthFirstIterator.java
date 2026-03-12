@@ -2,6 +2,7 @@ package org.simulatest.environment.tree;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
 public class TreeBreadthFirstIterator<T> implements Iterator<Node<T>> {
 
@@ -19,6 +20,7 @@ public class TreeBreadthFirstIterator<T> implements Iterator<Node<T>> {
 
 	@Override
 	public Node<T> next() {
+		if (!hasNext()) throw new NoSuchElementException();
 		Node<T> next = queue.pop();
 		queue.addAll(next.getChildren());
 		return next;
