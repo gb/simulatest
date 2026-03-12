@@ -13,7 +13,7 @@
 	<name>Simulatest - Spring JUnit 5 Plugin</name>
 
 	<properties>
-		<spring.version>6.2.7</spring.version>
+		<spring.version>7.0.5</spring.version>
 	</properties>
 
 	<dependencies>
