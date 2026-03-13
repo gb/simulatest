@@ -22,7 +22,7 @@ public class ConnectionWrapperTest {
 
 	@Before
 	public void setup() throws SQLException {
-		realConnection = DriverManager.getConnection("jdbc:h2:~/.h2/test", "sa", "");
+		realConnection = DriverManager.getConnection("jdbc:h2:mem:connectionwrappertest", "sa", "");
 		connectionWrapper = new ConnectionWrapper(realConnection);
 	}
 
