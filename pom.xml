@@ -26,6 +26,7 @@
 		<module>simulatest-spring</module>
 		<module>simulatest-gui</module>
 		<module>simulatest-jee</module>
+		<module>simulatest-guice</module>
 	</modules>
 
 	<developers>

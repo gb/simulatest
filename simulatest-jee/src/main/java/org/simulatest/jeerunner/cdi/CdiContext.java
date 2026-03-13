@@ -1,34 +1,64 @@
 package org.simulatest.jeerunner.cdi;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
+import jakarta.inject.Inject;
 
-public class CdiContext {
+import org.simulatest.environment.environment.DependencyInjectionContext;
+import org.simulatest.environment.environment.TestInstantiationException;
 
-	private static SeContainer container;
+public class CdiContext implements DependencyInjectionContext {
 
-	public static <T> T getBean(Class<T> clazz) {
+	private SeContainer container;
+
+	@Override
+	public <T> T getInstance(Class<T> clazz) {
 		return getContainer().select(clazz).get();
 	}
 
-	public static void initialize() {
+	@Override
+	public void injectMembers(Object instance) {
+		for (Class<?> clazz = instance.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
+			for (Field field : clazz.getDeclaredFields()) {
+				if (field.isAnnotationPresent(Inject.class)) {
+					inject(instance, field);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void initialize(Collection<Class<?>> testClasses) {
 		if (container != null && container.isRunning()) return;
 		container = SeContainerInitializer.newInstance().initialize();
 	}
 
-	public static void destroy() {
+	@Override
+	public void destroy() {
 		if (container != null && container.isRunning()) {
 			container.close();
 			container = null;
 		}
 	}
 
-	private static SeContainer getContainer() {
+	private SeContainer getContainer() {
 		if (container == null || !container.isRunning()) {
 			throw new IllegalStateException("CDI container is not running. "
-				+ "CDI container is not initialized. Add simulatest-jee to the classpath.");
+				+ "Add simulatest-jee to the classpath.");
 		}
 		return container;
+	}
+
+	private void inject(Object instance, Field field) {
+		field.setAccessible(true);
+		try {
+			field.set(instance, getInstance(field.getType()));
+		} catch (IllegalAccessException e) {
+			throw new TestInstantiationException("Failed to inject CDI bean into field: " + field.getName(), e);
+		}
 	}
 
 }
