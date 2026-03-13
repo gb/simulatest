@@ -11,17 +11,15 @@ import org.simulatest.environment.environment.Environment;
 public class AnnotationUtils {
 
 	private AnnotationUtils() {
-
+		// All static
 	}
 
-	public static <A extends Annotation> A findConfigAnnotation(
-			Collection<Class<?>> testClasses, Class<A> annotationType) {
+	public static <A extends Annotation> A findConfigAnnotation(Collection<Class<?>> testClasses, Class<A> annotationType) {
 		return testClasses.stream()
-				.filter(c -> c.isAnnotationPresent(annotationType))
+				.filter(clazz -> clazz.isAnnotationPresent(annotationType))
 				.findFirst()
-				.map(c -> c.getAnnotation(annotationType))
-				.orElseThrow(() -> new IllegalStateException(
-					"No test class annotated with @" + annotationType.getSimpleName() + " found."));
+				.map(clazz -> clazz.getAnnotation(annotationType))
+				.orElseThrow(() -> new IllegalStateException("No test class annotated with @" + annotationType.getSimpleName() + " found."));
 	}
 	
 	public static Class<? extends Environment> extractEnvironment(Class<?> testClass) {
