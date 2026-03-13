@@ -1,66 +1,94 @@
 # Simulatest
 
-If you've ever worked on a project with heavy relational database usage, you know the pain. Every test needs data. Setting up that data takes longer than the test itself. And cleaning it up? Even worse. You write `DELETE FROM` scripts, `@Before` and `@After` blocks, truncate-and-reseed routines. All fragile, all slow, all repeated across every test class.
+If you work on a project with a database, you know the pain: tests that corrupt each other's data, `@Before`/`@After` cleanup boilerplate everywhere, brittle `DELETE FROM` or `TRUNCATE` statements between tests, and suites that slow to a crawl because they recreate the schema for every test class.
 
-Simulatest makes all of that disappear.
+Simulatest eliminates all of that. It is a JVM toolkit made of two independent, composable tools:
+
+1. **Insistence Layer**: a transactional sandbox for your database
+2. **Environments**: composable, OOP test fixtures organized as a tree
 
 ---
 
 ## The Insistence Layer
 
-*Insist, insist, insist — but never persist.*
+*Insist, insist, insist... but never persist.*
 
-Imagine you could tell your relational database: *"Remember this moment."*
+What if your database had an undo button? You set up data, run your code, and then undo everything. The database returns to exactly the state it was in before, as if nothing happened.
 
-Then you do whatever you want. Insert rows, update records, delete tables, run a migration. The data is real. You can query it, join against it, build reports from it. It's all there.
+That's what the Insistence Layer does. It wraps your database connection and gives you a **checkpoint stack**: push a checkpoint before you make changes, pop it when you're done, and everything rolls back. The data is real while it exists: queryable, joinable, subject to constraints. But it never persists beyond the checkpoint.
 
-And then you say: *"Go back to that moment."*
+Checkpoints nest arbitrarily deep. Each pop rolls back exactly one level.
 
-Everything you did is undone. The relational database is exactly as it was. No cleanup. No scripts. No trace.
+```
++1  →  push checkpoint
+       do work: INSERTs, UPDATEs, DELETEs. All real, all queryable.
+-1  →  pop checkpoint. Everything undone, no trace.
+```
 
-That's the Insistence Layer. A transactional sandbox for any relational database. It uses JDBC savepoints, a feature already built into every major relational database, to create checkpoints you can roll back to. And checkpoints are nestable. You can push one inside another, as deep as you need. Each rollback takes you back exactly one level.
+Under the hood, this is built on JDBC savepoints, a standard database feature. Any database that supports savepoints works with the Insistence Layer.
 
-We call it `+1` and `-1`. Push a checkpoint, do your work, pop the checkpoint. Gone.
+Three main use cases:
 
-The Insistence Layer is not a test tool. It's a standalone sandbox. You can use it for anything.
+| Use Case | How |
+|----------|-----|
+| **Test isolation** | The framework pushes/pops checkpoints around environments and tests automatically |
+| **Dev seeding** | Push a checkpoint, run environments to populate an empty local DB, explore the app, pop when done |
+| **Production safety net** | Push a checkpoint, run a risky migration, inspect results, pop to undo if wrong |
 
-For **testing**, it gives you automatic isolation between test cases with zero cleanup code. For **local development**, when your relational database is empty and you need data to explore the app, you push a checkpoint, populate it, play around, and pop the checkpoint when you're done. For **production**, when you're about to run a risky data migration, you push a checkpoint first, inspect the results, and if something looks wrong, pop it. The relational database is untouched.
-
-Yes, production. If your relational database supports savepoints, the Insistence Layer works there. It's not magic. It's just a well-managed transaction that never commits.
+The Insistence Layer is not just a test tool. It works anywhere.
 
 ---
 
 ## Environments
 
-Now for the second problem: test fixtures.
+In database-heavy projects, test setup code tends to be duplicated across test classes. Or worse, every test builds the world from scratch. Environments solve this by letting you define setup logic once and compose it into a hierarchy.
 
-Every test that needs an Employee also needs a Company. Every test that needs a Company also needs a list of Departments. Every test that needs Departments also needs Roles and Permissions. You end up rebuilding the same data pyramid over and over, or worse, you share mutable state across tests and spend hours debugging why test 47 fails when you run the full suite but passes alone.
+An Environment is a Java class that sets up data. It declares a parent via `@EnvironmentParent`, the same way a class extends a superclass: it trusts that the parent's data already exists.
 
-Environments fix this by treating your test data the way you treat your code: as a hierarchy.
+```
+CompanyEnvironment               → creates a company
+├── EmployeeEnvironment          → creates employees (trusts company exists)
+│   ├── PayrollEnvironment       → creates payroll records (trusts employees exist)
+│   └── PermissionsEnvironment   → creates access roles (trusts employees exist)
+└── ProductEnvironment           → creates products (trusts company exists)
+```
 
-An Environment is a plain Java class that sets up data. And just like a class can extend a superclass, an Environment can declare a parent. The parent runs first. The child trusts that the parent's data already exists, and builds on top of it.
+Each environment runs once. Tests declare which environment they need via `@UseEnvironment`. Simulatest builds the tree, resolves the ordering, and executes everything.
 
-`CompanyEnvironment` creates a company. `EmployeeEnvironment` declares `CompanyEnvironment` as its parent and creates employees. It never touches the company, because it trusts the parent already did that. `ProductEnvironment` also declares `CompanyEnvironment` as its parent and creates products. Same company, completely different branch.
+When combined with the Insistence Layer, the magic happens: after each environment runs, a checkpoint is pushed. After its subtree completes, the checkpoint is popped. This means sibling environments never see each other's data. `PayrollEnvironment` and `PermissionsEnvironment` each start from the same `EmployeeEnvironment` state, completely unaffected by each other. Tests at the same level are isolated too. And the entire suite rolls back at the end.
 
-What you get is a tree of environments that mirrors your domain. Each environment runs exactly once. Tests declare which environment they need, and Simulatest figures out the rest: the ordering, the dependencies, the execution.
+No `@After`, no `DELETE FROM`, no `TRUNCATE`, no `@DirtiesContext`. No cleanup code at all.
 
-And here's where the Insistence Layer kicks in. After each environment runs, a checkpoint is pushed. After its tests finish, the checkpoint is popped. Sibling environments never see each other's data. Individual tests at the same level are isolated from each other. At the end of the suite, the entire relational database is rolled back to its original state.
+---
 
-No cleanup code. No teardown. No `DELETE FROM`. No `@After`. Nothing.
+## JUnit Integration
 
-And because environments are just Java classes that populate a relational database, they're not limited to tests. Got an empty local relational database and want to explore the app? Run a few environments to seed it with realistic, domain-accurate data. When you're done exploring, roll it all back.
+Works with both JUnit 4 (custom runner) and JUnit 5 (custom TestEngine). DI plugins for Spring, Guice, and Jakarta CDI are auto-discovered via ServiceLoader.
+
+```java
+@UseEnvironment(PayrollEnvironment.class)
+public class PayrollTest {
+
+    @Test
+    void shouldCalculateEmployeeSalary() {
+        // Company, Employee, and Payroll data already exist.
+        // The entire ancestor chain ran automatically.
+        // After this test, everything rolls back.
+    }
+}
+```
 
 ---
 
 ## Two Tools, One Toolkit
 
-The Insistence Layer and Environments are independent. You can use the Insistence Layer without environments: just `+1`, do work, `-1`. You can use environments without the Insistence Layer: just composable test fixtures. But together, they eliminate the two biggest time sinks in database-heavy projects: setting up test data and cleaning it up.
+The Insistence Layer and Environments are independent. Use the Insistence Layer alone for checkpoint-based isolation in any context. Use Environments alone for composable test fixtures. Together, they eliminate the two biggest time sinks in database-heavy projects: setting up test data and cleaning it up.
 
-Environments define *what* data to create. The Insistence Layer sandbox ensures *none of it persists*.
+Environments define *what* data to create. The Insistence Layer ensures *none of it persists*.
 
 ---
 
-*This project was inspired by an existing Smalltalk implementation from Objective Solutions.*
+*Inspired by a production-ready Smalltalk implementation from Objective Solutions.*
 
 ## License
 
