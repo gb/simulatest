@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @SimulatestSpringConfig(org.simulatest.springrunner.test.TestDoubleConfig.class)
 @UseEnvironment(SpringChildExampleEnvironment.class)
-class SimpleSpringJUnit5Test {
+public class SimpleSpringJUnit5Test {
 
 	@Autowired
 	private LanguageTeacher languageTeacher;

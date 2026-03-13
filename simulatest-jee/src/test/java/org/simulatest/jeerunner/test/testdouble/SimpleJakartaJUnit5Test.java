@@ -10,7 +10,7 @@ import org.simulatest.jeerunner.test.testdouble.environment.JakartaChildExampleE
 import org.simulatest.jeerunner.test.testdouble.mock.DatabaseMock;
 
 @UseEnvironment(JakartaChildExampleEnvironment.class)
-class SimpleJakartaJUnit5Test {
+public class SimpleJakartaJUnit5Test {
 
 	@Inject
 	DatabaseMock databaseMock;
