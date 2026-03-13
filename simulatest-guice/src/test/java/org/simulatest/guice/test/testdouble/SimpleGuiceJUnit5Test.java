@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SimulatestGuiceConfig(TestModule.class)
 @UseEnvironment(GuiceChildExampleEnvironment.class)
-public class SimpleGuiceJUnit5Test {
+class SimpleGuiceJUnit5Test {
 
 	@Inject
 	private LanguageTeacher languageTeacher;
