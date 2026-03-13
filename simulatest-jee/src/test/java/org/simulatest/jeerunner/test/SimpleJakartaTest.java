@@ -7,14 +7,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.environment.junit.EnvironmentJUnitRunner;
 import org.simulatest.jeerunner.cdi.CdiContext;
-import org.simulatest.jeerunner.junit.SimulatestJakartaRunner;
 import org.simulatest.jeerunner.test.example.BritishTeacher;
 import org.simulatest.jeerunner.test.example.JakartaChildExampleEnvironment;
 import org.simulatest.jeerunner.test.example.LanguageTeacher;
 import org.simulatest.jeerunner.test.example.mock.DatabaseMock;
 
-@RunWith(SimulatestJakartaRunner.class)
+@RunWith(EnvironmentJUnitRunner.class)
 @UseEnvironment(JakartaChildExampleEnvironment.class)
 public class SimpleJakartaTest {
 

@@ -25,10 +25,8 @@
 		<module>simulatest-environment</module>
 		<module>simulatest-environment-junit5</module>
 		<module>simulatest-spring</module>
-		<module>simulatest-spring-junit5</module>
 		<module>simulatest-gui</module>
 		<module>simulatest-jee</module>
-		<module>simulatest-jee-junit5</module>
 	</modules>
 
 	<developers>

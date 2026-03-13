@@ -7,14 +7,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
-import org.simulatest.springrunner.junit.SimulatestSpringRunner;
+import org.simulatest.environment.junit.EnvironmentJUnitRunner;
 import org.simulatest.springrunner.spring.SimulatestSpringConfig;
 import org.simulatest.springrunner.test.example.LanguageTeacher;
 import org.simulatest.springrunner.test.example.SpringChildExampleEnvironment;
 import org.simulatest.springrunner.test.example.mock.DatabaseMock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@RunWith(SimulatestSpringRunner.class)
+@RunWith(EnvironmentJUnitRunner.class)
 @SimulatestSpringConfig(TestConfig.class)
 @UseEnvironment(SpringChildExampleEnvironment.class)
 public class SimpleSpringTest {

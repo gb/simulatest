@@ -26,7 +26,7 @@ public class CdiContext {
 	private static SeContainer getContainer() {
 		if (container == null || !container.isRunning()) {
 			throw new IllegalStateException("CDI container is not running. "
-				+ "Use @RunWith(SimulatestJakartaRunner.class) to bootstrap it.");
+				+ "CDI container is not initialized. Add simulatest-jee to the classpath.");
 		}
 		return container;
 	}

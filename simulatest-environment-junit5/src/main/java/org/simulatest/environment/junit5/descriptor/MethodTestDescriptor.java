@@ -7,16 +7,11 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.engine.support.hierarchical.Node;
+import org.simulatest.environment.environment.SimulatestPlugins;
+import org.simulatest.environment.environment.TestInstantiationException;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
-import org.simulatest.environment.junit5.plugin.SimulatestEnginePlugin;
-import org.simulatest.environment.junit5.plugin.TestInstantiationException;
 
-/**
- * Describes a single test method. Executes the test and resets
- * the Insistence Layer savepoint after each method.
- */
-public class MethodTestDescriptor extends AbstractTestDescriptor
-		implements Node<SimulatestExecutionContext> {
+public class MethodTestDescriptor extends AbstractTestDescriptor implements Node<SimulatestExecutionContext> {
 
 	private final Class<?> testClass;
 	private final Method testMethod;
@@ -27,35 +22,26 @@ public class MethodTestDescriptor extends AbstractTestDescriptor
 		this.testMethod = testMethod;
 	}
 
-	public Class<?> getTestClass() {
-		return testClass;
-	}
-
-	public Method getTestMethod() {
-		return testMethod;
-	}
-
 	@Override
 	public Type getType() {
 		return Type.TEST;
 	}
 
 	@Override
-	public SimulatestExecutionContext execute(SimulatestExecutionContext context,
-			DynamicTestExecutor dynamicTestExecutor) throws Exception {
+	public SimulatestExecutionContext execute(SimulatestExecutionContext context, DynamicTestExecutor dynamicTestExecutor) throws Exception {
 		Object instance = createTestInstance(context);
-		for (SimulatestEnginePlugin plugin : context.plugins()) {
-			plugin.postProcessTestInstance(instance);
-		}
+		SimulatestPlugins.postProcessAll(context.plugins(), instance);
+		invokeTestMethod(instance);
+		return context;
+	}
 
+	private void invokeTestMethod(Object instance) throws Exception {
 		testMethod.setAccessible(true);
 		try {
 			testMethod.invoke(instance);
 		} catch (InvocationTargetException e) {
 			throw (e.getCause() instanceof Exception ex) ? ex : e;
 		}
-
-		return context;
 	}
 
 	@Override
@@ -66,10 +52,9 @@ public class MethodTestDescriptor extends AbstractTestDescriptor
 	}
 
 	private Object createTestInstance(SimulatestExecutionContext context) {
-		for (SimulatestEnginePlugin plugin : context.plugins()) {
-			Object instance = plugin.createTestInstance(testClass);
-			if (instance != null) return instance;
-		}
+		Object instance = SimulatestPlugins.createTestInstance(context.plugins(), testClass);
+		if (instance != null) return instance;
+
 		try {
 			return testClass.getDeclaredConstructor().newInstance();
 		} catch (ReflectiveOperationException e) {
