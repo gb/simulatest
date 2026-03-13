@@ -40,7 +40,8 @@ public class MethodTestDescriptor extends AbstractTestDescriptor implements Node
 		try {
 			testMethod.invoke(instance);
 		} catch (InvocationTargetException e) {
-			throw (e.getCause() instanceof Exception ex) ? ex : e;
+			Exception cause = e.getCause() instanceof Exception ex ? ex : e;
+			throw new IllegalStateException(cause);
 		}
 	}
 
