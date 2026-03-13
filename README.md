@@ -61,3 +61,7 @@ Environments define *what* data to create. The Insistence Layer sandbox ensures 
 ---
 
 *This project was inspired by an existing Smalltalk implementation from Objective Solutions.*
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
