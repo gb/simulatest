@@ -2,14 +2,14 @@ package org.simulatest.jeerunner.test;
 
 import static org.junit.Assert.assertEquals;
 
+import jakarta.inject.Inject;
+
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
-import org.simulatest.jeerunner.cdi.CdiContext;
-import org.simulatest.jeerunner.test.example.BritishTeacher;
 import org.simulatest.jeerunner.test.example.JakartaChildExampleEnvironment;
 import org.simulatest.jeerunner.test.example.LanguageTeacher;
 import org.simulatest.jeerunner.test.example.mock.DatabaseMock;
@@ -25,16 +25,20 @@ public class SimpleJakartaTest {
 		InsistenceLayerDataSource.configure(h2);
 	}
 
+	@Inject
+	private DatabaseMock databaseMock;
+
+	@Inject
+	private LanguageTeacher languageTeacher;
+
 	@Test
 	public void testEnvironments() {
-		DatabaseMock databaseMock = CdiContext.getBean(DatabaseMock.class);
 		assertEquals(2, databaseMock.getMessages().size());
 	}
 
 	@Test
 	public void testCdiLookup() {
-		LanguageTeacher teacher = CdiContext.getBean(BritishTeacher.class);
-		assertEquals("Hello", teacher.sayHello());
+		assertEquals("Hello", languageTeacher.sayHello());
 	}
 
 }
