@@ -9,6 +9,7 @@ import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.engine.support.hierarchical.Node;
 import org.simulatest.environment.environment.SimulatestPlugins;
 import org.simulatest.environment.environment.TestInstantiationException;
+import org.simulatest.environment.environment.TestInvocationException;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 public class MethodTestDescriptor extends AbstractTestDescriptor implements Node<SimulatestExecutionContext> {
@@ -40,8 +41,11 @@ public class MethodTestDescriptor extends AbstractTestDescriptor implements Node
 		try {
 			testMethod.invoke(instance);
 		} catch (InvocationTargetException e) {
-			Exception cause = e.getCause() instanceof Exception ex ? ex : e;
-			throw new IllegalStateException(cause);
+			Throwable cause = e.getCause();
+			if (cause instanceof Exception ex) throw ex;
+			throw new TestInvocationException("Failed to invoke test method: " + testMethod.getName(), cause);
+		} catch (IllegalAccessException e) {
+			throw new TestInvocationException("Failed to invoke test method: " + testMethod.getName(), e);
 		}
 	}
 
