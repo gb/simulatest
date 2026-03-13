@@ -30,8 +30,6 @@ public class App implements Startable {
 		container.addComponent(App.class);
 		container.addComponent(SimulatestHub.class);	
 		container.addComponent(SimulatestSQLWindow.class);
-		container.addComponent(InsistenceLayerServerForm.class);
-		
 		container.start();
 	}
 	
