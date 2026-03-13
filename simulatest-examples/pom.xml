@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.simulatest</groupId>
+		<artifactId>simulatest</artifactId>
+		<version>0.0.2</version>
+	</parent>
+
+	<artifactId>simulatest-examples</artifactId>
+	<name>Simulatest Examples</name>
+	<description>
+		Didactic examples showcasing Simulatest's environment tree and Insistence Layer.
+	</description>
+
+	<dependencies>
+		<!-- Simulatest core: Environment interface, @EnvironmentParent, @UseEnvironment -->
+		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-environment-core</artifactId>
+		</dependency>
+
+		<!-- Simulatest Insistence Layer: transactional savepoint stack -->
+		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-insistencelayer</artifactId>
+		</dependency>
+
+		<!-- Simulatest JUnit 5 TestEngine (test scope) -->
+		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-environment-junit5</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- JUnit Jupiter API: @Test, Assertions (test scope) -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- JUnit Jupiter Engine: required so IDEs activate the JUnit Platform
+		     Launcher, which in turn discovers the Simulatest TestEngine.
+		     The PostDiscoveryFilter prevents Jupiter from also running
+		     @UseEnvironment classes — only the Simulatest engine handles them. -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit-jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- H2 in-memory database (test scope) -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.5</version>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

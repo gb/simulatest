@@ -13,6 +13,7 @@ import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.ClassSelector;
+import org.junit.platform.engine.discovery.ClasspathRootSelector;
 import org.junit.platform.engine.discovery.PackageSelector;
 import org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine;
 import org.simulatest.environment.annotation.UseEnvironment;
@@ -124,7 +125,29 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 			testClasses.addAll(scanForTestClasses(selector.getPackageName()));
 		}
 
+		for (ClasspathRootSelector selector : request.getSelectorsByType(ClasspathRootSelector.class)) {
+			testClasses.addAll(scanClasspathRoot(selector));
+		}
+
 		return testClasses;
+	}
+
+	private Set<Class<?>> scanClasspathRoot(ClasspathRootSelector selector) {
+		Set<Class<?>> result = new LinkedHashSet<>();
+		try (var scanResult = new io.github.classgraph.ClassGraph()
+				.enableClassInfo()
+				.enableAnnotationInfo()
+				.overrideClasspath(selector.getClasspathRoot())
+				.scan()) {
+			for (var classInfo : scanResult.getClassesWithAnnotation(UseEnvironment.class)) {
+				try {
+					result.add(classInfo.loadClass());
+				} catch (Exception e) {
+					logger.warn("Could not load class: {}", classInfo.getName(), e);
+				}
+			}
+		}
+		return result;
 	}
 
 	private Set<Class<?>> scanForTestClasses(String basePackage) {

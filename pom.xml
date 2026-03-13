@@ -27,6 +27,7 @@
 		<module>simulatest-gui</module>
 		<module>simulatest-jee</module>
 		<module>simulatest-guice</module>
+		<module>simulatest-examples</module>
 	</modules>
 
 	<developers>
