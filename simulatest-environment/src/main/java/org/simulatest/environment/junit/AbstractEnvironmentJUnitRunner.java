@@ -91,16 +91,16 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 		initializeTestClasses();
 		SimulatestPlugins.initializeAll(plugins, environmentGrouperTests.getTestClasses());
 
-		environmentRunner = new EnvironmentDatabaseRunner(SimulatestPlugins.resolveFactory(plugins), environmentTree);
-
-		environmentRunner.addListener(new EnvironmentRunnerListener() {
-			@Override
-			public void afterRun(EnvironmentDefinition environment) {
-				runTestOfEnvironment(notifier, environment);
-			}
-		});
-
 		try {
+			environmentRunner = new EnvironmentDatabaseRunner(SimulatestPlugins.resolveFactory(plugins), environmentTree);
+
+			environmentRunner.addListener(new EnvironmentRunnerListener() {
+				@Override
+				public void afterRun(EnvironmentDefinition environment) {
+					runTestOfEnvironment(notifier, environment);
+				}
+			});
+
 			environmentRunner.run();
 		} finally {
 			SimulatestPlugins.destroyAll(plugins);
