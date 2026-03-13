@@ -1,10 +1,10 @@
 package org.simulatest.environment.environment;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,16 +89,18 @@ public class SimulatestPluginsTest {
 			}
 		};
 
+		RuntimeException thrown = null;
 		try {
 			SimulatestPlugins.destroyAll(List.of(failing, healthy, alsoFailing));
-			fail("Should have thrown");
 		} catch (RuntimeException e) {
-			assertEquals("first failure", e.getMessage());
-			assertEquals(1, e.getSuppressed().length);
-			assertEquals("third failure", e.getSuppressed()[0].getMessage());
+			thrown = e;
 		}
 
 		assertEquals(List.of("first", "second", "third"), destroyed);
+		assertNotNull(thrown);
+		assertEquals("first failure", thrown.getMessage());
+		assertEquals(1, thrown.getSuppressed().length);
+		assertEquals("third failure", thrown.getSuppressed()[0].getMessage());
 	}
 
 	@Test
