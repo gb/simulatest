@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.springrunner.environment.EnvironmentSpringFactory;
+import org.simulatest.springrunner.spring.SimulatestSpringConfig;
 import org.simulatest.springrunner.spring.SpringContext;
 
 public class SimulatestSpringPlugin implements SimulatestPlugin {
@@ -16,7 +17,9 @@ public class SimulatestSpringPlugin implements SimulatestPlugin {
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
-		testClasses.stream().findFirst()
+		testClasses.stream()
+				.filter(c -> c.isAnnotationPresent(SimulatestSpringConfig.class))
+				.findFirst()
 				.ifPresent(SpringContext::initializeFromTestClass);
 	}
 
