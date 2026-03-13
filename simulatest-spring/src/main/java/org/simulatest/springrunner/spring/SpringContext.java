@@ -49,7 +49,7 @@ public class SpringContext {
 	private static AnnotationConfigApplicationContext getContext() {
 		if (context == null) {
 			throw new IllegalStateException("Spring context is not running. "
-				+ "Use @RunWith(SimulatestSpringRunner.class) to bootstrap it.");
+				+ "Spring context is not initialized. Add simulatest-spring to the classpath.");
 		}
 		return context;
 	}

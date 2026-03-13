@@ -3,22 +3,15 @@ package org.simulatest.environment.junit5;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
-import org.simulatest.environment.environment.EnvironmentFactory;
-import org.simulatest.environment.environment.EnvironmentReflectionFactory;
-import org.simulatest.environment.junit5.plugin.SimulatestEnginePlugin;
+import org.simulatest.environment.environment.SimulatestPlugin;
+import org.simulatest.environment.environment.SimulatestPlugins;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import java.util.ServiceLoader;
 
-/**
- * Root descriptor for the Simulatest test engine.
- * Loads plugins and creates the execution context in {@link #before}.
- */
 class SimulatestEngineDescriptor extends EngineDescriptor implements Node<SimulatestExecutionContext> {
 
 	private Collection<Class<?>> testClasses;
@@ -37,13 +30,8 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 			return SimulatestExecutionContext.EMPTY;
 		}
 
-		List<SimulatestEnginePlugin> plugins = loadPlugins();
-
-		for (SimulatestEnginePlugin plugin : plugins) {
-			plugin.initialize(testClasses);
-		}
-
-		EnvironmentFactory factory = resolveEnvironmentFactory(plugins);
+		List<SimulatestPlugin> plugins = SimulatestPlugins.loadAll();
+		SimulatestPlugins.initializeAll(plugins, testClasses);
 
 		InsistenceLayerManager insistenceLayer = null;
 		if (InsistenceLayerDataSource.isConfigured()) {
@@ -51,27 +39,13 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 			insistenceLayer.increaseLevel();
 		}
 
-		return new SimulatestExecutionContext(insistenceLayer, factory, plugins);
+		return new SimulatestExecutionContext(insistenceLayer, SimulatestPlugins.resolveFactory(plugins), plugins);
 	}
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
 		if (context.insistenceLayer() != null) context.insistenceLayer().decreaseLevel();
-		for (SimulatestEnginePlugin plugin : context.plugins()) plugin.destroy();
-	}
-
-	private List<SimulatestEnginePlugin> loadPlugins() {
-		return ServiceLoader.load(SimulatestEnginePlugin.class).stream()
-				.map(ServiceLoader.Provider::get)
-				.toList();
-	}
-
-	private EnvironmentFactory resolveEnvironmentFactory(List<SimulatestEnginePlugin> plugins) {
-		return plugins.stream()
-				.map(SimulatestEnginePlugin::getEnvironmentFactory)
-				.filter(Objects::nonNull)
-				.findFirst()
-				.orElseGet(EnvironmentReflectionFactory::new);
+		SimulatestPlugins.destroyAll(context.plugins());
 	}
 
 }
