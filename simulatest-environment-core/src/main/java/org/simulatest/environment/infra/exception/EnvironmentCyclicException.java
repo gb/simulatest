@@ -8,12 +8,4 @@ public class EnvironmentCyclicException extends EnvironmentGeneralException {
 		super(message);
 	}
 
-	public EnvironmentCyclicException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public EnvironmentCyclicException(Throwable cause) {
-		super(cause);
-	}
-
 }

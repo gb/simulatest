@@ -8,10 +8,6 @@ public class InsistenceLayerException extends RuntimeException {
 		super(message);
 	}
 	
-	public InsistenceLayerException(Throwable cause) {
-		super(cause);
-	}
-
     public InsistenceLayerException(String message, Throwable cause) {
         super(message, cause);
     }
