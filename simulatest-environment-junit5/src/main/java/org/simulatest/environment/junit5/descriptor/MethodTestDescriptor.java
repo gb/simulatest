@@ -61,7 +61,9 @@ public class MethodTestDescriptor extends AbstractTestDescriptor implements Node
 		if (instance != null) return instance;
 
 		try {
-			return testClass.getDeclaredConstructor().newInstance();
+			var constructor = testClass.getDeclaredConstructor();
+			constructor.setAccessible(true);
+			return constructor.newInstance();
 		} catch (ReflectiveOperationException e) {
 			throw new TestInstantiationException("Failed to instantiate test class: " + testClass.getName(), e);
 		}

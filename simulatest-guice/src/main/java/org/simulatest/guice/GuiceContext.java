@@ -54,7 +54,9 @@ public class GuiceContext implements DependencyInjectionContext {
 
 	private static Module instantiate(Class<? extends Module> moduleClass) {
 		try {
-			return moduleClass.getDeclaredConstructor().newInstance();
+			var constructor = moduleClass.getDeclaredConstructor();
+			constructor.setAccessible(true);
+			return constructor.newInstance();
 		} catch (InstantiationException | IllegalAccessException |
 				 InvocationTargetException | NoSuchMethodException e) {
 			throw new IllegalStateException("Failed to instantiate Guice module: " + moduleClass.getName(), e);

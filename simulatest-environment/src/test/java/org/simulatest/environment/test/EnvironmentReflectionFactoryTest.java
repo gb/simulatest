@@ -9,7 +9,7 @@ import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
-import org.simulatest.environment.test.testdouble.Environments.PrivateConstructorEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.NoDefaultConstructorEnvironment;
 
 public class EnvironmentReflectionFactoryTest {
 	
@@ -27,10 +27,10 @@ public class EnvironmentReflectionFactoryTest {
 	@Test
 	public void shouldThrowAnEnvironmentInstantiationExceptionWhenSomethingWrongHappen() {
 		try {
-			environmentReflection.create(create(PrivateConstructorEnvironment.class));
+			environmentReflection.create(create(NoDefaultConstructorEnvironment.class));
 			fail("should throw an EnvironmentInstantiationException");
 		} catch (EnvironmentInstantiationException exception) {
-			String expectedMessage = "Error in instantiation of environment: PrivateConstructorEnvironment";
+			String expectedMessage = "Error in instantiation of environment: NoDefaultConstructorEnvironment";
 			assertEquals(expectedMessage, exception.getMessage());
 		}
 	}
