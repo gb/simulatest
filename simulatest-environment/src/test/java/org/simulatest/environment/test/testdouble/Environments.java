@@ -69,8 +69,8 @@ public class Environments {
 		public void run() { }
 	}
 	
-	public static class PrivateConstructorEnvironment implements Environment {
-		private PrivateConstructorEnvironment() { }
+	public static class NoDefaultConstructorEnvironment implements Environment {
+		public NoDefaultConstructorEnvironment(String required) { }
 		public void run() { }
 	}
 	

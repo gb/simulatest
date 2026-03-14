@@ -12,7 +12,9 @@ public class EnvironmentReflectionFactory implements EnvironmentFactory {
 	public Environment create(EnvironmentDefinition definition) {
 		try {
 			logger.info("[ReflectionRunner] instantiation >> {}", definition.getName());
-			return definition.getEnvironmentClass().getDeclaredConstructor().newInstance();
+			var constructor = definition.getEnvironmentClass().getDeclaredConstructor();
+			constructor.setAccessible(true);
+			return constructor.newInstance();
 		} catch (Exception exception) {
 			String message = "Error in instantiation of environment: " + definition.getName();
 			throw new EnvironmentInstantiationException(message, exception);
