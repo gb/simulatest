@@ -43,6 +43,14 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- JUnit Jupiter Params: @ParameterizedTest, @CsvSource (test scope) -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-params</artifactId>
+			<version>${junit-jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- JUnit Jupiter Engine: required so IDEs activate the JUnit Platform
 		     Launcher, which in turn discovers the Simulatest TestEngine.
 		     The PostDiscoveryFilter prevents Jupiter from also running

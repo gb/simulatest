@@ -1,6 +1,8 @@
 package org.simulatest.example.library;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.MembersEnvironment;
 
@@ -163,29 +165,16 @@ class MemberTest {
 	// proving the savepoint survived the failed statement.
 	// =========================================================================
 
-	@Test
-	void duplicateEmailIsRejected() {
+	@ParameterizedTest(name = "rejected: {0}")
+	@CsvSource({
+		"duplicate email,   9, Fake Alice,  alice@email.com,     1,  1",
+		"invalid branch,    9, Nowhere Man, nowhere@email.com,   1, 99",
+		"invalid type,      9, Bad Type,    badtype@email.com,  99,  1"
+	})
+	void invalidInsertIsRejected(String reason, int id, String name, String email, int typeId, int branchId) {
 		assertThrows(RuntimeException.class, () ->
 			LibraryDatabase.execute(
-				"INSERT INTO member VALUES (9, 'Fake Alice', 'alice@email.com', 1, 1)"));
-
-		assertEquals(8, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member"));
-	}
-
-	@Test
-	void invalidBranchIsRejected() {
-		assertThrows(RuntimeException.class, () ->
-			LibraryDatabase.execute(
-				"INSERT INTO member VALUES (9, 'Nowhere Man', 'nowhere@email.com', 1, 99)"));
-
-		assertEquals(8, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member"));
-	}
-
-	@Test
-	void invalidMemberTypeIsRejected() {
-		assertThrows(RuntimeException.class, () ->
-			LibraryDatabase.execute(
-				"INSERT INTO member VALUES (9, 'Bad Type', 'badtype@email.com', 99, 1)"));
+				"INSERT INTO member VALUES (" + id + ", '" + name + "', '" + email + "', " + typeId + ", " + branchId + ")"));
 
 		assertEquals(8, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member"));
 	}
