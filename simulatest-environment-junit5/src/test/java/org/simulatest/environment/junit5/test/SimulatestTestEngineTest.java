@@ -21,6 +21,7 @@ import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
 import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
+import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
@@ -134,6 +135,26 @@ class SimulatestTestEngineTest {
 		assertTrue(EnvironmentTracker.getEvents().indexOf("FirstLevel")
 				< EnvironmentTracker.getEvents().indexOf("SecondLevel"),
 				"FirstLevel should run before SecondLevel");
+	}
+
+	@Test
+	void selectingNestedClassDirectlyShouldResolveToEnclosingEnvironment() throws ClassNotFoundException {
+		Class<?> innerClass = Class.forName(AdvancedJupiterTest.class.getName() + "$InnerTest");
+		TestExecutionSummary summary = runSimulatest(innerClass);
+
+		assertNoFailures(summary);
+		assertTrue(summary.getTestsSucceededCount() >= 1,
+				"Selecting a @Nested class directly should resolve to its @UseEnvironment enclosing class");
+		assertTrue(EnvironmentTracker.getEvents().contains("FirstLevel"),
+				"Environment should be set up when running a @Nested class directly");
+	}
+
+	@Test
+	void containerFailureShouldBeReportedAsFailed() {
+		TestExecutionSummary summary = runSimulatest(FailingBeforeAllTest.class);
+
+		assertTrue(summary.getTestsFailedCount() > 0 || summary.getContainersFailedCount() > 0,
+				"A @BeforeAll failure should surface as a failure, not be silently swallowed");
 	}
 
 	// --- helpers ---

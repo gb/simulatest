@@ -119,7 +119,7 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 
 		@Override
 		public void executionFinished(TestIdentifier identifier, TestExecutionResult result) {
-			if (identifier.isTest()) {
+			if (identifier.isTest() || result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
 				results.add(new CapturedResult(
 						identifier.getDisplayName(),
 						identifier.getSource().orElse(null),

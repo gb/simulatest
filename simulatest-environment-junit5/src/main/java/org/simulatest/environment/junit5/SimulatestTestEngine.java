@@ -106,9 +106,9 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		Set<Class<?>> testClasses = new LinkedHashSet<>();
 
 		for (ClassSelector selector : request.getSelectorsByType(ClassSelector.class)) {
-			Class<?> clazz = selector.getJavaClass();
-			if (clazz.isAnnotationPresent(UseEnvironment.class)) {
-				testClasses.add(clazz);
+			Class<?> resolved = resolveUseEnvironmentClass(selector.getJavaClass());
+			if (resolved != null) {
+				testClasses.add(resolved);
 			}
 		}
 
@@ -121,6 +121,13 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		}
 
 		return testClasses;
+	}
+
+	private static Class<?> resolveUseEnvironmentClass(Class<?> clazz) {
+		for (Class<?> c = clazz; c != null; c = c.getEnclosingClass()) {
+			if (c.isAnnotationPresent(UseEnvironment.class)) return c;
+		}
+		return null;
 	}
 
 	private Set<Class<?>> scanClasspathRoot(ClasspathRootSelector selector) {
