@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at LEVEL 4 — full catalog + 8 members. Loans don't exist yet. */
 @UseEnvironment(MembersEnvironment.class)
-public class MemberTest {
+class MemberTest {
 
 	static { LibraryTestSetup.init(); }
 

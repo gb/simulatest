@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * books, members, and loans are invisible (rolled back automatically).
  */
 @UseEnvironment(StaffEnvironment.class)
-public class StaffTest {
+class StaffTest {
 
 	static { LibraryTestSetup.init(); }
 

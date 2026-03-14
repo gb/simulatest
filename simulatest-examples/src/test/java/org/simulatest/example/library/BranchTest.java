@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at LEVEL 2 — reference data + 3 branches. */
 @UseEnvironment(BranchesEnvironment.class)
-public class BranchTest {
+class BranchTest {
 
 	static { LibraryTestSetup.init(); }
 

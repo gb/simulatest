@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at LEVEL 5 (leaf) — everything exists: 5 loans, 2 holds, the full library. */
 @UseEnvironment(LoansEnvironment.class)
-public class LoanTest {
+class LoanTest {
 
 	static { LibraryTestSetup.init(); }
 

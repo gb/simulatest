@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at the ROOT level — only genres and member types exist. */
 @UseEnvironment(ReferenceDataEnvironment.class)
-public class ReferenceDataTest {
+class ReferenceDataTest {
 
 	static { LibraryTestSetup.init(); }
 

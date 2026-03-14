@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at LEVEL 3a — reference data + branches + 10 books + 18 copies. */
 @UseEnvironment(CatalogEnvironment.class)
-public class CatalogTest {
+class CatalogTest {
 
 	static { LibraryTestSetup.init(); }
 
