@@ -28,7 +28,7 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 		}
 
 		Class<?> testClass = resolveTestClass(descriptor);
-		if (testClass != null && testClass.isAnnotationPresent(UseEnvironment.class)) {
+		if (testClass != null && hasUseEnvironment(testClass)) {
 			return FilterResult.excluded("@UseEnvironment class is run by the Simulatest engine");
 		}
 
@@ -48,6 +48,13 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 			}
 		}
 		return null;
+	}
+
+	private static boolean hasUseEnvironment(Class<?> clazz) {
+		for (Class<?> c = clazz; c != null; c = c.getEnclosingClass()) {
+			if (c.isAnnotationPresent(UseEnvironment.class)) return true;
+		}
+		return false;
 	}
 
 	private static boolean isExternalEngine(TestDescriptor descriptor) {

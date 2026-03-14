@@ -1,7 +1,5 @@
 package org.simulatest.environment.junit5;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,9 +18,8 @@ import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentRaker;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
-import org.simulatest.environment.junit5.descriptor.ClassTestDescriptor;
 import org.simulatest.environment.junit5.descriptor.EnvironmentTestDescriptor;
-import org.simulatest.environment.junit5.descriptor.MethodTestDescriptor;
+import org.simulatest.environment.junit5.descriptor.JupiterDelegatingClassDescriptor;
 import org.simulatest.environment.tree.Tree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,13 +98,7 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 	private void addTestClassDescriptors(EnvironmentTestDescriptor envDesc, List<Class<?>> testClasses) {
 		for (Class<?> testClass : testClasses) {
 			UniqueId classId = envDesc.getUniqueId().append("class", testClass.getName());
-			ClassTestDescriptor classDesc = new ClassTestDescriptor(classId, testClass);
-			envDesc.addChild(classDesc);
-
-			for (Method method : findTestMethods(testClass)) {
-				UniqueId methodId = classId.append("method", method.getName());
-				classDesc.addChild(new MethodTestDescriptor(methodId, testClass, method));
-			}
+			envDesc.addChild(new JupiterDelegatingClassDescriptor(classId, testClass));
 		}
 	}
 
@@ -115,9 +106,9 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		Set<Class<?>> testClasses = new LinkedHashSet<>();
 
 		for (ClassSelector selector : request.getSelectorsByType(ClassSelector.class)) {
-			Class<?> clazz = selector.getJavaClass();
-			if (clazz.isAnnotationPresent(UseEnvironment.class)) {
-				testClasses.add(clazz);
+			Class<?> resolved = resolveUseEnvironmentClass(selector.getJavaClass());
+			if (resolved != null) {
+				testClasses.add(resolved);
 			}
 		}
 
@@ -130,6 +121,13 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		}
 
 		return testClasses;
+	}
+
+	private static Class<?> resolveUseEnvironmentClass(Class<?> clazz) {
+		for (Class<?> c = clazz; c != null; c = c.getEnclosingClass()) {
+			if (c.isAnnotationPresent(UseEnvironment.class)) return c;
+		}
+		return null;
 	}
 
 	private Set<Class<?>> scanClasspathRoot(ClasspathRootSelector selector) {
@@ -166,16 +164,6 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 			}
 		}
 		return result;
-	}
-
-	private List<Method> findTestMethods(Class<?> testClass) {
-		List<Method> testMethods = new ArrayList<>();
-		for (Method method : testClass.getDeclaredMethods()) {
-			if (method.isAnnotationPresent(org.junit.jupiter.api.Test.class)) {
-				testMethods.add(method);
-			}
-		}
-		return testMethods;
 	}
 
 }
