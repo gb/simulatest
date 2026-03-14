@@ -3,15 +3,12 @@ package org.simulatest.example.library;
 import org.junit.jupiter.api.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.CatalogEnvironment;
-import org.simulatest.example.library.util.LibraryTestSetup;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at LEVEL 3a — reference data + branches + 10 books + 18 copies. */
 @UseEnvironment(CatalogEnvironment.class)
 class CatalogTest {
-
-	static { LibraryTestSetup.init(); }
 
 	// --- Book catalog ---
 

@@ -3,15 +3,12 @@ package org.simulatest.example.library;
 import org.junit.jupiter.api.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.ReferenceDataEnvironment;
-import org.simulatest.example.library.util.LibraryTestSetup;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at the ROOT level — only genres and member types exist. */
 @UseEnvironment(ReferenceDataEnvironment.class)
 class ReferenceDataTest {
-
-	static { LibraryTestSetup.init(); }
 
 	// --- Genres ---
 

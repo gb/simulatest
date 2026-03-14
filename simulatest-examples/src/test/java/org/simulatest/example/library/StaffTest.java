@@ -3,8 +3,6 @@ package org.simulatest.example.library;
 import org.junit.jupiter.api.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.StaffEnvironment;
-import org.simulatest.example.library.util.LibraryTestSetup;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -13,8 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @UseEnvironment(StaffEnvironment.class)
 class StaffTest {
-
-	static { LibraryTestSetup.init(); }
 
 	// --- Staff operations ---
 
