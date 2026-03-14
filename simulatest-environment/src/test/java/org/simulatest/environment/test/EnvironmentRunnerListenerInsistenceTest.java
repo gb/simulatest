@@ -77,12 +77,12 @@ public class EnvironmentRunnerListenerInsistenceTest {
 			// DummyEnvironment throws during run()
 		}
 
-		// BigBang fires afterRun → increaseLevel, then DummyEnvironment fails
-		// before its afterRun fires. The listener should have received
-		// increaseLevel from BigBang's afterRun but no matching decreaseLevel,
-		// demonstrating that the caller (EnvironmentDatabaseRunner) must handle cleanup.
-		verify(insistenceLayerManager, times(1)).increaseLevel();
-		verify(insistenceLayerManager, never()).decreaseLevel();
+		// Even though DummyEnvironment fails, afterRun fires for both BigBang
+		// and DummyEnvironment (increaseLevel x2), and afterChildrenRun fires
+		// during cleanup for both (decreaseLevel x2). The checkpoint stack
+		// is fully unwound by the runner's exception safety.
+		verify(insistenceLayerManager, times(2)).increaseLevel();
+		verify(insistenceLayerManager, times(2)).decreaseLevel();
 	}
 
 }

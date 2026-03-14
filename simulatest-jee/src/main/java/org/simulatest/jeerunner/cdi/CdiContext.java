@@ -39,8 +39,11 @@ public class CdiContext implements DependencyInjectionContext {
 	@Override
 	public void destroy() {
 		if (container != null && container.isRunning()) {
-			container.close();
-			container = null;
+			try {
+				container.close();
+			} finally {
+				container = null;
+			}
 		}
 	}
 

@@ -2,12 +2,17 @@ package org.simulatest.environment.environment;
 
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Generic {@link SimulatestPlugin} that delegates everything to a
  * {@link DependencyInjectionContext}. DI modules subclass this with
  * a one-liner constructor — no per-module factory class needed.
  */
 public class DependencyInjectionPlugin implements SimulatestPlugin {
+
+	private static final Logger logger = LoggerFactory.getLogger(DependencyInjectionPlugin.class);
 
 	private final DependencyInjectionContext context;
 
@@ -35,6 +40,8 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 		try {
 			return context.getInstance(testClass);
 		} catch (Exception e) {
+			logger.debug("DI context could not create instance of {}, falling back to default construction",
+					testClass.getName(), e);
 			return null;
 		}
 	}

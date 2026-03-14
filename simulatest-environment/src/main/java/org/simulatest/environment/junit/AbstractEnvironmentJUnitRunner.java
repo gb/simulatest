@@ -14,6 +14,7 @@ import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.environment.environment.SimulatestPlugins;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
+import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.Tree;
 
 public abstract class AbstractEnvironmentJUnitRunner extends Runner {
@@ -129,7 +130,8 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 			try {
 				Class.forName(testClass.getName(), true, testClass.getClassLoader());
 			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
+				throw new EnvironmentInstantiationException(
+						"Failed to initialize test class: " + testClass.getName(), e);
 			}
 		}
 	}

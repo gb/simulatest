@@ -43,32 +43,38 @@ public class EnvironmentRunner {
 	}
 	
 	private void fireBeforeRun(EnvironmentDefinition definition) {
-		fireEvent(definition, EnvironmentRunnerListener::beforeRun);
+		fireEvent(definition, "beforeRun", EnvironmentRunnerListener::beforeRun);
 	}
 
 	private void fireAfterRun(EnvironmentDefinition definition) {
-		fireEvent(definition, EnvironmentRunnerListener::afterRun);
+		fireEvent(definition, "afterRun", EnvironmentRunnerListener::afterRun);
 	}
 
 	private void fireAfterChildrenRun(EnvironmentDefinition definition) {
-		fireEvent(definition, EnvironmentRunnerListener::afterChildrenRun);
+		fireEvent(definition, "afterChildrenRun", EnvironmentRunnerListener::afterChildrenRun);
 	}
 
 	private void fireAfterSiblingCleanup(EnvironmentDefinition definition) {
-		fireEvent(definition, EnvironmentRunnerListener::afterSiblingCleanup);
+		fireEvent(definition, "afterSiblingCleanup", EnvironmentRunnerListener::afterSiblingCleanup);
 	}
 
-	private void fireEvent(EnvironmentDefinition definition, ListenerAction action) {
+	private void fireEvent(EnvironmentDefinition definition, String eventName, ListenerAction action) {
 		RuntimeException firstException = null;
 		for (EnvironmentRunnerListener listener : listeners) {
 			try {
 				action.execute(listener, definition);
 			} catch (RuntimeException exception) {
-				logger.error("Listener {} threw exception", listener.getClass().getName(), exception);
+				logger.error("Listener {} failed during {} for environment '{}'",
+						listener.getClass().getSimpleName(), eventName, definition.getName(), exception);
 				if (firstException == null) firstException = exception;
+				else firstException.addSuppressed(exception);
 			}
 		}
-		if (firstException != null) throw firstException;
+		if (firstException != null) {
+			throw new EnvironmentExecutionException(
+					"Failed during " + eventName + " for environment '" + definition.getName() + "'",
+					firstException);
+		}
 	}
 
 	@FunctionalInterface
@@ -81,39 +87,84 @@ public class EnvironmentRunner {
 	}
 	
 	private void run(Node<EnvironmentDefinition> node) {
-		runEnvironment(node.getValue());
-		executeAfterEnvironment(node);
+		RuntimeException failure = null;
+		try {
+			runEnvironment(node.getValue());
+		} catch (RuntimeException e) {
+			failure = e;
+		}
+		try {
+			executeAfterEnvironment(node);
+		} catch (RuntimeException e) {
+			if (failure != null) failure.addSuppressed(e);
+			else failure = e;
+		}
+		if (failure != null) throw failure;
 	}
 
 	private void executeAfterEnvironment(Node<EnvironmentDefinition> node) {
 		if (!node.getChildren().isEmpty()) return;
-		fireAfterChildrenRun(node.getValue());
-		if (node.isLastChild()) fireAfterChildrenRunForParent(node.getParent());
-		else if (node.hasParent()) fireAfterSiblingCleanup(node.getParentValue());
+		RuntimeException failure = null;
+		try {
+			fireAfterChildrenRun(node.getValue());
+		} catch (RuntimeException e) {
+			failure = e;
+		}
+		try {
+			if (node.isLastChild()) fireAfterChildrenRunForParent(node.getParent());
+			else if (node.hasParent()) fireAfterSiblingCleanup(node.getParentValue());
+		} catch (RuntimeException e) {
+			if (failure != null) failure.addSuppressed(e);
+			else failure = e;
+		}
+		if (failure != null) throw failure;
 	}
 
 	private void runEnvironment(EnvironmentDefinition definition) {
 		logger.info("[Run Environment] >> {}", definition.getName());
-		
+
 		fireBeforeRun(definition);
-		if (!definition.equals(EnvironmentDefinition.bigBang())) executeEnvironment(definition);
-		fireAfterRun(definition);
+		RuntimeException failure = null;
+		try {
+			if (!definition.equals(EnvironmentDefinition.bigBang())) executeEnvironment(definition);
+		} catch (RuntimeException e) {
+			failure = e;
+		}
+		try {
+			fireAfterRun(definition);
+		} catch (RuntimeException e) {
+			if (failure != null) failure.addSuppressed(e);
+			else failure = e;
+		}
+		if (failure != null) throw failure;
 	}
 
 	protected void executeEnvironment(EnvironmentDefinition definition) {
 		try {
 			factory.create(definition).run();
 		} catch (Exception exception) {
-			String message = "Error in execution of Environment: " + definition.getName();
-			throw new EnvironmentExecutionException(message, exception);
+			throw new EnvironmentExecutionException(
+					"Failed during run for environment '" + definition.getName() + "'", exception);
 		}
 	}
 	
 	private void fireAfterChildrenRunForParent(Node<EnvironmentDefinition> parent) {
-		fireAfterChildrenRun(parent.getValue());
-		if (!parent.hasParent()) return;
-		if (parent.isLastChild()) fireAfterChildrenRunForParent(parent.getParent());
-		else fireAfterSiblingCleanup(parent.getParentValue());
+		RuntimeException failure = null;
+		try {
+			fireAfterChildrenRun(parent.getValue());
+		} catch (RuntimeException e) {
+			failure = e;
+		}
+		if (parent.hasParent()) {
+			try {
+				if (parent.isLastChild()) fireAfterChildrenRunForParent(parent.getParent());
+				else fireAfterSiblingCleanup(parent.getParentValue());
+			} catch (RuntimeException e) {
+				if (failure != null) failure.addSuppressed(e);
+				else failure = e;
+			}
+		}
+		if (failure != null) throw failure;
 	}
 
 }

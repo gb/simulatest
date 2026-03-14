@@ -109,7 +109,9 @@ public class EnvironmentRunnerTest {
 			runner.run();
 			fail("should propagate the listener exception");
 		} catch (RuntimeException exception) {
-			assertEquals("listener failure", exception.getMessage());
+			assertEquals("Failed during afterRun for environment 'BigBangEnvironment'",
+					exception.getMessage());
+			assertEquals("listener failure", exception.getCause().getMessage());
 		}
 
 		assertTrue("second listener should have received afterRun despite first listener throwing",
@@ -161,7 +163,7 @@ public class EnvironmentRunnerTest {
 			runner.run();
 			fail("should throw an EnvironmentExecutionException");
 		} catch (EnvironmentExecutionException exception) {
-			String expectedMessage = "Error in execution of Environment: DummyEnvironment";
+			String expectedMessage = "Failed during run for environment 'DummyEnvironment'";
 			assertEquals(expectedMessage, exception.getMessage());
 		}
 	}

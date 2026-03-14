@@ -38,8 +38,11 @@ public class SpringContext implements DependencyInjectionContext {
 	@Override
 	public void destroy() {
 		if (context != null) {
-			context.close();
-			context = null;
+			try {
+				context.close();
+			} finally {
+				context = null;
+			}
 		}
 	}
 
