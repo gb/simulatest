@@ -10,7 +10,7 @@ public class TestSetup {
 	public static synchronized void configure() {
 		if (!initialized) {
 			JdbcDataSource h2 = new JdbcDataSource();
-			h2.setURL("jdbc:h2:~/.h2/test");
+			h2.setURL("jdbc:h2:mem:envtest;DB_CLOSE_DELAY=-1");
 			h2.setUser("sa");
 			InsistenceLayerDataSource.configure(h2);
 			initialized = true;

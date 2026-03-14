@@ -23,7 +23,7 @@ public class InsistenceLayerDataSourceTest {
 	@Test
 	public void shouldGetANonNullableConnection() throws SQLException {
 		JdbcDataSource h2 = new JdbcDataSource();
-		h2.setURL("jdbc:h2:~/.h2/test");
+		h2.setURL("jdbc:h2:mem:datasourcetest;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
 
 		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(h2);
@@ -33,7 +33,7 @@ public class InsistenceLayerDataSourceTest {
 	@Test
 	public void shouldReturnConnectionWrapperAfterConfigure() throws SQLException {
 		JdbcDataSource h2 = new JdbcDataSource();
-		h2.setURL("jdbc:h2:~/.h2/test");
+		h2.setURL("jdbc:h2:mem:datasourcetest;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
 
 		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(h2);

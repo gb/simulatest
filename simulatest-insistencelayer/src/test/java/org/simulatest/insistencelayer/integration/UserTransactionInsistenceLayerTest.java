@@ -30,7 +30,7 @@ public class UserTransactionInsistenceLayerTest {
 	@Before
 	public void setup() throws Exception {
 		JdbcDataSource h2 = new JdbcDataSource();
-		h2.setURL("jdbc:h2:~/.h2/test");
+		h2.setURL("jdbc:h2:mem:usertxtest;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
 
 		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(h2);
