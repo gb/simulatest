@@ -19,6 +19,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
+import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
@@ -51,50 +52,24 @@ class SimulatestTestEngineTest {
 
 	@Test
 	void engineShouldDiscoverAndRunTestsInEnvironmentOrder() {
-		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(
-						DiscoverySelectors.selectClass(FirstLevelTest.class),
-						DiscoverySelectors.selectClass(AnotherFirstLevelTest.class),
-						DiscoverySelectors.selectClass(SecondLevelTest.class))
-				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
-				.build();
+		TestExecutionSummary summary = runSimulatest(
+				FirstLevelTest.class, AnotherFirstLevelTest.class, SecondLevelTest.class);
 
-		SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
-		Launcher launcher = LauncherFactory.create();
-		launcher.execute(request, summaryListener);
-
-		TestExecutionSummary summary = summaryListener.getSummary();
-
-		if (!summary.getFailures().isEmpty()) {
-			summary.getFailures().forEach(f ->
-				System.err.println(f.getTestIdentifier().getDisplayName() + ": " + f.getException()));
-		}
-
-		assertEquals(0, summary.getTestsFailedCount(),
-				"All tests should pass");
+		assertNoFailures(summary);
 		assertEquals(4, summary.getTestsSucceededCount(),
 				"Should run 4 test methods total (2 FirstLevelTest + 1 AnotherFirstLevelTest + 1 SecondLevelTest)");
 	}
 
 	@Test
 	void engineShouldReturnEmptyDescriptorForNonSimulatestClasses() {
-		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(DiscoverySelectors.selectClass(SimulatestTestEngineTest.class))
-				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
-				.build();
+		TestExecutionSummary summary = runSimulatest(SimulatestTestEngineTest.class);
 
-		SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
-		Launcher launcher = LauncherFactory.create();
-		launcher.execute(request, summaryListener);
-
-		TestExecutionSummary summary = summaryListener.getSummary();
 		assertEquals(0, summary.getTestsStartedCount(),
 				"No tests should be found for non-@UseEnvironment class");
 	}
 
 	@Test
 	void postDiscoveryFilterShouldExcludeUseEnvironmentFromJupiter() {
-		// Register filter explicitly in the request
 		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
 				.selectors(
 						DiscoverySelectors.selectClass(FirstLevelTest.class),
@@ -102,8 +77,7 @@ class SimulatestTestEngineTest {
 				.filters(new org.simulatest.environment.junit5.SimulatestPostDiscoveryFilter())
 				.build();
 
-		Launcher launcher = LauncherFactory.create();
-		TestPlan testPlan = launcher.discover(request);
+		TestPlan testPlan = LauncherFactory.create().discover(request);
 
 		for (TestIdentifier root : testPlan.getRoots()) {
 			if (root.getDisplayName().contains("Jupiter")) {
@@ -116,39 +90,76 @@ class SimulatestTestEngineTest {
 
 	@Test
 	void classesWithSameEnvironmentShouldBeGroupedUnderOneNode() {
-		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(
-						DiscoverySelectors.selectClass(FirstLevelTest.class),
-						DiscoverySelectors.selectClass(AnotherFirstLevelTest.class),
-						DiscoverySelectors.selectClass(SecondLevelTest.class))
-				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
-				.build();
+		LauncherDiscoveryRequest request = simulatestRequest(
+				FirstLevelTest.class, AnotherFirstLevelTest.class, SecondLevelTest.class);
 
-		Launcher launcher = LauncherFactory.create();
-		TestPlan testPlan = launcher.discover(request);
+		TestPlan testPlan = LauncherFactory.create().discover(request);
 
-		// Find the Simulatest engine root
 		TestIdentifier engineRoot = testPlan.getRoots().stream()
 				.filter(r -> r.getDisplayName().equals("Simulatest"))
 				.findFirst().orElseThrow();
 
-		// Print tree for diagnosis
 		printTree(testPlan, engineRoot, "");
 
-		// Count how many children have "FirstLevelEnvironment" in their display name
 		long firstLevelEnvCount = countDescendantsWithName(testPlan, engineRoot, "FirstLevelEnvironment");
 		assertEquals(1, firstLevelEnvCount,
 				"FirstLevelEnvironment should appear exactly once in the tree, " +
 				"grouping both FirstLevelTest and AnotherFirstLevelTest");
 
-		// Verify both test classes are under FirstLevelEnvironment
-		SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
-		LauncherFactory.create().execute(request, summaryListener);
+		TestExecutionSummary summary = runSimulatest(
+				FirstLevelTest.class, AnotherFirstLevelTest.class, SecondLevelTest.class);
 
-		TestExecutionSummary summary = summaryListener.getSummary();
-		assertEquals(0, summary.getTestsFailedCount(), "All tests should pass");
+		assertNoFailures(summary);
 		assertEquals(4, summary.getTestsSucceededCount(),
 				"Should run 4 methods (2 FirstLevelTest + 1 AnotherFirstLevelTest + 1 SecondLevelTest)");
+	}
+
+	@Test
+	void shouldDelegateAllJupiterTestTypesToJupiter() {
+		TestExecutionSummary summary = runSimulatest(AdvancedJupiterTest.class);
+
+		assertNoFailures(summary);
+		// 3 @ParameterizedTest + 3 @RepeatedTest + 2 @TestFactory + 1 @Nested = 9
+		assertEquals(9, summary.getTestsSucceededCount(),
+				"Should run all parameterized, repeated, dynamic, and nested tests");
+	}
+
+	@Test
+	void engineShouldExecuteEnvironmentsInTreeOrder() {
+		TestExecutionSummary summary = runSimulatest(SecondLevelTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(1, summary.getTestsSucceededCount());
+
+		assertTrue(EnvironmentTracker.getEvents().indexOf("FirstLevel")
+				< EnvironmentTracker.getEvents().indexOf("SecondLevel"),
+				"FirstLevel should run before SecondLevel");
+	}
+
+	// --- helpers ---
+
+	private static LauncherDiscoveryRequest simulatestRequest(Class<?>... testClasses) {
+		return LauncherDiscoveryRequestBuilder.request()
+				.selectors(DiscoverySelectors.selectClasspathRoots(java.util.Set.of()))
+				.selectors(java.util.Arrays.stream(testClasses)
+						.map(DiscoverySelectors::selectClass)
+						.toList())
+				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
+				.build();
+	}
+
+	private static TestExecutionSummary runSimulatest(Class<?>... testClasses) {
+		SummaryGeneratingListener listener = new SummaryGeneratingListener();
+		LauncherFactory.create().execute(simulatestRequest(testClasses), listener);
+		return listener.getSummary();
+	}
+
+	private static void assertNoFailures(TestExecutionSummary summary) {
+		if (!summary.getFailures().isEmpty()) {
+			summary.getFailures().forEach(f ->
+				System.err.println(f.getTestIdentifier().getDisplayName() + ": " + f.getException()));
+		}
+		assertEquals(0, summary.getTestsFailedCount(), "All tests should pass");
 	}
 
 	private void printTree(TestPlan testPlan, TestIdentifier node, String indent) {
@@ -165,27 +176,6 @@ class SimulatestTestEngineTest {
 			count += countDescendantsWithName(testPlan, child, name);
 		}
 		return count;
-	}
-
-	@Test
-	void engineShouldExecuteEnvironmentsInTreeOrder() {
-		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(DiscoverySelectors.selectClass(SecondLevelTest.class))
-				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
-				.build();
-
-		SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
-		Launcher launcher = LauncherFactory.create();
-		launcher.execute(request, summaryListener);
-
-		TestExecutionSummary summary = summaryListener.getSummary();
-		assertEquals(0, summary.getTestsFailedCount());
-		assertEquals(1, summary.getTestsSucceededCount());
-
-		// Verify environment execution order: parent before child
-		assertTrue(EnvironmentTracker.getEvents().indexOf("FirstLevel")
-				< EnvironmentTracker.getEvents().indexOf("SecondLevel"),
-				"FirstLevel should run before SecondLevel");
 	}
 
 }

@@ -11,6 +11,8 @@ public class SimulatestExecutionContext implements EngineExecutionContext {
 
 	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null, null, List.of());
 
+	private static final ThreadLocal<SimulatestExecutionContext> CURRENT = new ThreadLocal<>();
+
 	private final InsistenceLayerManager insistenceLayer;
 	private final EnvironmentFactory factory;
 	private final List<SimulatestPlugin> plugins;
@@ -32,6 +34,18 @@ public class SimulatestExecutionContext implements EngineExecutionContext {
 
 	public List<SimulatestPlugin> plugins() {
 		return plugins;
+	}
+
+	public static SimulatestExecutionContext getCurrent() {
+		return CURRENT.get();
+	}
+
+	public static void setCurrent(SimulatestExecutionContext context) {
+		CURRENT.set(context);
+	}
+
+	public static void clearCurrent() {
+		CURRENT.remove();
 	}
 
 }
