@@ -5,6 +5,9 @@ import java.util.Set;
 
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.Filterable;
+import org.junit.runner.manipulation.NoTestsRemainException;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.environment.EnvironmentDatabaseRunner;
@@ -17,7 +20,7 @@ import org.simulatest.environment.environment.listener.EnvironmentRunnerListener
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.Tree;
 
-public abstract class AbstractEnvironmentJUnitRunner extends Runner {
+public abstract class AbstractEnvironmentJUnitRunner extends Runner implements Filterable {
 
 	private final EnvironmentGrouperTests environmentGrouperTests;
 	private final List<SimulatestPlugin> plugins;
@@ -123,6 +126,16 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner {
 
 	public void resetInsistenceLevel() {
 		environmentRunner.insistenceLayer().resetCurrentLevel();
+	}
+
+	@Override
+	public void filter(Filter filter) throws NoTestsRemainException {
+		for (Class<?> testCase : environmentGrouperTests.getTestClasses()) {
+			Runner runner = environmentGrouperTests.get(testCase);
+			if (runner instanceof Filterable filterable) {
+				filterable.filter(filter);
+			}
+		}
 	}
 
 	private void initializeTestClasses() {
