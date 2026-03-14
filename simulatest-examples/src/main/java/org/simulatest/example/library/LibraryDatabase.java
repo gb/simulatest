@@ -114,7 +114,7 @@ public class LibraryDatabase {
 				);
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Failed to create library schema", e);
+			throw new LibraryDatabaseException("Failed to create library schema", e);
 		}
 	}
 
@@ -123,7 +123,7 @@ public class LibraryDatabase {
 		try (Statement stmt = getConnection().createStatement()) {
 			stmt.execute(sql);
 		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			throw new LibraryDatabaseException("Failed to execute statement", e);
 		}
 	}
 
@@ -140,7 +140,7 @@ public class LibraryDatabase {
 			 ResultSet rs = stmt.executeQuery(sql)) {
 			return rs.next();
 		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			throw new LibraryDatabaseException("Query failed: " + sql, e);
 		}
 	}
 
@@ -155,11 +155,11 @@ public class LibraryDatabase {
 		try (Statement stmt = getConnection().createStatement();
 			 ResultSet rs = stmt.executeQuery(sql)) {
 			if (!rs.next()) {
-				throw new RuntimeException("Query returned no rows: " + sql);
+				throw new LibraryDatabaseException("Query returned no rows: " + sql, null);
 			}
 			return mapper.map(rs);
 		} catch (SQLException e) {
-			throw new RuntimeException(e);
+			throw new LibraryDatabaseException("Query failed: " + sql, e);
 		}
 	}
 
