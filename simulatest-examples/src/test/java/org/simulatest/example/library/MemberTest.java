@@ -3,15 +3,12 @@ package org.simulatest.example.library;
 import org.junit.jupiter.api.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.MembersEnvironment;
-import org.simulatest.example.library.util.LibraryTestSetup;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at LEVEL 4 — full catalog + 8 members. Loans don't exist yet. */
 @UseEnvironment(MembersEnvironment.class)
 class MemberTest {
-
-	static { LibraryTestSetup.init(); }
 
 	// --- Member operations ---
 

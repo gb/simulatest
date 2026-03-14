@@ -3,15 +3,12 @@ package org.simulatest.example.library;
 import org.junit.jupiter.api.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.BranchesEnvironment;
-import org.simulatest.example.library.util.LibraryTestSetup;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Tests at LEVEL 2 — reference data + 3 branches. */
 @UseEnvironment(BranchesEnvironment.class)
 class BranchTest {
-
-	static { LibraryTestSetup.init(); }
 
 	// --- Branch operations ---
 
