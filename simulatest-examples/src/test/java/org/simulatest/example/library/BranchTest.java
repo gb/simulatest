@@ -54,7 +54,7 @@ class BranchTest {
 
 		assertEquals("999 New Street", LibraryDatabase.queryString(
 			"SELECT address FROM branch WHERE id = 2"));
-		assertNotEquals(oldAddress, "999 New Street");
+		assertNotEquals("999 New Street", oldAddress);
 	}
 
 	@Test
