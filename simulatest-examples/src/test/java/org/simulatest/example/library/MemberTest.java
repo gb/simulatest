@@ -1,16 +1,26 @@
 package org.simulatest.example.library;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.MembersEnvironment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests at LEVEL 4 — full catalog + 8 members. Loans don't exist yet. */
+/**
+ * Tests at LEVEL 4 — full catalog + 8 members. Loans don't exist yet.
+ *
+ * <p>Members are the most FK-entangled entity: they reference member_type
+ * AND branch, and are themselves referenced by loan and hold.
+ * This level is where constraint enforcement tests really matter.
+ */
 @UseEnvironment(MembersEnvironment.class)
 class MemberTest {
 
-	// --- Member operations ---
+	// =========================================================================
+	// Member CRUD
+	// =========================================================================
 
 	@Test
 	void eightMembersRegistered() {
@@ -108,7 +118,6 @@ class MemberTest {
 		assertEquals(6, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member"));
 		assertEquals(0, LibraryDatabase.queryInt(
 			"SELECT COUNT(*) FROM member WHERE member_type_id = 3"));
-		// Regular and Premium unchanged
 		assertEquals(3, LibraryDatabase.queryInt(
 			"SELECT COUNT(*) FROM member WHERE member_type_id = 1"));
 		assertEquals(3, LibraryDatabase.queryInt(
@@ -132,27 +141,47 @@ class MemberTest {
 		assertEquals(total, unique);
 	}
 
-	// --- Constraint enforcement ---
+	// =========================================================================
+	// Same-row isolation — upgradeMembership changes Alice from Regular to
+	// Premium, updateEmail changes Bob's email. These value-level checks
+	// catch leaks that count-based tests would miss.
+	// =========================================================================
 
 	@Test
-	void duplicateEmailIsRejected() {
+	void aliceIsStillRegular() {
+		assertEquals(1, LibraryDatabase.queryInt(
+			"SELECT member_type_id FROM member WHERE id = 1"));
+	}
+
+	@Test
+	void bobsEmailIsStillOriginal() {
+		assertEquals("bob@email.com", LibraryDatabase.queryString(
+			"SELECT email FROM member WHERE id = 2"));
+	}
+
+	// =========================================================================
+	// Constraint enforcement — failed mutations must not corrupt state.
+	// Each test verifies the count is unchanged after the exception,
+	// proving the savepoint survived the failed statement.
+	// =========================================================================
+
+	@ParameterizedTest(name = "rejected: {0}")
+	@CsvSource({
+		"duplicate email,   9, Fake Alice,  alice@email.com,     1,  1",
+		"invalid branch,    9, Nowhere Man, nowhere@email.com,   1, 99",
+		"invalid type,      9, Bad Type,    badtype@email.com,  99,  1"
+	})
+	void invalidInsertIsRejected(String reason, int id, String name, String email, int typeId, int branchId) {
 		assertThrows(RuntimeException.class, () ->
 			LibraryDatabase.execute(
-				"INSERT INTO member VALUES (9, 'Fake Alice', 'alice@email.com', 1, 1)"));
+				"INSERT INTO member VALUES (" + id + ", '" + name + "', '" + email + "', " + typeId + ", " + branchId + ")"));
 
 		assertEquals(8, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member"));
 	}
 
-	@Test
-	void invalidBranchIsRejected() {
-		assertThrows(RuntimeException.class, () ->
-			LibraryDatabase.execute(
-				"INSERT INTO member VALUES (9, 'Nowhere Man', 'nowhere@email.com', 1, 99)"));
-
-		assertEquals(8, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member"));
-	}
-
-	// --- Tree visibility ---
+	// =========================================================================
+	// Tree visibility
+	// =========================================================================
 
 	@Test
 	void parentCatalogDataVisible() {

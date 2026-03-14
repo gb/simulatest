@@ -6,11 +6,21 @@ import org.simulatest.example.library.environment.LoansEnvironment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests at LEVEL 5 (leaf) — everything exists: 5 loans, 2 holds, the full library. */
+/**
+ * Tests at LEVEL 5 (leaf) — everything exists: 5 active loans, 2 holds,
+ * the full library.
+ *
+ * <p>This is the deepest and richest level. It exercises the most complex
+ * scenarios: multi-table workflows, cross-table FK constraints, and overdue
+ * detection. Every test mutates state aggressively, and the isolation checks
+ * verify that NONE of it leaks to peers.
+ */
 @UseEnvironment(LoansEnvironment.class)
 class LoanTest {
 
-	// --- Loan operations ---
+	// =========================================================================
+	// Loan operations — CRUD
+	// =========================================================================
 
 	@Test
 	void fiveActiveLoans() {
@@ -78,22 +88,50 @@ class LoanTest {
 			"SELECT COUNT(*) FROM book_copy WHERE status = 'AVAILABLE'"));
 	}
 
+	// =========================================================================
+	// Isolation — verify that destructive loan tests didn't leak.
+	// =========================================================================
+
 	@Test
 	void aliceStillHasTwoActiveLoans() {
-		// If deleteAllLoans or returnBook leaked, this fails
+		// Guards against deleteAllLoans and returnBook leaking.
 		assertEquals(2, LibraryDatabase.queryInt(
 			"SELECT COUNT(*) FROM loan WHERE member_id = 1 AND return_date IS NULL"));
 	}
 
 	@Test
-	void bobsLoanIsStillOverdue() {
-		// If returnOverdueBook leaked, this fails
-		assertTrue(LibraryDatabase.queryExists(
-			"SELECT 1 FROM loan " +
-			"WHERE member_id = 2 AND due_date < CURRENT_DATE AND return_date IS NULL"));
+	void loanTwoIsExactlyBobsOverdueLoan() {
+		// Guards against returnOverdueBook leaking. Checks specific loan ID,
+		// member, and copy — more precise than just "some overdue loan exists".
+		assertEquals(2, LibraryDatabase.queryInt(
+			"SELECT member_id FROM loan WHERE id = 2"));
+		assertEquals(5, LibraryDatabase.queryInt(
+			"SELECT book_copy_id FROM loan WHERE id = 2"));
+		assertNull(LibraryDatabase.queryString(
+			"SELECT CAST(return_date AS VARCHAR) FROM loan WHERE id = 2"));
 	}
 
-	// --- Hold operations ---
+	// =========================================================================
+	// Same-row isolation — returnBook changes copy 1 to AVAILABLE,
+	// checkoutNewBook changes copy 3 to CHECKED_OUT. These verify the exact
+	// copy that was mutated is back to its original status.
+	// =========================================================================
+
+	@Test
+	void copyOneIsStillCheckedOut() {
+		assertEquals("CHECKED_OUT", LibraryDatabase.queryString(
+			"SELECT status FROM book_copy WHERE id = 1"));
+	}
+
+	@Test
+	void copyThreeIsStillAvailable() {
+		assertEquals("AVAILABLE", LibraryDatabase.queryString(
+			"SELECT status FROM book_copy WHERE id = 3"));
+	}
+
+	// =========================================================================
+	// Hold operations
+	// =========================================================================
 
 	@Test
 	void twoActiveHolds() {
@@ -137,7 +175,16 @@ class LoanTest {
 		assertFalse(LibraryDatabase.queryExists("SELECT 1 FROM hold WHERE id = 2"));
 	}
 
-	// --- Copy status ---
+	@Test
+	void holdOneIsStillActive() {
+		// cancelHold changes hold 1 to CANCELLED. If that leaked, this fails.
+		assertEquals("ACTIVE", LibraryDatabase.queryString(
+			"SELECT status FROM hold WHERE id = 1"));
+	}
+
+	// =========================================================================
+	// Copy status distribution
+	// =========================================================================
 
 	@Test
 	void fiveCopiesCheckedOutThirteenAvailable() {
@@ -161,7 +208,11 @@ class LoanTest {
 			"SELECT COUNT(*) FROM book_copy WHERE status = 'CHECKED_OUT'"));
 	}
 
-	// --- Multi-step workflows ---
+	// =========================================================================
+	// Multi-step workflows — fullCheckoutWorkflow touches loan, book_copy,
+	// and hold in a single test. fullWorkflowLeftNoTrace verifies that ALL
+	// THREE tables are clean afterward — proving multi-table atomicity.
+	// =========================================================================
 
 	@Test
 	void fullCheckoutWorkflow() {
@@ -200,6 +251,21 @@ class LoanTest {
 	}
 
 	@Test
+	void fullWorkflowLeftNoTrace() {
+		// fullCheckoutWorkflow touched 3 tables. Verify ALL are clean.
+		assertEquals(5, LibraryDatabase.queryInt("SELECT COUNT(*) FROM loan"));
+		assertEquals(2, LibraryDatabase.queryInt("SELECT COUNT(*) FROM hold"));
+		assertEquals(5, LibraryDatabase.queryInt(
+			"SELECT COUNT(*) FROM book_copy WHERE status = 'CHECKED_OUT'"));
+		assertEquals(0, LibraryDatabase.queryInt(
+			"SELECT COUNT(*) FROM hold WHERE status = 'FULFILLED'"));
+		assertEquals("CHECKED_OUT", LibraryDatabase.queryString(
+			"SELECT status FROM book_copy WHERE id = 1"));
+		assertEquals("AVAILABLE", LibraryDatabase.queryString(
+			"SELECT status FROM book_copy WHERE id = 17"));
+	}
+
+	@Test
 	void memberReachesCheckoutLimit() {
 		assertEquals(2, LibraryDatabase.queryInt(
 			"SELECT COUNT(*) FROM loan WHERE member_id = 1 AND return_date IS NULL"));
@@ -224,7 +290,67 @@ class LoanTest {
 		assertEquals(aliceLimit, aliceLoans);
 	}
 
-	// --- Ancestry verification ---
+	// =========================================================================
+	// FK constraint violations — at this level, the FK web is at its most
+	// complex. Proving that a failed DELETE doesn't damage the savepoint is
+	// critical for trusting the entire tree.
+	// =========================================================================
+
+	@Test
+	void deletingMemberWithActiveLoansFailsOnFK() {
+		assertThrows(RuntimeException.class, () ->
+			LibraryDatabase.execute("DELETE FROM member WHERE id = 1"));
+
+		assertEquals(8, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member"));
+	}
+
+	@Test
+	void deletingBookCopyWithActiveLoanFailsOnFK() {
+		assertThrows(RuntimeException.class, () ->
+			LibraryDatabase.execute("DELETE FROM book_copy WHERE id = 1"));
+
+		assertEquals(18, LibraryDatabase.queryInt("SELECT COUNT(*) FROM book_copy"));
+	}
+
+	@Test
+	void deletingBookWithHoldFailsOnFK() {
+		assertThrows(RuntimeException.class, () ->
+			LibraryDatabase.execute("DELETE FROM book WHERE id = 1"));
+
+		assertEquals(10, LibraryDatabase.queryInt("SELECT COUNT(*) FROM book"));
+	}
+
+	// =========================================================================
+	// Delete-and-reinsert same PK — at the deepest level with full FK web.
+	// This is the most complex version of this pattern: loan references both
+	// member and book_copy. ReferenceDataTest tests the same pattern on a
+	// simple table with no FKs; this proves it scales to complex schemas.
+	// =========================================================================
+
+	@Test
+	void deleteAndReinsertLoanWithSamePk() {
+		LibraryDatabase.execute("DELETE FROM loan WHERE id = 1");
+		LibraryDatabase.execute(
+			"INSERT INTO loan VALUES (1, 2, 7, CURRENT_DATE, " +
+			"DATEADD('DAY', 21, CURRENT_DATE), NULL)");
+
+		// Now loan 1 is George checking out copy 2, not Alice checking out copy 1
+		assertEquals(7, LibraryDatabase.queryInt(
+			"SELECT member_id FROM loan WHERE id = 1"));
+	}
+
+	@Test
+	void loanOneIsStillAlices() {
+		// Loan 1 should still be Alice (member 1), copy 1.
+		assertEquals(1, LibraryDatabase.queryInt(
+			"SELECT member_id FROM loan WHERE id = 1"));
+		assertEquals(1, LibraryDatabase.queryInt(
+			"SELECT book_copy_id FROM loan WHERE id = 1"));
+	}
+
+	// =========================================================================
+	// Ancestry verification — the full tree is visible at this leaf level
+	// =========================================================================
 
 	@Test
 	void entireAncestryIsVisible() {

@@ -6,11 +6,20 @@ import org.simulatest.example.library.environment.BranchesEnvironment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests at LEVEL 2 — reference data + 3 branches. */
+/**
+ * Tests at LEVEL 2 — reference data + 3 branches.
+ *
+ * <p>Branches are the pivot point of the tree: CatalogEnvironment and
+ * StaffEnvironment are both children of BranchesEnvironment. If branch
+ * data leaks between tests here, every downstream environment inherits
+ * corrupt state.
+ */
 @UseEnvironment(BranchesEnvironment.class)
 class BranchTest {
 
-	// --- Branch operations ---
+	// =========================================================================
+	// Branch CRUD
+	// =========================================================================
 
 	@Test
 	void threeBranchesExist() {
@@ -63,28 +72,35 @@ class BranchTest {
 		assertEquals(0, LibraryDatabase.queryInt("SELECT COUNT(*) FROM branch"));
 	}
 
+	// =========================================================================
+	// Same-row isolation — verify EXACT VALUES, not just existence.
+	// renameBranch changes id=1 to "Central Library". relocateBranch changes
+	// id=2's address. If either leaked, these catch it. closeAllBranches
+	// deleting everything would also be caught here (queryString throws on
+	// missing rows).
+	// =========================================================================
+
 	@Test
-	void downtownBranchStillExists() {
-		// If closeAllBranches leaked, this would fail
-		assertTrue(LibraryDatabase.queryExists(
-			"SELECT 1 FROM branch WHERE name = 'Downtown Branch'"));
+	void downtownBranchIsStillCalledDowntown() {
+		assertEquals("Downtown Branch", LibraryDatabase.queryString(
+			"SELECT name FROM branch WHERE id = 1"));
 	}
 
 	@Test
-	void eastvilleBranchStillExists() {
-		assertTrue(LibraryDatabase.queryExists(
-			"SELECT 1 FROM branch WHERE name = 'Eastville Branch'"));
+	void westsideAddressIsStillOriginal() {
+		assertEquals("250 Oak Avenue", LibraryDatabase.queryString(
+			"SELECT address FROM branch WHERE id = 2"));
 	}
 
-	// --- Parent data visible ---
+	// =========================================================================
+	// Parent data visible, child data not yet available
+	// =========================================================================
 
 	@Test
 	void parentReferenceDataIsAccessible() {
 		assertEquals(5, LibraryDatabase.queryInt("SELECT COUNT(*) FROM genre"));
 		assertEquals(3, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member_type"));
 	}
-
-	// --- Child data not yet available ---
 
 	@Test
 	void noBooksExistYet() {
