@@ -3,16 +3,26 @@ package org.simulatest.example.library;
 import org.junit.jupiter.api.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.example.library.environment.StaffEnvironment;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests at LEVEL 3b — staff only. Sibling of CatalogEnvironment:
  * books, members, and loans are invisible (rolled back automatically).
+ *
+ * <p>This test class serves a DUAL purpose:
+ * <ol>
+ *   <li>Staff CRUD and isolation at this level</li>
+ *   <li>PROOF that sibling subtree isolation works — when CatalogEnvironment's
+ *       entire subtree (books, copies, members, loans, holds) was rolled
+ *       back before StaffEnvironment ran, all those tables must be empty here</li>
+ * </ol>
  */
 @UseEnvironment(StaffEnvironment.class)
 class StaffTest {
 
-	// --- Staff operations ---
+	// =========================================================================
+	// Staff CRUD
+	// =========================================================================
 
 	@Test
 	void sevenStaffMembers() {
@@ -33,17 +43,14 @@ class StaffTest {
 
 	@Test
 	void promoteToHeadLibrarian() {
-		// Downtown has 1 HEAD_LIBRARIAN
 		assertEquals(1, LibraryDatabase.queryInt(
 			"SELECT COUNT(*) FROM staff WHERE branch_id = 1 AND role = 'HEAD_LIBRARIAN'"));
 
-		// Fire the current head, promote someone else
 		LibraryDatabase.execute(
 			"UPDATE staff SET role = 'LIBRARIAN' WHERE branch_id = 1 AND role = 'HEAD_LIBRARIAN'");
 		LibraryDatabase.execute(
 			"UPDATE staff SET role = 'HEAD_LIBRARIAN' WHERE id = 2");
 
-		// Still exactly 1 HEAD_LIBRARIAN at Downtown
 		assertEquals(1, LibraryDatabase.queryInt(
 			"SELECT COUNT(*) FROM staff WHERE branch_id = 1 AND role = 'HEAD_LIBRARIAN'"));
 	}
@@ -75,7 +82,7 @@ class StaffTest {
 
 	@Test
 	void everyBranchStillHasAHeadLibrarian() {
-		// If fireAllStaff leaked, this would fail
+		// Guards against fireAllStaff leaking.
 		assertEquals(3, LibraryDatabase.queryInt(
 			"SELECT COUNT(*) FROM staff WHERE role = 'HEAD_LIBRARIAN'"));
 	}
@@ -86,15 +93,45 @@ class StaffTest {
 			"SELECT COUNT(DISTINCT role) FROM staff"));
 	}
 
-	// --- Ancestor data visible ---
+	// =========================================================================
+	// Same-row isolation — promoteToHeadLibrarian demotes Margaret (id=1)
+	// and promotes Robert (id=2). transferStaffToDifferentBranch moves
+	// Robert to branch 3. If either leaked, these catch it.
+	// =========================================================================
+
+	@Test
+	void margaretIsStillHeadLibrarian() {
+		assertEquals("HEAD_LIBRARIAN", LibraryDatabase.queryString(
+			"SELECT role FROM staff WHERE id = 1"));
+	}
+
+	@Test
+	void robertIsStillAtDowntown() {
+		assertEquals(1, LibraryDatabase.queryInt(
+			"SELECT branch_id FROM staff WHERE id = 2"));
+		assertEquals("LIBRARIAN", LibraryDatabase.queryString(
+			"SELECT role FROM staff WHERE id = 2"));
+	}
+
+	// =========================================================================
+	// Ancestor data visible
+	// =========================================================================
 
 	@Test
 	void ancestorDataIsVisible() {
 		assertEquals(3, LibraryDatabase.queryInt("SELECT COUNT(*) FROM branch"));
 		assertEquals(5, LibraryDatabase.queryInt("SELECT COUNT(*) FROM genre"));
+		assertEquals(3, LibraryDatabase.queryInt("SELECT COUNT(*) FROM member_type"));
 	}
 
-	// --- Sibling isolation ---
+	// =========================================================================
+	// SIBLING ISOLATION — THE CROWN JEWEL.
+	//
+	// CatalogEnvironment and its entire subtree (books, copies, members,
+	// loans, holds) ran BEFORE StaffEnvironment. The Insistence Layer
+	// rolled ALL of it back. If ANY data from that subtree is visible here,
+	// sibling isolation is broken and the entire tree model is untrustworthy.
+	// =========================================================================
 
 	@Test
 	void noBooksExist_siblingCatalogWasRolledBack() {
