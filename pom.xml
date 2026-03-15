@@ -22,6 +22,7 @@
 
 	<modules>
 				<module>simulatest-insistencelayer</module>
+		<module>simulatest-insistencelayer-remote</module>
 		<module>simulatest-environment-core</module>
 		<module>simulatest-environment</module>
 		<module>simulatest-environment-junit5</module>
