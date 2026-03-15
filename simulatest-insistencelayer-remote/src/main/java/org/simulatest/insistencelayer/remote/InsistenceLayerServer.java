@@ -39,6 +39,7 @@ public class InsistenceLayerServer {
 	private final int requestedPort;
 	private ServerSocket serverSocket;
 	private Thread serverThread;
+	private volatile Socket activeClient;
 
 	/**
 	 * Creates a server that will delegate commands to the given manager.
@@ -76,6 +77,7 @@ public class InsistenceLayerServer {
 		if (serverSocket != null && !serverSocket.isClosed()) {
 			serverSocket.close();
 		}
+		closeActiveClient();
 		if (serverThread != null) {
 			try {
 				serverThread.join(5000);
@@ -116,16 +118,39 @@ public class InsistenceLayerServer {
 	}
 
 	private void handleClient(Socket client) throws IOException {
-		DataInputStream in = new DataInputStream(client.getInputStream());
-		DataOutputStream out = new DataOutputStream(client.getOutputStream());
+		activeClient = client;
+		try {
+			DataInputStream in = new DataInputStream(client.getInputStream());
+			DataOutputStream out = new DataOutputStream(client.getOutputStream());
 
-		while (!client.isClosed() && !serverSocket.isClosed()) {
+			while (!client.isClosed() && !serverSocket.isClosed()) {
+				try {
+					byte command = in.readByte();
+					executeCommand(command, out);
+				} catch (EOFException e) {
+					logger.info("[InsistenceLayer Remote] Client {} disconnected", client.getRemoteSocketAddress());
+					break;
+				} catch (SocketException e) {
+					if (serverSocket.isClosed()) {
+						logger.info("[InsistenceLayer Remote] Client connection closed during server shutdown");
+					} else {
+						throw e;
+					}
+					break;
+				}
+			}
+		} finally {
+			activeClient = null;
+		}
+	}
+
+	private void closeActiveClient() {
+		Socket client = activeClient;
+		if (client != null && !client.isClosed()) {
 			try {
-				byte command = in.readByte();
-				executeCommand(command, out);
-			} catch (EOFException e) {
-				logger.info("[InsistenceLayer Remote] Client {} disconnected", client.getRemoteSocketAddress());
-				break;
+				client.close();
+			} catch (IOException e) {
+				logger.debug("[InsistenceLayer Remote] Error closing active client connection", e);
 			}
 		}
 	}

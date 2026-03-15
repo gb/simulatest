@@ -83,6 +83,7 @@ public class InsistenceLayerClient implements AutoCloseable {
 			logger.error("[InsistenceLayer Remote] {}: {}", context, e.getMessage());
 			throw new InsistenceLayerException(context + ": " + e.getMessage(), e);
 		} catch (IOException e) {
+			resetConnection();
 			logger.error("[InsistenceLayer Remote] Lost connection to {}:{} during command 0x{}",
 				host, port, String.format("%02X", command), e);
 			throw new InsistenceLayerException(
@@ -93,6 +94,24 @@ public class InsistenceLayerClient implements AutoCloseable {
 	private void ensureConnected() {
 		if (socket == null || socket.isClosed()) {
 			connect();
+		}
+	}
+
+	/**
+	 * Closes the socket and nulls all I/O state so that {@link #ensureConnected()}
+	 * will open a fresh connection on the next command.
+	 */
+	private void resetConnection() {
+		try {
+			if (socket != null && !socket.isClosed()) {
+				socket.close();
+			}
+		} catch (IOException e) {
+			logger.debug("[InsistenceLayer Remote] Error closing dead connection to {}:{}", host, port, e);
+		} finally {
+			socket = null;
+			out = null;
+			in = null;
 		}
 	}
 
@@ -115,13 +134,7 @@ public class InsistenceLayerClient implements AutoCloseable {
 	 */
 	@Override
 	public void close() {
-		try {
-			if (socket != null && !socket.isClosed()) {
-				socket.close();
-			}
-		} catch (IOException e) {
-			logger.debug("[InsistenceLayer Remote] Error closing connection to {}:{}", host, port, e);
-		}
+		resetConnection();
 	}
 
 }
