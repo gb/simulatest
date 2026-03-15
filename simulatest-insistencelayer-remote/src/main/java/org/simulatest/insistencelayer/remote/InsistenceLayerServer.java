@@ -123,24 +123,37 @@ public class InsistenceLayerServer {
 			DataInputStream in = new DataInputStream(client.getInputStream());
 			DataOutputStream out = new DataOutputStream(client.getOutputStream());
 
-			while (!client.isClosed() && !serverSocket.isClosed()) {
-				try {
-					byte command = in.readByte();
-					executeCommand(command, out);
-				} catch (EOFException e) {
-					logger.info("[InsistenceLayer Remote] Client {} disconnected", client.getRemoteSocketAddress());
-					break;
-				} catch (SocketException e) {
-					if (serverSocket.isClosed()) {
-						logger.info("[InsistenceLayer Remote] Client connection closed during server shutdown");
-					} else {
-						throw e;
-					}
-					break;
-				}
+			while (processNextCommand(client, in, out)) {
+				// each iteration reads and executes one command
 			}
 		} finally {
 			activeClient = null;
+		}
+	}
+
+	/**
+	 * Reads and executes a single command from the client.
+	 *
+	 * @return {@code true} if the session should continue, {@code false} if the
+	 *         client disconnected or the server is shutting down
+	 * @throws IOException if a non-shutdown socket error occurs
+	 */
+	private boolean processNextCommand(Socket client, DataInputStream in, DataOutputStream out) throws IOException {
+		if (client.isClosed() || serverSocket.isClosed()) return false;
+
+		try {
+			byte command = in.readByte();
+			executeCommand(command, out);
+			return true;
+		} catch (EOFException e) {
+			logger.info("[InsistenceLayer Remote] Client {} disconnected", client.getRemoteSocketAddress());
+			return false;
+		} catch (SocketException e) {
+			if (serverSocket.isClosed()) {
+				logger.info("[InsistenceLayer Remote] Client connection closed during server shutdown");
+				return false;
+			}
+			throw e;
 		}
 	}
 
