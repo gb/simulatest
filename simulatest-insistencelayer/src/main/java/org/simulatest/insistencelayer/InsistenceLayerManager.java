@@ -19,10 +19,22 @@ public class InsistenceLayerManager {
 	private final ConnectionWrapper connection;
 	private final Deque<Savepoint> savepoints;
 
+	/**
+	 * Creates a manager backed by the given connection's savepoint stack.
+	 */
 	protected InsistenceLayerManager(ConnectionWrapper connection) {
 		Objects.requireNonNull(connection, "Connection is null");
 		this.connection = connection;
 		this.savepoints = new ArrayDeque<>();
+	}
+
+	/**
+	 * No-arg constructor for subclasses that do not manage a local connection
+	 * (e.g. remote proxies). Subclasses must override all public methods.
+	 */
+	protected InsistenceLayerManager() {
+		this.connection = null;
+		this.savepoints = null;
 	}
 
 	public int getCurrentLevel() {
