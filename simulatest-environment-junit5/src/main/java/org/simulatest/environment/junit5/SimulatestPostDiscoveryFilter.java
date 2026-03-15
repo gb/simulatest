@@ -1,8 +1,9 @@
 package org.simulatest.environment.junit5;
 
+import java.util.Optional;
+
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
-import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.PostDiscoveryFilter;
@@ -26,27 +27,26 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 			return FilterResult.included("Simulatest engine descriptor");
 		}
 
-		Class<?> testClass = resolveTestClass(descriptor);
-		if (testClass != null && UseEnvironmentClassScanner.resolveUseEnvironmentClass(testClass) != null) {
+		if (belongsToUseEnvironmentClass(descriptor)) {
 			return FilterResult.excluded("@UseEnvironment class is run by the Simulatest engine");
 		}
 
 		return FilterResult.included("No @UseEnvironment annotation");
 	}
 
-	private static Class<?> resolveTestClass(TestDescriptor descriptor) {
-		TestSource source = descriptor.getSource().orElse(null);
-		if (source instanceof ClassSource classSource) {
-			return classSource.getJavaClass();
-		}
-		if (source instanceof MethodSource methodSource) {
-			try {
-				return Class.forName(methodSource.getClassName());
-			} catch (ClassNotFoundException e) {
-				return null;
-			}
-		}
-		return null;
+	private static boolean belongsToUseEnvironmentClass(TestDescriptor descriptor) {
+		return resolveTestClass(descriptor)
+				.map(UseEnvironmentClassScanner::resolveUseEnvironmentClass)
+				.isPresent();
+	}
+
+	private static Optional<Class<?>> resolveTestClass(TestDescriptor descriptor) {
+		return descriptor.getSource()
+				.map(source -> switch (source) {
+					case ClassSource s -> s.getJavaClass();
+					case MethodSource s -> s.getJavaClass();
+					default -> null;
+				});
 	}
 
 	private static boolean isExternalEngine(TestDescriptor descriptor) {
