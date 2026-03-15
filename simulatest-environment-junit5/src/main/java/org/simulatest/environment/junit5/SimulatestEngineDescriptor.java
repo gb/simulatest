@@ -33,9 +33,11 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 		List<SimulatestPlugin> plugins = SimulatestPlugins.loadAll();
 		SimulatestPlugins.initializeAll(plugins, testClasses);
 
-		InsistenceLayerManager insistenceLayer = null;
-		if (InsistenceLayerDataSource.isConfigured()) {
+		InsistenceLayerManager insistenceLayer = InsistenceLayerManagerFactory.getConfigured();
+		if (insistenceLayer == null && InsistenceLayerDataSource.isConfigured()) {
 			insistenceLayer = InsistenceLayerManagerFactory.build(InsistenceLayerDataSource.getDefault().getConnectionWrapper());
+		}
+		if (insistenceLayer != null) {
 			insistenceLayer.increaseLevel();
 		}
 

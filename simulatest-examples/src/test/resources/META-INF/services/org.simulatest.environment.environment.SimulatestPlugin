@@ -1,1 +1,2 @@
 org.simulatest.example.library.LibraryPlugin
+org.simulatest.insistencelayer.remote.RemoteInsistenceLayerPlugin

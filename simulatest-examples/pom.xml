@@ -29,6 +29,13 @@
 			<artifactId>simulatest-insistencelayer</artifactId>
 		</dependency>
 
+		<!-- Simulatest Insistence Layer Remote: savepoint control over TCP -->
+		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-insistencelayer-remote</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- Simulatest JUnit 5 TestEngine (test scope) -->
 		<dependency>
 			<groupId>org.simulatest</groupId>
