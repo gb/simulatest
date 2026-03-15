@@ -27,7 +27,7 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 		}
 
 		Class<?> testClass = resolveTestClass(descriptor);
-		if (testClass != null && SimulatestTestEngine.resolveUseEnvironmentClass(testClass) != null) {
+		if (testClass != null && UseEnvironmentClassScanner.resolveUseEnvironmentClass(testClass) != null) {
 			return FilterResult.excluded("@UseEnvironment class is run by the Simulatest engine");
 		}
 
