@@ -6,7 +6,6 @@ import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.PostDiscoveryFilter;
-import org.simulatest.environment.annotation.UseEnvironment;
 
 /**
  * Prunes {@link UseEnvironment @UseEnvironment} classes from non-Simulatest engines
@@ -24,15 +23,15 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 	@Override
 	public FilterResult apply(TestDescriptor descriptor) {
 		if (!isExternalEngine(descriptor)) {
-			return FilterResult.includedIf(true);
+			return FilterResult.included("Simulatest engine descriptor");
 		}
 
 		Class<?> testClass = resolveTestClass(descriptor);
-		if (testClass != null && hasUseEnvironment(testClass)) {
+		if (testClass != null && SimulatestTestEngine.resolveUseEnvironmentClass(testClass) != null) {
 			return FilterResult.excluded("@UseEnvironment class is run by the Simulatest engine");
 		}
 
-		return FilterResult.includedIf(true);
+		return FilterResult.included("No @UseEnvironment annotation");
 	}
 
 	private static Class<?> resolveTestClass(TestDescriptor descriptor) {
@@ -48,13 +47,6 @@ public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 			}
 		}
 		return null;
-	}
-
-	private static boolean hasUseEnvironment(Class<?> clazz) {
-		for (Class<?> c = clazz; c != null; c = c.getEnclosingClass()) {
-			if (c.isAnnotationPresent(UseEnvironment.class)) return true;
-		}
-		return false;
 	}
 
 	private static boolean isExternalEngine(TestDescriptor descriptor) {
