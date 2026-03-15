@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * manager.decreaseLevel();
  * }</pre>
  */
-public class RemoteInsistenceLayerManager extends InsistenceLayerManager implements AutoCloseable {
+public class RemoteInsistenceLayerManager implements InsistenceLayerManager, AutoCloseable {
 
 	private static final Logger logger = LoggerFactory.getLogger(RemoteInsistenceLayerManager.class);
 
@@ -38,7 +38,6 @@ public class RemoteInsistenceLayerManager extends InsistenceLayerManager impleme
 	 * @param port the server port
 	 */
 	public RemoteInsistenceLayerManager(String host, int port) {
-		super();
 		this.client = new InsistenceLayerClient(host, port);
 		this.level = 0;
 	}

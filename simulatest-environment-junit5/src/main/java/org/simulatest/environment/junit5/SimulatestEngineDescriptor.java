@@ -7,7 +7,6 @@ import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.environment.environment.SimulatestPlugins;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,10 +32,7 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 		List<SimulatestPlugin> plugins = SimulatestPlugins.loadAll();
 		SimulatestPlugins.initializeAll(plugins, testClasses);
 
-		InsistenceLayerManager insistenceLayer = InsistenceLayerManagerFactory.getConfigured();
-		if (insistenceLayer == null && InsistenceLayerDataSource.isConfigured()) {
-			insistenceLayer = InsistenceLayerManagerFactory.build(InsistenceLayerDataSource.getDefault().getConnectionWrapper());
-		}
+		InsistenceLayerManager insistenceLayer = InsistenceLayerManagerFactory.resolve();
 		if (insistenceLayer != null) {
 			insistenceLayer.increaseLevel();
 		}

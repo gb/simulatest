@@ -7,6 +7,7 @@ import java.util.Collection;
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerManagerHolder;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 /**
@@ -37,7 +38,7 @@ public class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 		}
 
 		remote = new RemoteInsistenceLayerManager("localhost", server.getPort());
-		InsistenceLayerManagerFactory.configure(remote);
+		InsistenceLayerManagerHolder.set(remote);
 	}
 
 	@Override
@@ -48,6 +49,6 @@ public class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 		} catch (IOException e) {
 			throw new UncheckedIOException("Failed to stop Insistence Layer server", e);
 		}
-		InsistenceLayerManagerFactory.reset();
+		InsistenceLayerManagerHolder.clear();
 	}
 }

@@ -19,19 +19,19 @@ public class InsistenceLayerManagerTest {
 
 	private ConnectionMock connectionMock;
 	private ConnectionWrapper connection;
-	private InsistenceLayerManager insistenceLayerManager;
+	private LocalInsistenceLayerManager insistenceLayerManager;
 
 	@Before
 	public void setup() throws SQLException {
 		connectionMock = new ConnectionMock();
 		connection = new ConnectionWrapper(connectionMock.getConnection());
-		insistenceLayerManager = new InsistenceLayerManager(connection);
+		insistenceLayerManager = new LocalInsistenceLayerManager(connection);
 	}
 
 	@Test
 	public void shouldNotBePossibleCreateAnInstanceWithANullConnection() {
 		try {
-			insistenceLayerManager = new InsistenceLayerManager(null);
+			insistenceLayerManager = new LocalInsistenceLayerManager(null);
 			fail("was possible create an instance of InsistenceLayer with a null Connection!");
 		} catch (RuntimeException e) {
 			assertEquals("Connection is null", e.getMessage());
@@ -126,7 +126,7 @@ public class InsistenceLayerManagerTest {
 	@Test
 	public void shouldCallRollbackLevelJustOnceWhenUseSetLevel() throws SQLException {
 		ConnectionWrapper spyConnection = spy(connection);
-		insistenceLayerManager = new InsistenceLayerManager(spyConnection);
+		insistenceLayerManager = new LocalInsistenceLayerManager(spyConnection);
 
 		insistenceLayerManager.setLevelTo(9);
 		assertEquals(9, insistenceLayerManager.getCurrentLevel());

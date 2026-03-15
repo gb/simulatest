@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.sql.SQLException;
 
-import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
@@ -22,21 +21,13 @@ public class InsistenceLayerDataSourceTest {
 
 	@Test
 	public void shouldGetANonNullableConnection() throws SQLException {
-		JdbcDataSource h2 = new JdbcDataSource();
-		h2.setURL("jdbc:h2:mem:datasourcetest;DB_CLOSE_DELAY=-1");
-		h2.setUser("sa");
-
-		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(h2);
+		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(TestDataSources.createH2("datasourcetest"));
 		assertNotNull(ds.getConnection());
 	}
 
 	@Test
 	public void shouldReturnConnectionWrapperAfterConfigure() throws SQLException {
-		JdbcDataSource h2 = new JdbcDataSource();
-		h2.setURL("jdbc:h2:mem:datasourcetest;DB_CLOSE_DELAY=-1");
-		h2.setUser("sa");
-
-		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(h2);
+		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(TestDataSources.createH2("datasourcetest"));
 		assertNotNull(ds.getConnectionWrapper());
 	}
 

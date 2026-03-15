@@ -11,12 +11,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.TestDataSources;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
@@ -29,11 +29,7 @@ public class UserTransactionInsistenceLayerTest {
 
 	@Before
 	public void setup() throws Exception {
-		JdbcDataSource h2 = new JdbcDataSource();
-		h2.setURL("jdbc:h2:mem:usertxtest;DB_CLOSE_DELAY=-1");
-		h2.setUser("sa");
-
-		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(h2);
+		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(TestDataSources.createH2("usertxtest"));
 		wrapper = ds.getConnectionWrapper();
 		connection = ds.getConnection();
 		insistenceLayerManager = InsistenceLayerManagerFactory.build(wrapper);

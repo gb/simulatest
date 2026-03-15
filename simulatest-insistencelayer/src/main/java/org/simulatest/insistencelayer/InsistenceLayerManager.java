@@ -1,129 +1,69 @@
 package org.simulatest.insistencelayer;
 
-import java.sql.SQLException;
-import java.sql.Savepoint;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Objects;
-
-import org.simulatest.insistencelayer.connection.ConnectionWrapper;
-import org.simulatest.insistencelayer.infra.InsistenceLayerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class InsistenceLayerManager {
-
-	private static final String PREFIX_SAVEPOINT = "LAYER";
-	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerManager.class);
-
-	private final ConnectionWrapper connection;
-	private final Deque<Savepoint> savepoints;
-
-	/**
-	 * Creates a manager backed by the given connection's savepoint stack.
-	 */
-	protected InsistenceLayerManager(ConnectionWrapper connection) {
-		Objects.requireNonNull(connection, "Connection is null");
-		this.connection = connection;
-		this.savepoints = new ArrayDeque<>();
-	}
+/**
+ * Controls the depth of the Insistence Layer, a boundary where all data
+ * changes are temporary.
+ *
+ * <p>Each level deepens the layer. Data written at a given level exists
+ * only while that level is active and is undone when the level is left.
+ * Consumers entering the same level always see the same initial state.</p>
+ *
+ * <p>"Insist, insist, insist ... but never persist."</p>
+ *
+ * <h3>Typical lifecycle</h3>
+ * <pre>
+ *   increaseLevel()          // capture state before environment subtree
+ *     increaseLevel()        // capture state before deeper environment
+ *       resetCurrentLevel()  // restore between sibling tests
+ *       resetCurrentLevel()
+ *     decreaseLevel()        // restore state, leaving deeper environment
+ *   decreaseLevel()          // restore state, leaving subtree
+ * </pre>
+ *
+ * @see LocalInsistenceLayerManager
+ */
+public interface InsistenceLayerManager {
 
 	/**
-	 * No-arg constructor for subclasses that do not manage a local connection
-	 * (e.g. remote proxies). Subclasses must override all public methods.
+	 * Returns the current depth of the checkpoint stack.
+	 * Zero means the layer is inactive (no checkpoints held).
 	 */
-	protected InsistenceLayerManager() {
-		this.connection = null;
-		this.savepoints = null;
-	}
+	int getCurrentLevel();
 
-	public int getCurrentLevel() {
-		return savepoints.size();
-	}
+	/**
+	 * Captures the current state and pushes a new checkpoint onto the stack.
+	 */
+	void increaseLevel();
 
-	public void increaseLevel() {
-		setup();
-		createSavepoint();
+	/**
+	 * Restores the state captured by the topmost checkpoint and removes it
+	 * from the stack.
+	 *
+	 * @throws IllegalStateException if the stack is already at level 0
+	 */
+	void decreaseLevel();
 
-		logger.info("[InsistenceLayer] Level increased to {}", getCurrentLevel());
-	}
+	/**
+	 * Restores the state captured by the topmost checkpoint without removing
+	 * it. All changes made at the current level are undone, bringing the
+	 * state back to what it was right after the last {@link #increaseLevel()}.
+	 *
+	 * <p>Does nothing if the stack is at level 0.</p>
+	 */
+	void resetCurrentLevel();
 
-	private void setup() {
-		if (isDisabled()) connection.wrap();
-	}
+	/**
+	 * Restores all levels back to zero, equivalent to {@code setLevelTo(0)}.
+	 */
+	void decreaseAllLevels();
 
-	private void createSavepoint() {
-		String savePointName = PREFIX_SAVEPOINT + (getCurrentLevel() + 1);
-
-		try {
-			savepoints.push(connection.setSavepoint(savePointName));
-		} catch (SQLException exception) {
-			String message = "Error creating the savepoint: " + savePointName;
-			throw new InsistenceLayerException(message, exception);
-		}
-	}
-
-	public void resetCurrentLevel() {
-		if (isDisabled()) return;
-
-		rollbackSavepoint(savepoints.peek());
-		logger.info("[InsistenceLayer] Cleaned current level: {}", getCurrentLevel());
-	}
-
-	public void decreaseLevel() {
-		if (isDisabled()) {
-			throw new IllegalStateException("Cannot decrease level: already at level 0");
-		}
-
-		rollbackSavepoint(savepoints.pop());
-		tearDown();
-
-		logger.info("[InsistenceLayer] Level decreased to {}", getCurrentLevel());
-	}
-
-	private void tearDown() {
-		if (isDisabled()) connection.unwrap();
-	}
-
-	public void decreaseAllLevels() {
-		setLevelTo(0);
-	}
-
-	public void setLevelTo(int level) {
-		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
-		logger.info("[InsistenceLayer] Setting level {} to {}", getCurrentLevel(), level);
-
-		if (getCurrentLevel() > level) decreaseToLevel(level);
-		else if (getCurrentLevel() < level ) increaseToLevel(level);
-	}
-
-	private void increaseToLevel(int level) {
-		while (getCurrentLevel() < level) increaseLevel();
-	}
-
-	private void decreaseToLevel(int level) {
-		while (getCurrentLevel() - 1 > level) dropCurrentLevel();
-		if (getCurrentLevel() == level + 1) decreaseLevel();
-	}
-
-	private void dropCurrentLevel() {
-		try {
-			connection.releaseSavepoint(savepoints.pop());
-		} catch (SQLException exception) {
-			throw new InsistenceLayerException("Error dropping the current level", exception);
-		}
-	}
-
-	private void rollbackSavepoint(Savepoint savepoint) {
-		try {
-			connection.rollback(savepoint);
-		} catch (SQLException exception) {
-			throw new InsistenceLayerException("Error rollbacking the savepoint", exception);
-		}
-	}
-
-	private boolean isDisabled() {
-		return getCurrentLevel() == 0;
-	}
+	/**
+	 * Adjusts the stack to the given target level by increasing or
+	 * decreasing as needed.
+	 *
+	 * @param level the target level (must be non-negative)
+	 * @throws IllegalArgumentException if level is negative
+	 */
+	void setLevelTo(int level);
 
 }
