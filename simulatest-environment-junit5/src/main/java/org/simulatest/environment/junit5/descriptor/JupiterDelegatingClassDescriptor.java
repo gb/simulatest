@@ -1,8 +1,10 @@
 package org.simulatest.environment.junit5.descriptor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
@@ -89,7 +91,7 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 
 	private List<CapturedResult> runJupiter() {
 		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(DiscoverySelectors.selectClass(testClass))
+				.selectors(selectTestClass())
 				.filters(EngineFilter.includeEngines(JUPITER_ENGINE_ID))
 				.configurationParameter(AUTODETECTION_KEY, "true")
 				.build();
@@ -97,6 +99,19 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 		ResultCapturingListener listener = new ResultCapturingListener();
 		jupiterLauncher().execute(request, listener);
 		return listener.results;
+	}
+
+	private DiscoverySelector selectTestClass() {
+		Class<?> enclosing = testClass.getEnclosingClass();
+		if (enclosing == null) {
+			return DiscoverySelectors.selectClass(testClass);
+		}
+		List<Class<?>> enclosingChain = new ArrayList<>();
+		for (Class<?> c = enclosing; c != null; c = c.getEnclosingClass()) {
+			enclosingChain.add(c);
+		}
+		Collections.reverse(enclosingChain);
+		return DiscoverySelectors.selectNestedClass(enclosingChain, testClass);
 	}
 
 	private void registerDynamicTests(List<CapturedResult> results, DynamicTestExecutor executor) {

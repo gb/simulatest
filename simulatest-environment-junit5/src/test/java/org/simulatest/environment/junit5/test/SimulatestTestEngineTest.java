@@ -24,6 +24,7 @@ import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
 import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
+import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
@@ -147,6 +148,30 @@ class SimulatestTestEngineTest {
 				"Selecting a @Nested class directly should resolve to its @UseEnvironment enclosing class");
 		assertTrue(EnvironmentTracker.getEvents().contains("FirstLevel"),
 				"Environment should be set up when running a @Nested class directly");
+	}
+
+	@Test
+	void nestedClassesWithOwnEnvironmentsShouldBeDiscoveredAndRunUnderCorrectEnvironment() {
+		TestExecutionSummary summary = runSimulatest(NestedEnvironmentsTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(3, summary.getTestsSucceededCount(),
+				"Should discover and run all tests from @Nested classes with their own @UseEnvironment " +
+				"(1 AtFirstLevel + 2 AtSecondLevel)");
+		assertTrue(EnvironmentTracker.getEvents().contains("FirstLevel"),
+				"FirstLevelEnvironment should have run for AtFirstLevel nested class");
+		assertTrue(EnvironmentTracker.getEvents().contains("SecondLevel"),
+				"SecondLevelEnvironment should have run for AtSecondLevel nested class");
+	}
+
+	@Test
+	void nestedClassesShouldCoexistWithTopLevelClasses() {
+		TestExecutionSummary summary = runSimulatest(
+				FirstLevelTest.class, NestedEnvironmentsTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(5, summary.getTestsSucceededCount(),
+				"Should run 2 from FirstLevelTest + 3 from NestedEnvironmentsTest nested classes");
 	}
 
 	@Test

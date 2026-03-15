@@ -110,6 +110,7 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 			if (resolved != null) {
 				testClasses.add(resolved);
 			}
+			collectAnnotatedInnerClasses(selector.getJavaClass(), testClasses);
 		}
 
 		for (PackageSelector selector : request.getSelectorsByType(PackageSelector.class)) {
@@ -123,6 +124,15 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		return testClasses;
 	}
 
+	private static void collectAnnotatedInnerClasses(Class<?> clazz, Set<Class<?>> result) {
+		for (Class<?> inner : clazz.getDeclaredClasses()) {
+			if (inner.isAnnotationPresent(UseEnvironment.class)) {
+				result.add(inner);
+			}
+			collectAnnotatedInnerClasses(inner, result);
+		}
+	}
+
 	private static Class<?> resolveUseEnvironmentClass(Class<?> clazz) {
 		for (Class<?> c = clazz; c != null; c = c.getEnclosingClass()) {
 			if (c.isAnnotationPresent(UseEnvironment.class)) return c;
@@ -131,30 +141,18 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 	}
 
 	private Set<Class<?>> scanClasspathRoot(ClasspathRootSelector selector) {
-		Set<Class<?>> result = new LinkedHashSet<>();
-		try (var scanResult = new io.github.classgraph.ClassGraph()
-				.enableClassInfo()
-				.enableAnnotationInfo()
-				.overrideClasspath(selector.getClasspathRoot())
-				.scan()) {
-			for (var classInfo : scanResult.getClassesWithAnnotation(UseEnvironment.class)) {
-				try {
-					result.add(classInfo.loadClass());
-				} catch (Exception e) {
-					logger.warn("Could not load class: {}", classInfo.getName(), e);
-				}
-			}
-		}
-		return result;
+		return scanWithClassGraph(new io.github.classgraph.ClassGraph()
+				.overrideClasspath(selector.getClasspathRoot()));
 	}
 
 	private Set<Class<?>> scanForTestClasses(String basePackage) {
+		return scanWithClassGraph(new io.github.classgraph.ClassGraph()
+				.acceptPackages(basePackage.isEmpty() ? new String[0] : new String[]{basePackage}));
+	}
+
+	private Set<Class<?>> scanWithClassGraph(io.github.classgraph.ClassGraph classGraph) {
 		Set<Class<?>> result = new LinkedHashSet<>();
-		try (var scanResult = new io.github.classgraph.ClassGraph()
-				.enableClassInfo()
-				.enableAnnotationInfo()
-				.acceptPackages(basePackage.isEmpty() ? new String[0] : new String[]{basePackage})
-				.scan()) {
+		try (var scanResult = classGraph.enableClassInfo().enableAnnotationInfo().scan()) {
 			for (var classInfo : scanResult.getClassesWithAnnotation(UseEnvironment.class)) {
 				try {
 					result.add(classInfo.loadClass());
