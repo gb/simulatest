@@ -19,7 +19,8 @@ public class EnvironmentDescriptionTreeBuilder {
 	}
 
 	private void createEnvironmentsDescriptions() {
-		for (Node<EnvironmentDefinition> node : environments) createEnvironmentDescription(node);
+		for (Node<EnvironmentDefinition> node : environments)
+			createEnvironmentDescription(node);
 	}
 
 	private void createEnvironmentDescription(Node<EnvironmentDefinition> node) {

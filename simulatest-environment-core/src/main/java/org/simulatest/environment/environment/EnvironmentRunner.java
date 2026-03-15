@@ -33,6 +33,8 @@ public class EnvironmentRunner {
 		for (int i = 0; i < listeners.size(); i++) {
 			if (listeners.get(i).getPhase().ordinal() <= listener.getPhase().ordinal()) {
 				insertIndex = i + 1;
+			} else {
+				break;
 			}
 		}
 		listeners.add(insertIndex, listener);

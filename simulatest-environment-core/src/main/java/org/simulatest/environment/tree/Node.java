@@ -52,7 +52,7 @@ public class Node<T> {
 	}
 	
 	private boolean isTheLastChildOfParent() {
-		return this.equals(getParent().getLastChild());
+		return this == getParent().getLastChild();
 	}
 	
 	public int totalQuantityOfNodes() {

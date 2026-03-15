@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 public class TreeDepthFirstIterator<T> implements Iterator<Node<T>> {
@@ -26,9 +25,8 @@ public class TreeDepthFirstIterator<T> implements Iterator<Node<T>> {
 		if (!hasNext()) throw new NoSuchElementException();
 		Node<T> next = stack.pop();
 		List<Node<T>> children = next.getChildren();
-		ListIterator<Node<T>> it = children.listIterator(children.size());
-		while (it.hasPrevious()) {
-			stack.push(it.previous());
+		for (int i = children.size() - 1; i >= 0; i--) {
+			stack.push(children.get(i));
 		}
 		return next;
 	}

@@ -10,13 +10,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentRaker;
+import org.simulatest.environment.environment.EnvironmentExtractor;
 import org.simulatest.environment.test.testdouble.Environments.PessoaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.Root;
 
-public class EnvironmentRakerTest {
+public class EnvironmentExtractorTest {
 	
-	private EnvironmentRaker environmentRaker;
+	private EnvironmentExtractor environmentExtractor;
 	private List<Class<?>> tests;
 	
 	@Before
@@ -31,26 +31,26 @@ public class EnvironmentRakerTest {
 		tests.add(TestWithEnvironment3.class);
 		tests.add(TestWithEnvironment4.class);
 		
-		environmentRaker = new EnvironmentRaker(tests);
+		environmentExtractor = new EnvironmentExtractor(tests);
 	}
 	
 	@Test
 	public void testEnvironmentMap() {
-		assertEquals(3, environmentRaker.size());
+		assertEquals(3, environmentExtractor.size());
 		
-		List<Class<?>> classesWithoutEnvironment = environmentRaker.getTests(EnvironmentDefinition.bigBang());
+		List<Class<?>> classesWithoutEnvironment = environmentExtractor.getTests(EnvironmentDefinition.bigBang());
 		
 		assertTrue(classesWithoutEnvironment.size() == 2);
 		assertTrue(classesWithoutEnvironment.contains(TestWithoutEnvironment1.class));
 		assertTrue(classesWithoutEnvironment.contains(TestWithoutEnvironment2.class));
 		
-		List<Class<?>> classWithRootEnvironment = environmentRaker.getTests(EnvironmentDefinition.create(Root.class));
+		List<Class<?>> classWithRootEnvironment = environmentExtractor.getTests(EnvironmentDefinition.create(Root.class));
 		
 		assertTrue(classWithRootEnvironment.size() == 2);
 		assertTrue(classWithRootEnvironment.contains(TestWithEnvironment1.class));
 		assertTrue(classWithRootEnvironment.contains(TestWithEnvironment2.class));
 		
-		List<Class<?>> classesWithPessoaEnvironment = environmentRaker.getTests(EnvironmentDefinition.create(PessoaEnvironment.class));
+		List<Class<?>> classesWithPessoaEnvironment = environmentExtractor.getTests(EnvironmentDefinition.create(PessoaEnvironment.class));
 		
 		assertTrue(classesWithPessoaEnvironment.size() == 2);
 		assertTrue(classesWithPessoaEnvironment.contains(TestWithEnvironment3.class));

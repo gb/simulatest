@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class EnvironmentRaker {
+public class EnvironmentExtractor {
 
 	private final Map<EnvironmentDefinition, List<Class<?>>> testsByEnvironment;
 
-	public EnvironmentRaker(Collection<Class<?>> tests) {
+	public EnvironmentExtractor(Collection<Class<?>> tests) {
 		testsByEnvironment = new HashMap<>();
 		for (Class<?> testCase : tests) addTestIntoEnvironmentNode(testCase);
 	}
@@ -30,7 +30,7 @@ public class EnvironmentRaker {
 	}
 
 	public List<Class<?>> getTests(EnvironmentDefinition environment) {
-		return Collections.unmodifiableList(testsByEnvironment.get(environment));
+		return Collections.unmodifiableList(testsByEnvironment.getOrDefault(environment, List.of()));
 	}
 
 	public Set<EnvironmentDefinition> getEnvironments() {

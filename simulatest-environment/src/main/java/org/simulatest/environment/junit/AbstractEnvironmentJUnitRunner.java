@@ -12,7 +12,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.environment.EnvironmentDatabaseRunner;
 import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentRaker;
+import org.simulatest.environment.environment.EnvironmentExtractor;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.environment.environment.SimulatestPlugins;
@@ -25,7 +25,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	private final EnvironmentGrouperTests environmentGrouperTests;
 	private final List<SimulatestPlugin> plugins;
 	private Tree<EnvironmentDefinition> environmentTree;
-	private EnvironmentRaker environmentRaker;
+	private EnvironmentExtractor environmentExtractor;
 	private EnvironmentDescriptionTreeBuilder descriptionTreeBuilder;
 	private EnvironmentDatabaseRunner environmentRunner;
 
@@ -36,25 +36,23 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	public AbstractEnvironmentJUnitRunner(Class<?> testClass) throws InitializationError {
-		this.environmentGrouperTests = new EnvironmentGrouperTests(testClass);
-		this.plugins = SimulatestPlugins.loadAll();
-		setup();
+		this(Set.of(testClass));
 	}
 
 	private void setup() throws InitializationError {
-		initializeEnvironmentRaker();
+		initializeEnvironmentExtractor();
 		createEnvironmentTree();
 		initializeDescriptionTreeBuilder();
 		createTestRunners();
 		populateDescriptionTreeBuilder();
 	}
 
-	private void initializeEnvironmentRaker() {
-		environmentRaker = new EnvironmentRaker(environmentGrouperTests.getTestClasses());
+	private void initializeEnvironmentExtractor() {
+		environmentExtractor = new EnvironmentExtractor(environmentGrouperTests.getTestClasses());
 	}
 
 	private void createEnvironmentTree() {
-		EnvironmentTreeBuilder treeBuilder = new EnvironmentTreeBuilder(environmentRaker.getEnvironments());
+		EnvironmentTreeBuilder treeBuilder = new EnvironmentTreeBuilder(environmentExtractor.getEnvironments());
 		environmentTree = treeBuilder.getTree();
 	}
 
@@ -72,8 +70,8 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	private void populateDescriptionTreeBuilder() {
-		for (EnvironmentDefinition environment : environmentRaker.getEnvironments())
-			for (Class<?> testCase : environmentRaker.getTests(environment))
+		for (EnvironmentDefinition environment : environmentExtractor.getEnvironments())
+			for (Class<?> testCase : environmentExtractor.getTests(environment))
 				addTestDescription(environment, testCase);
 	}
 
@@ -112,8 +110,8 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	private void runTestOfEnvironment(RunNotifier notifier, EnvironmentDefinition environment) {
-		if (!environmentRaker.hasEnvironment(environment)) return;
-		for (Class<?> testCase : environmentRaker.getTests(environment)) runTestCase(testCase, notifier);
+		if (!environmentExtractor.hasEnvironment(environment)) return;
+		for (Class<?> testCase : environmentExtractor.getTests(environment)) runTestCase(testCase, notifier);
 	}
 
 	private void runTestCase(Class<?> testCase, RunNotifier notifier) {

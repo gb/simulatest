@@ -16,7 +16,7 @@ import org.junit.platform.engine.discovery.PackageSelector;
 import org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentRaker;
+import org.simulatest.environment.environment.EnvironmentExtractor;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.junit5.descriptor.EnvironmentTestDescriptor;
 import org.simulatest.environment.junit5.descriptor.JupiterDelegatingClassDescriptor;
@@ -56,16 +56,16 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		engineDescriptor.setTestClasses(testClasses);
 		if (testClasses.isEmpty()) return engineDescriptor;
 
-		EnvironmentRaker raker = new EnvironmentRaker(testClasses);
-		Tree<EnvironmentDefinition> envTree = new EnvironmentTreeBuilder(raker.getEnvironments()).getTree();
+		EnvironmentExtractor extractor = new EnvironmentExtractor(testClasses);
+		Tree<EnvironmentDefinition> envTree = new EnvironmentTreeBuilder(extractor.getEnvironments()).getTree();
 
-		buildDescriptorTree(engineDescriptor, envTree, raker);
+		buildDescriptorTree(engineDescriptor, envTree, extractor);
 
 		return engineDescriptor;
 	}
 
 	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor,
-			Tree<EnvironmentDefinition> envTree, EnvironmentRaker raker) {
+			Tree<EnvironmentDefinition> envTree, EnvironmentExtractor extractor) {
 		Map<EnvironmentDefinition, EnvironmentTestDescriptor> envDescriptors = new HashMap<>();
 
 		for (var node : envTree) {
@@ -83,8 +83,8 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 				engineDescriptor.addChild(envDesc);
 			}
 
-			if (raker.hasEnvironment(node.getValue())) {
-				addTestClassDescriptors(envDesc, raker.getTests(node.getValue()));
+			if (extractor.hasEnvironment(node.getValue())) {
+				addTestClassDescriptors(envDesc, extractor.getTests(node.getValue()));
 			}
 		}
 	}
@@ -133,7 +133,7 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		}
 	}
 
-	private static Class<?> resolveUseEnvironmentClass(Class<?> clazz) {
+	static Class<?> resolveUseEnvironmentClass(Class<?> clazz) {
 		for (Class<?> c = clazz; c != null; c = c.getEnclosingClass()) {
 			if (c.isAnnotationPresent(UseEnvironment.class)) return c;
 		}

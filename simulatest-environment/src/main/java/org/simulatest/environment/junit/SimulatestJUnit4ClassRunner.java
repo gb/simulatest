@@ -14,8 +14,7 @@ public class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 	private final AbstractEnvironmentJUnitRunner runner;
 	private final List<SimulatestPlugin> plugins;
 
-	public SimulatestJUnit4ClassRunner(AbstractEnvironmentJUnitRunner runner, Class<?> clazz,
-			List<SimulatestPlugin> plugins) throws InitializationError {
+	public SimulatestJUnit4ClassRunner(AbstractEnvironmentJUnitRunner runner, Class<?> clazz, List<SimulatestPlugin> plugins) throws InitializationError {
 		super(clazz);
 		this.runner = runner;
 		this.plugins = plugins;

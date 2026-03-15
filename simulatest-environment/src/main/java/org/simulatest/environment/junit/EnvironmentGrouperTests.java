@@ -14,10 +14,6 @@ public class EnvironmentGrouperTests {
 	private final Map<Class<?>, Runner> runnersByTest = new HashMap<>();
 	private final Set<Class<?>> testClasses = new HashSet<>();
 
-	public EnvironmentGrouperTests(Class<?> testClass) {
-		testClasses.add(testClass);
-	}
-
 	public EnvironmentGrouperTests(Set<Class<?>> testClasses) {
 		this.testClasses.addAll(testClasses);
 	}
