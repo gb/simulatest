@@ -1,5 +1,10 @@
 package org.simulatest.environment.junit5;
 
+import java.io.File;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -141,8 +146,35 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 	}
 
 	private Set<Class<?>> scanClasspathRoot(ClasspathRootSelector selector) {
-		return scanWithClassGraph(new io.github.classgraph.ClassGraph()
-				.overrideClasspath(selector.getClasspathRoot()));
+		Set<Class<?>> result = new LinkedHashSet<>();
+		URI root = selector.getClasspathRoot();
+
+		try {
+			Path rootPath = Paths.get(root);
+			try (var stream = Files.walk(rootPath)) {
+				stream.filter(p -> p.toString().endsWith(".class"))
+						.forEach(p -> {
+							String relative = rootPath.relativize(p).toString();
+							String className = relative
+									.replace(File.separatorChar, '.')
+									.replace('/', '.')
+									.replace(".class", "");
+							try {
+								Class<?> clazz = Class.forName(className);
+								if (clazz.isAnnotationPresent(UseEnvironment.class)) {
+									result.add(clazz);
+								}
+								collectAnnotatedInnerClasses(clazz, result);
+							} catch (ClassNotFoundException | NoClassDefFoundError e) {
+								logger.debug("Skipping class: {}", className, e);
+							}
+						});
+			}
+		} catch (Exception e) {
+			logger.warn("Failed to scan classpath root: {}", root, e);
+		}
+
+		return result;
 	}
 
 	private Set<Class<?>> scanForTestClasses(String basePackage) {
@@ -152,7 +184,7 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 
 	private Set<Class<?>> scanWithClassGraph(io.github.classgraph.ClassGraph classGraph) {
 		Set<Class<?>> result = new LinkedHashSet<>();
-		try (var scanResult = classGraph.enableClassInfo().enableAnnotationInfo().scan()) {
+		try (var scanResult = classGraph.enableClassInfo().enableAnnotationInfo().ignoreClassVisibility().scan()) {
 			for (var classInfo : scanResult.getClassesWithAnnotation(UseEnvironment.class)) {
 				try {
 					result.add(classInfo.loadClass());

@@ -182,6 +182,30 @@ class SimulatestTestEngineTest {
 				"A @BeforeAll failure should surface as a failure, not be silently swallowed");
 	}
 
+	@Test
+	void classpathRootScanShouldDiscoverPackagePrivateClasses() {
+		java.nio.file.Path testClasses = java.nio.file.Path.of("target/test-classes").toAbsolutePath();
+
+		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+				.selectors(DiscoverySelectors.selectClasspathRoots(java.util.Set.of(testClasses)))
+				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
+				.build();
+
+		TestPlan testPlan = LauncherFactory.create().discover(request);
+
+		TestIdentifier engineRoot = testPlan.getRoots().stream()
+				.filter(r -> r.getDisplayName().equals("Simulatest"))
+				.findFirst().orElseThrow();
+
+		boolean foundPackagePrivate = testPlan.getDescendants(engineRoot).stream()
+				.anyMatch(id -> id.getDisplayName().equals("PackagePrivateTest"));
+
+		assertTrue(foundPackagePrivate,
+				"ClasspathRootSelector scan should discover package-private @UseEnvironment test classes. " +
+				"Found: " + testPlan.getDescendants(engineRoot).stream()
+						.map(TestIdentifier::getDisplayName).toList());
+	}
+
 	// --- helpers ---
 
 	private static LauncherDiscoveryRequest simulatestRequest(Class<?>... testClasses) {
