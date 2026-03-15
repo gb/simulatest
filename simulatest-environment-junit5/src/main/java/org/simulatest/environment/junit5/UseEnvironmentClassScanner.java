@@ -1,20 +1,14 @@
 package org.simulatest.environment.junit5;
 
-import java.io.File;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.junit.platform.commons.support.ReflectionSupport;
 import org.junit.platform.engine.EngineDiscoveryRequest;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.ClasspathRootSelector;
 import org.junit.platform.engine.discovery.PackageSelector;
 import org.simulatest.environment.annotation.UseEnvironment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Finds test classes annotated with {@link UseEnvironment} from JUnit Platform
@@ -23,14 +17,11 @@ import org.slf4j.LoggerFactory;
  * <p>Handles three selector types:</p>
  * <ul>
  *   <li>{@link ClassSelector} -- checks the class and its enclosing hierarchy</li>
- *   <li>{@link PackageSelector} -- scans via ClassGraph</li>
- *   <li>{@link ClasspathRootSelector} -- walks the file system directly
- *       (ClassGraph's {@code overrideClasspath} ignores class visibility)</li>
+ *   <li>{@link PackageSelector} -- scans via {@link ReflectionSupport}</li>
+ *   <li>{@link ClasspathRootSelector} -- scans via {@link ReflectionSupport}</li>
  * </ul>
  */
 class UseEnvironmentClassScanner {
-
-	private static final Logger logger = LoggerFactory.getLogger(UseEnvironmentClassScanner.class);
 
 	Set<Class<?>> scan(EngineDiscoveryRequest request) {
 		Set<Class<?>> result = new LinkedHashSet<>();
@@ -44,11 +35,13 @@ class UseEnvironmentClassScanner {
 		}
 
 		for (PackageSelector selector : request.getSelectorsByType(PackageSelector.class)) {
-			result.addAll(scanPackage(selector.getPackageName()));
+			result.addAll(ReflectionSupport.findAllClassesInPackage(
+					selector.getPackageName(), UseEnvironmentClassScanner::isAnnotated, name -> true));
 		}
 
 		for (ClasspathRootSelector selector : request.getSelectorsByType(ClasspathRootSelector.class)) {
-			result.addAll(scanClasspathRoot(selector.getClasspathRoot()));
+			result.addAll(ReflectionSupport.findAllClassesInClasspathRoot(
+					selector.getClasspathRoot(), UseEnvironmentClassScanner::isAnnotated, name -> true));
 		}
 
 		return result;
@@ -65,6 +58,10 @@ class UseEnvironmentClassScanner {
 		return null;
 	}
 
+	private static boolean isAnnotated(Class<?> clazz) {
+		return clazz.isAnnotationPresent(UseEnvironment.class);
+	}
+
 	private static void collectAnnotatedInnerClasses(Class<?> clazz, Set<Class<?>> result) {
 		for (Class<?> inner : clazz.getDeclaredClasses()) {
 			if (inner.isAnnotationPresent(UseEnvironment.class)) {
@@ -72,56 +69,6 @@ class UseEnvironmentClassScanner {
 			}
 			collectAnnotatedInnerClasses(inner, result);
 		}
-	}
-
-	private Set<Class<?>> scanClasspathRoot(URI root) {
-		Set<Class<?>> result = new LinkedHashSet<>();
-
-		try {
-			Path rootPath = Paths.get(root);
-			try (var stream = Files.walk(rootPath)) {
-				stream.filter(p -> p.toString().endsWith(".class"))
-						.forEach(p -> {
-							String relative = rootPath.relativize(p).toString();
-							String className = relative
-									.replace(File.separatorChar, '.')
-									.replace('/', '.')
-									.replace(".class", "");
-							try {
-								Class<?> clazz = Class.forName(className);
-								if (clazz.isAnnotationPresent(UseEnvironment.class)) {
-									result.add(clazz);
-								}
-								collectAnnotatedInnerClasses(clazz, result);
-							} catch (ClassNotFoundException | NoClassDefFoundError e) {
-								logger.debug("Skipping class: {}", className, e);
-							}
-						});
-			}
-		} catch (Exception e) {
-			logger.warn("Failed to scan classpath root: {}", root, e);
-		}
-
-		return result;
-	}
-
-	private Set<Class<?>> scanPackage(String basePackage) {
-		Set<Class<?>> result = new LinkedHashSet<>();
-		try (var scanResult = new io.github.classgraph.ClassGraph()
-				.acceptPackages(basePackage.isEmpty() ? new String[0] : new String[]{basePackage})
-				.enableClassInfo()
-				.enableAnnotationInfo()
-				.ignoreClassVisibility()
-				.scan()) {
-			for (var classInfo : scanResult.getClassesWithAnnotation(UseEnvironment.class)) {
-				try {
-					result.add(classInfo.loadClass());
-				} catch (Exception e) {
-					logger.warn("Could not load class: {}", classInfo.getName(), e);
-				}
-			}
-		}
-		return result;
 	}
 
 }

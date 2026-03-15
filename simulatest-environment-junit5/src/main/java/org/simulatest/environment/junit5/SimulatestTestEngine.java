@@ -15,6 +15,7 @@ import org.simulatest.environment.environment.EnvironmentExtractor;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.junit5.descriptor.EnvironmentTestDescriptor;
 import org.simulatest.environment.junit5.descriptor.JupiterDelegatingClassDescriptor;
+import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
 
 /**
@@ -59,39 +60,33 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 
 	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor,
 			Tree<EnvironmentDefinition> envTree, EnvironmentExtractor extractor) {
-		Map<EnvironmentDefinition, EnvironmentTestDescriptor> envDescriptors = new HashMap<>();
+		Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv = new HashMap<>();
 
 		for (var node : envTree) {
-			EnvironmentTestDescriptor parentDesc = node.hasParent()
-					? envDescriptors.get(node.getParentValue())
-					: null;
+			TestDescriptor parent = resolveParent(node, engineDescriptor, descriptorsByEnv);
+			EnvironmentTestDescriptor envDesc = createEnvironmentDescriptor(parent, node.getValue());
 
-			EnvironmentTestDescriptor envDesc = createEnvironmentDescriptor(
-					node.getValue(), parentDesc, engineDescriptor.getUniqueId());
-			envDescriptors.put(node.getValue(), envDesc);
+			descriptorsByEnv.put(node.getValue(), envDesc);
+			parent.addChild(envDesc);
 
-			if (parentDesc != null) {
-				parentDesc.addChild(envDesc);
-			} else {
-				engineDescriptor.addChild(envDesc);
-			}
-
-			if (extractor.hasEnvironment(node.getValue())) {
-				addTestClassDescriptors(envDesc, extractor.getTests(node.getValue()));
-			}
+			addTestClassChildren(envDesc, extractor.getTests(node.getValue()));
 		}
 	}
 
-	private EnvironmentTestDescriptor createEnvironmentDescriptor(
-			EnvironmentDefinition def, EnvironmentTestDescriptor parentDesc, UniqueId engineId) {
-		UniqueId parentId = (parentDesc != null) ? parentDesc.getUniqueId() : engineId;
-		return new EnvironmentTestDescriptor(parentId.append("environment", def.getName()), def);
+	private TestDescriptor resolveParent(Node<EnvironmentDefinition> node,
+			TestDescriptor root, Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv) {
+		return node.hasParent() ? descriptorsByEnv.get(node.getParentValue()) : root;
 	}
 
-	private void addTestClassDescriptors(EnvironmentTestDescriptor envDesc, List<Class<?>> testClasses) {
+	private EnvironmentTestDescriptor createEnvironmentDescriptor(TestDescriptor parent, EnvironmentDefinition def) {
+		UniqueId id = parent.getUniqueId().append("environment", def.getName());
+		return new EnvironmentTestDescriptor(id, def);
+	}
+
+	private void addTestClassChildren(EnvironmentTestDescriptor parent, List<Class<?>> testClasses) {
 		for (Class<?> testClass : testClasses) {
-			UniqueId classId = envDesc.getUniqueId().append("class", testClass.getName());
-			envDesc.addChild(new JupiterDelegatingClassDescriptor(classId, testClass));
+			UniqueId classId = parent.getUniqueId().append("class", testClass.getName());
+			parent.addChild(new JupiterDelegatingClassDescriptor(classId, testClass));
 		}
 	}
 
