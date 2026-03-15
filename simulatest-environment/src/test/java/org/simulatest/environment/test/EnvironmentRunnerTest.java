@@ -17,7 +17,7 @@ import org.simulatest.environment.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
-import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerLog;
+import org.simulatest.environment.test.EnvironmentRunnerListenerLog;
 import org.simulatest.environment.environment.listener.ListenerPhase;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
