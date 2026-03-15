@@ -79,9 +79,9 @@ public class InsistenceLayerClient implements AutoCloseable {
 			out.flush();
 			readResponse();
 		} catch (InsistenceLayerException e) {
-			logger.error("[InsistenceLayer Remote] Command 0x{} failed on {}:{}: {}",
-				String.format("%02X", command), host, port, e.getMessage());
-			throw e;
+			String context = String.format("Command 0x%02X failed on %s:%d", command, host, port);
+			logger.error("[InsistenceLayer Remote] {}: {}", context, e.getMessage());
+			throw new InsistenceLayerException(context + ": " + e.getMessage(), e);
 		} catch (IOException e) {
 			logger.error("[InsistenceLayer Remote] Lost connection to {}:{} during command 0x{}",
 				host, port, String.format("%02X", command), e);
