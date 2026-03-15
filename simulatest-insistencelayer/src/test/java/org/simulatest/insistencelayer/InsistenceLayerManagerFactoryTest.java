@@ -1,6 +1,7 @@
 package org.simulatest.insistencelayer;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 import org.junit.After;
 import org.junit.Test;
@@ -11,40 +12,100 @@ public class InsistenceLayerManagerFactoryTest {
 
 	@After
 	public void cleanup() {
-		InsistenceLayerManagerFactory.clearCache();
+		InsistenceLayerManagerFactory.clear();
 	}
 
 	@Test
-	public void testSimpleCreate() {
-		ConnectionWrapper wrapper = newConnectionWrapper();
-		assertNotNull(InsistenceLayerManagerFactory.build(wrapper));
-	}
-
-	@Test
-	public void testBuildReturnsLocalInsistenceLayerManager() {
+	public void buildReturnsLocalInsistenceLayerManager() {
 		ConnectionWrapper wrapper = newConnectionWrapper();
 		InsistenceLayerManager manager = InsistenceLayerManagerFactory.build(wrapper);
 		assertTrue(manager instanceof LocalInsistenceLayerManager);
 	}
 
 	@Test
-	public void testCache() {
+	public void buildReturnsFreshInstanceEachTime() {
 		ConnectionWrapper wrapper = newConnectionWrapper();
-		InsistenceLayerManager instance1 = InsistenceLayerManagerFactory.build(wrapper);
-		InsistenceLayerManager instance2 = InsistenceLayerManagerFactory.build(wrapper);
+		InsistenceLayerManager first = InsistenceLayerManagerFactory.build(wrapper);
+		InsistenceLayerManager second = InsistenceLayerManagerFactory.build(wrapper);
 
-		assertSame(instance1, instance2);
+		assertNotSame(first, second);
 	}
 
 	@Test
-	public void testDifferentConnectionsReturnDifferentManagers() {
-		ConnectionWrapper wrapper1 = newConnectionWrapper();
-		ConnectionWrapper wrapper2 = newConnectionWrapper();
+	public void resolveReturnsNullWhenEmpty() {
+		assertNull(InsistenceLayerManagerFactory.resolve());
+	}
 
-		InsistenceLayerManager manager1 = InsistenceLayerManagerFactory.build(wrapper1);
-		InsistenceLayerManager manager2 = InsistenceLayerManagerFactory.build(wrapper2);
+	@Test
+	public void resolveByNameReturnsNullWhenNotRegistered() {
+		assertNull(InsistenceLayerManagerFactory.resolve("nonexistent"));
+	}
 
-		assertNotSame(manager1, manager2);
+	@Test
+	public void registerThenResolveByName() {
+		InsistenceLayerManager manager = mock(InsistenceLayerManager.class);
+		InsistenceLayerManagerFactory.register("main", manager);
+
+		assertSame(manager, InsistenceLayerManagerFactory.resolve("main"));
+	}
+
+	@Test
+	public void resolveReturnsFirstRegistered() {
+		InsistenceLayerManager first = mock(InsistenceLayerManager.class);
+		InsistenceLayerManager second = mock(InsistenceLayerManager.class);
+		InsistenceLayerManagerFactory.register("a", first);
+		InsistenceLayerManagerFactory.register("b", second);
+
+		assertSame(first, InsistenceLayerManagerFactory.resolve());
+	}
+
+	@Test
+	public void deregisterRemovesEntry() {
+		InsistenceLayerManager manager = mock(InsistenceLayerManager.class);
+		InsistenceLayerManagerFactory.register("main", manager);
+		InsistenceLayerManagerFactory.deregister("main");
+
+		assertNull(InsistenceLayerManagerFactory.resolve("main"));
+	}
+
+	@Test
+	public void deregisterNonexistentNameDoesNothing() {
+		InsistenceLayerManagerFactory.deregister("nonexistent");
+		assertNull(InsistenceLayerManagerFactory.resolve());
+	}
+
+	@Test
+	public void registerOverwritesPreviousValue() {
+		InsistenceLayerManager first = mock(InsistenceLayerManager.class);
+		InsistenceLayerManager second = mock(InsistenceLayerManager.class);
+
+		InsistenceLayerManagerFactory.register("main", first);
+		InsistenceLayerManagerFactory.register("main", second);
+
+		assertSame(second, InsistenceLayerManagerFactory.resolve("main"));
+	}
+
+	@Test
+	public void clearRemovesAllEntries() {
+		InsistenceLayerManagerFactory.register("a", mock(InsistenceLayerManager.class));
+		InsistenceLayerManagerFactory.register("b", mock(InsistenceLayerManager.class));
+		InsistenceLayerManagerFactory.clear();
+
+		assertNull(InsistenceLayerManagerFactory.resolve());
+		assertNull(InsistenceLayerManagerFactory.resolve("a"));
+		assertNull(InsistenceLayerManagerFactory.resolve("b"));
+	}
+
+	@Test
+	public void multipleNamesResolveIndependently() {
+		InsistenceLayerManager first = mock(InsistenceLayerManager.class);
+		InsistenceLayerManager second = mock(InsistenceLayerManager.class);
+
+		InsistenceLayerManagerFactory.register("orders", first);
+		InsistenceLayerManagerFactory.register("users", second);
+
+		assertSame(first, InsistenceLayerManagerFactory.resolve("orders"));
+		assertSame(second, InsistenceLayerManagerFactory.resolve("users"));
 	}
 
 	private static ConnectionWrapper newConnectionWrapper() {

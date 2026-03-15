@@ -1,6 +1,6 @@
 package org.simulatest.insistencelayer;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
@@ -8,15 +8,29 @@ import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 public class InsistenceLayerManagerFactory {
 
-	private static final Map<ConnectionWrapper, InsistenceLayerManager> cache = new HashMap<>();
+	public static final String DEFAULT = "default";
+	private static final Map<String, InsistenceLayerManager> registry = new LinkedHashMap<>();
 
 	public static InsistenceLayerManager build(ConnectionWrapper connection) {
-		return cache.computeIfAbsent(connection, LocalInsistenceLayerManager::new);
+		return new LocalInsistenceLayerManager(connection);
+	}
+
+	public static void register(String name, InsistenceLayerManager manager) {
+		registry.put(name, manager);
+	}
+
+	public static void deregister(String name) {
+		registry.remove(name);
+	}
+
+	public static InsistenceLayerManager resolve(String name) {
+		return registry.get(name);
 	}
 
 	public static InsistenceLayerManager resolve() {
-		InsistenceLayerManager configured = InsistenceLayerManagerHolder.get();
-		if (configured != null) return configured;
+		if (!registry.isEmpty()) {
+			return registry.values().iterator().next();
+		}
 
 		if (InsistenceLayerDataSource.isConfigured()) {
 			return build(InsistenceLayerDataSource.getDefault().getConnectionWrapper());
@@ -25,8 +39,8 @@ public class InsistenceLayerManagerFactory {
 		return null;
 	}
 
-	static void clearCache() {
-		cache.clear();
+	static void clear() {
+		registry.clear();
 	}
 
 }
