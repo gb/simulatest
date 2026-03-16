@@ -97,6 +97,24 @@ public class InsistenceLayerManagerFactoryTest {
 	}
 
 	@Test
+	public void resolveFallsBackToConfiguredDataSourceAfterDeregister() {
+		InsistenceLayerManagerFactory.configure(TestDataSources.createH2("fallback-test"));
+		InsistenceLayerManagerFactory.deregister(InsistenceLayerManagerFactory.DEFAULT);
+
+		assertNotNull(InsistenceLayerManagerFactory.resolve());
+	}
+
+	@Test
+	public void configureOverwritesPreviousDataSource() {
+		InsistenceLayerManagerFactory.configure(TestDataSources.createH2("first"));
+		var firstDataSource = InsistenceLayerManagerFactory.dataSource();
+
+		InsistenceLayerManagerFactory.configure(TestDataSources.createH2("second"));
+
+		assertNotSame(firstDataSource, InsistenceLayerManagerFactory.dataSource());
+	}
+
+	@Test
 	public void multipleNamesResolveIndependently() {
 		InsistenceLayerManager first = mock(InsistenceLayerManager.class);
 		InsistenceLayerManager second = mock(InsistenceLayerManager.class);

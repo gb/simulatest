@@ -1,7 +1,7 @@
 package org.simulatest.environment.environment;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
@@ -38,14 +38,14 @@ public class DependencyInjectionPluginTest {
 	}
 
 	@Test
-	public void shouldNotOverrideManualConfiguration() {
+	public void shouldReconfigureOnEachInitialization() {
 		InsistenceLayerManagerFactory.configure(createH2DataSource());
-		var manualDataSource = InsistenceLayerManagerFactory.dataSource();
+		var firstDataSource = InsistenceLayerManagerFactory.dataSource();
 
 		var plugin = new DependencyInjectionPlugin(new StubContext(createH2DataSource()));
 		plugin.initialize(List.of());
 
-		assertSame(manualDataSource, InsistenceLayerManagerFactory.dataSource());
+		assertNotSame(firstDataSource, InsistenceLayerManagerFactory.dataSource());
 	}
 
 	private static JdbcDataSource createH2DataSource() {

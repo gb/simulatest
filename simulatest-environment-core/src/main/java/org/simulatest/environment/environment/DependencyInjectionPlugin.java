@@ -33,7 +33,7 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 		context.initialize(testClasses);
 
 		DataSource ds = context.dataSource();
-		if (ds != null && !InsistenceLayerManagerFactory.isConfigured()) {
+		if (ds != null) {
 			logger.info("Auto-configuring InsistenceLayer from DI context");
 			InsistenceLayerManagerFactory.configure(ds);
 		}

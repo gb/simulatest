@@ -45,7 +45,15 @@ public class InsistenceLayerManagerFactory {
 	}
 
 	public static InsistenceLayerManager resolve() {
-		return registry.isEmpty() ? null : registry.values().iterator().next();
+		if (!registry.isEmpty()) {
+			return registry.values().iterator().next();
+		}
+
+		if (!dataSources.isEmpty()) {
+			return build(dataSources.values().iterator().next().getConnectionWrapper());
+		}
+
+		return null;
 	}
 
 	public static void clear() {
