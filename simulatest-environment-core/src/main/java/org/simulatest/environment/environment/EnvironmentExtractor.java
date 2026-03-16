@@ -15,7 +15,11 @@ public class EnvironmentExtractor {
 
 	private final Map<EnvironmentDefinition, List<Class<?>>> testsByEnvironment;
 
-	public EnvironmentExtractor(Collection<Class<?>> tests) {
+	public static EnvironmentExtractor extract(Collection<Class<?>> tests) {
+		return new EnvironmentExtractor(tests);
+	}
+
+	private EnvironmentExtractor(Collection<Class<?>> tests) {
 		testsByEnvironment = new HashMap<>();
 		for (Class<?> testCase : tests) addTestIntoEnvironmentNode(testCase);
 	}

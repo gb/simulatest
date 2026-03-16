@@ -31,7 +31,7 @@ public class EnvironmentExtractorTest {
 		tests.add(TestWithEnvironment3.class);
 		tests.add(TestWithEnvironment4.class);
 		
-		environmentExtractor = new EnvironmentExtractor(tests);
+		environmentExtractor = EnvironmentExtractor.extract(tests);
 	}
 	
 	@Test

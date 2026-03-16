@@ -48,14 +48,18 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 
 		Set<Class<?>> testClasses = scanner.scan(request);
 		engineDescriptor.setTestClasses(testClasses);
-		if (testClasses.isEmpty()) return engineDescriptor;
+		if (!testClasses.isEmpty()) {
+			populateDescriptors(engineDescriptor, testClasses);
+		}
 
-		EnvironmentExtractor extractor = new EnvironmentExtractor(testClasses);
+		return engineDescriptor;
+	}
+
+	private void populateDescriptors(SimulatestEngineDescriptor engineDescriptor, Set<Class<?>> testClasses) {
+		EnvironmentExtractor extractor = EnvironmentExtractor.extract(testClasses);
 		Tree<EnvironmentDefinition> envTree = new EnvironmentTreeBuilder(extractor.getEnvironments()).getTree();
 
 		buildDescriptorTree(engineDescriptor, envTree, extractor);
-
-		return engineDescriptor;
 	}
 
 	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor,

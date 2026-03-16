@@ -48,7 +48,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	private void initializeEnvironmentExtractor() {
-		environmentExtractor = new EnvironmentExtractor(environmentGrouperTests.getTestClasses());
+		environmentExtractor = EnvironmentExtractor.extract(environmentGrouperTests.getTestClasses());
 	}
 
 	private void createEnvironmentTree() {
