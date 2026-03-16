@@ -5,7 +5,7 @@ import java.util.List;
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.SimulatestPlugin;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 
 public class SimulatestExecutionContext implements EngineExecutionContext {
 
@@ -13,18 +13,18 @@ public class SimulatestExecutionContext implements EngineExecutionContext {
 
 	private static final ThreadLocal<SimulatestExecutionContext> CURRENT = new ThreadLocal<>();
 
-	private final InsistenceLayerManager insistenceLayer;
+	private final InsistenceLayer insistenceLayer;
 	private final EnvironmentFactory factory;
 	private final List<SimulatestPlugin> plugins;
 
-	public SimulatestExecutionContext(InsistenceLayerManager insistenceLayer, EnvironmentFactory factory,
+	public SimulatestExecutionContext(InsistenceLayer insistenceLayer, EnvironmentFactory factory,
 			List<SimulatestPlugin> plugins) {
 		this.insistenceLayer = insistenceLayer;
 		this.factory = factory;
 		this.plugins = plugins;
 	}
 
-	public InsistenceLayerManager insistenceLayer() {
+	public InsistenceLayer insistenceLayer() {
 		return insistenceLayer;
 	}
 

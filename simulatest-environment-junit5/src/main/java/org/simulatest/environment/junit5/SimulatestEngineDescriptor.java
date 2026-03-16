@@ -5,8 +5,8 @@ import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.environment.environment.SimulatestPlugins;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +32,7 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 		List<SimulatestPlugin> plugins = SimulatestPlugins.loadAll();
 		SimulatestPlugins.initializeAll(plugins, testClasses);
 
-		InsistenceLayerManager insistenceLayer = InsistenceLayerManagerFactory.resolve();
+		InsistenceLayer insistenceLayer = InsistenceLayerFactory.resolve();
 		if (insistenceLayer != null) {
 			insistenceLayer.increaseLevel();
 		}

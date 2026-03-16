@@ -8,10 +8,10 @@ import javax.sql.DataSource;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
-public class InsistenceLayerManagerFactory {
+public class InsistenceLayerFactory {
 
 	public static final String DEFAULT = "default";
-	private static final Map<String, InsistenceLayerManager> registry = new LinkedHashMap<>();
+	private static final Map<String, InsistenceLayer> registry = new LinkedHashMap<>();
 	private static final Map<String, InsistenceLayerDataSource> dataSources = new LinkedHashMap<>();
 
 	public static void configure(DataSource dataSource) {
@@ -28,11 +28,11 @@ public class InsistenceLayerManagerFactory {
 		return !registry.isEmpty();
 	}
 
-	public static InsistenceLayerManager build(ConnectionWrapper connection) {
-		return new LocalInsistenceLayerManager(connection);
+	public static InsistenceLayer build(ConnectionWrapper connection) {
+		return new LocalInsistenceLayer(connection);
 	}
 
-	public static void register(String name, InsistenceLayerManager manager) {
+	public static void register(String name, InsistenceLayer manager) {
 		registry.put(name, manager);
 	}
 
@@ -40,11 +40,11 @@ public class InsistenceLayerManagerFactory {
 		registry.remove(name);
 	}
 
-	public static InsistenceLayerManager resolve(String name) {
+	public static InsistenceLayer resolve(String name) {
 		return registry.get(name);
 	}
 
-	public static InsistenceLayerManager resolve() {
+	public static InsistenceLayer resolve() {
 		if (!registry.isEmpty()) {
 			return registry.values().iterator().next();
 		}

@@ -26,7 +26,7 @@ import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 /**
  * Integration test for the Simulatest JUnit 5 TestEngine.
@@ -39,7 +39,7 @@ class SimulatestTestEngineTest {
 		JdbcDataSource h2 = new JdbcDataSource();
 		h2.setURL("jdbc:h2:mem:junit5test;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
-		InsistenceLayerManagerFactory.configure(h2);
+		InsistenceLayerFactory.configure(h2);
 	}
 
 	@AfterAll

@@ -5,8 +5,8 @@ import java.io.UncheckedIOException;
 import java.util.Collection;
 
 import org.simulatest.environment.environment.SimulatestPlugin;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 /**
  * Plugin that interposes a TCP layer between the Simulatest engine and the
@@ -14,19 +14,19 @@ import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
  * proving the remote protocol works as a drop-in replacement.
  *
  * <p>Requires a DataSource to be configured via
- * {@link InsistenceLayerManagerFactory#configure} first.
+ * {@link InsistenceLayerFactory#configure} first.
  * List this plugin AFTER the datasource-configuring plugin in the
  * ServiceLoader file.
  */
 public class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 
 	private InsistenceLayerServer server;
-	private RemoteInsistenceLayerManager remote;
+	private RemoteInsistenceLayer remote;
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
-		InsistenceLayerManager local = InsistenceLayerManagerFactory.build(
-			InsistenceLayerManagerFactory.dataSource().getConnectionWrapper()
+		InsistenceLayer local = InsistenceLayerFactory.build(
+			InsistenceLayerFactory.dataSource().getConnectionWrapper()
 		);
 
 		try {
@@ -36,8 +36,8 @@ public class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 			throw new UncheckedIOException("Failed to start Insistence Layer server", e);
 		}
 
-		remote = new RemoteInsistenceLayerManager("localhost", server.getPort());
-		InsistenceLayerManagerFactory.register(InsistenceLayerManagerFactory.DEFAULT, remote);
+		remote = new RemoteInsistenceLayer("localhost", server.getPort());
+		InsistenceLayerFactory.register(InsistenceLayerFactory.DEFAULT, remote);
 	}
 
 	@Override
@@ -48,6 +48,6 @@ public class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 		} catch (IOException e) {
 			throw new UncheckedIOException("Failed to stop Insistence Layer server", e);
 		}
-		InsistenceLayerManagerFactory.deregister(InsistenceLayerManagerFactory.DEFAULT);
+		InsistenceLayerFactory.deregister(InsistenceLayerFactory.DEFAULT);
 	}
 }

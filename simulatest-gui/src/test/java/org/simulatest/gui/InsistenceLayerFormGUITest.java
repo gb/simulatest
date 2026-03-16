@@ -12,17 +12,17 @@ import org.fest.swing.fixture.FrameFixture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 
 public class InsistenceLayerFormGUITest {
 
 	private FrameFixture window;
-	private InsistenceLayerManager insistenceLayerManager;
+	private InsistenceLayer insistenceLayer;
 
 	@Before
 	public void setUp() throws Exception {
-		insistenceLayerManager = mock(InsistenceLayerManager.class);
-		InsistenceLayerForm insistenceLayerForm = new InsistenceLayerForm(insistenceLayerManager);
+		insistenceLayer = mock(InsistenceLayer.class);
+		InsistenceLayerForm insistenceLayerForm = new InsistenceLayerForm(insistenceLayer);
 		window = new FrameFixture(insistenceLayerForm);
 		insistenceLayerForm.showMe();
 	}
@@ -35,14 +35,14 @@ public class InsistenceLayerFormGUITest {
 	@Test
 	public void testIncreaseButton() throws SQLException {
 		window.button("+").click();
-		verify(insistenceLayerManager, times(1)).increaseLevel();
+		verify(insistenceLayer, times(1)).increaseLevel();
 	}
 	
 	@Test
 	public void testIncreaseButtonAndUpdateCurrentLevel() throws SQLException {
 		assertEquals("0", window.textBox().text());
 		
-		when(insistenceLayerManager.getCurrentLevel()).thenReturn(1);
+		when(insistenceLayer.getCurrentLevel()).thenReturn(1);
 		window.button("+").click();
 		assertEquals("1", window.textBox().text());
 	}
@@ -51,16 +51,16 @@ public class InsistenceLayerFormGUITest {
 	public void testDecreaseButton() throws SQLException {
 		assertEquals("0", window.textBox().text());
 		window.button("-").click();
-		verify(insistenceLayerManager, times(1)).decreaseLevel();
+		verify(insistenceLayer, times(1)).decreaseLevel();
 	}
 	
 	@Test
 	public void testDecreaseButtonAndNotUpdateCurrentLevel() throws SQLException {
-		when(insistenceLayerManager.getCurrentLevel()).thenReturn(1);
+		when(insistenceLayer.getCurrentLevel()).thenReturn(1);
 		window.button("+").click();
 		assertEquals("1", window.textBox().text());
 		
-		when(insistenceLayerManager.getCurrentLevel()).thenReturn(0);
+		when(insistenceLayer.getCurrentLevel()).thenReturn(0);
 		window.button("-").click();
 		assertEquals("0", window.textBox().text());
 	}
@@ -70,7 +70,7 @@ public class InsistenceLayerFormGUITest {
 		assertEquals("0", window.textBox().text());
 		
 		window.button("-").click();
-		verify(insistenceLayerManager, times(1)).decreaseLevel();
+		verify(insistenceLayer, times(1)).decreaseLevel();
 		
 		assertEquals("0", window.textBox().text());
 	}
@@ -78,13 +78,13 @@ public class InsistenceLayerFormGUITest {
 	@Test
 	public void testClearCurrentLevel() throws SQLException {
 		window.button("clear").click();
-		verify(insistenceLayerManager, times(1)).resetCurrentLevel();
+		verify(insistenceLayer, times(1)).resetCurrentLevel();
 	}
 	
 	@Test
 	public void testResetAllLevels() throws SQLException {
 		window.button("reset").click();
-		verify(insistenceLayerManager, times(1)).decreaseAllLevels();
+		verify(insistenceLayer, times(1)).decreaseAllLevels();
 	}
 
 }

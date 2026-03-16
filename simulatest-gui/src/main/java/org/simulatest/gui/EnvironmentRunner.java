@@ -26,7 +26,7 @@ import javax.swing.event.ListSelectionListener;
 import org.simulatest.environment.environment.Environment;
 import org.simulatest.environment.environment.facade.EnvironmentRunnerFacade;
 import org.simulatest.environment.environment.EnvironmentScanner;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 
 public class EnvironmentRunner extends JFrame implements ListSelectionListener {
 	
@@ -40,7 +40,7 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
     
     private EnvironmentRunnerFacade facade;
 
-    public EnvironmentRunner(InsistenceLayerManager insistenceLayerManager) {
+    public EnvironmentRunner(InsistenceLayer insistenceLayer) {
         super("Environment Runner");
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         

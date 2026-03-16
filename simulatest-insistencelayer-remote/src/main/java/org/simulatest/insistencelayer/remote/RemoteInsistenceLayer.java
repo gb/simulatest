@@ -1,11 +1,11 @@
 package org.simulatest.insistencelayer.remote;
 
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Remote proxy for {@link InsistenceLayerManager}.
+ * Remote proxy for {@link InsistenceLayer}.
  *
  * <p>Drop-in replacement that forwards {@code increaseLevel()}, {@code decreaseLevel()},
  * and {@code resetCurrentLevel()} over TCP to an {@link InsistenceLayerServer} running
@@ -17,15 +17,15 @@ import org.slf4j.LoggerFactory;
  *
  * <h3>Usage:</h3>
  * <pre>{@code
- * InsistenceLayerManager manager = new RemoteInsistenceLayerManager("localhost", 4242);
+ * InsistenceLayer manager = new RemoteInsistenceLayer("localhost", 4242);
  * manager.increaseLevel();   // sent over TCP to the app process
  * manager.resetCurrentLevel();
  * manager.decreaseLevel();
  * }</pre>
  */
-public class RemoteInsistenceLayerManager implements InsistenceLayerManager, AutoCloseable {
+public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 
-	private static final Logger logger = LoggerFactory.getLogger(RemoteInsistenceLayerManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(RemoteInsistenceLayer.class);
 
 	private final InsistenceLayerClient client;
 	private int level;
@@ -37,7 +37,7 @@ public class RemoteInsistenceLayerManager implements InsistenceLayerManager, Aut
 	 * @param host the server hostname
 	 * @param port the server port
 	 */
-	public RemoteInsistenceLayerManager(String host, int port) {
+	public RemoteInsistenceLayer(String host, int port) {
 		this.client = new InsistenceLayerClient(host, port);
 		this.level = 0;
 	}

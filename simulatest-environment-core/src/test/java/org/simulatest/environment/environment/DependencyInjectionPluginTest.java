@@ -12,13 +12,13 @@ import javax.sql.DataSource;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Test;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 public class DependencyInjectionPluginTest {
 
 	@After
 	public void resetInsistenceLayer() {
-		InsistenceLayerManagerFactory.clear();
+		InsistenceLayerFactory.clear();
 	}
 
 	@Test
@@ -26,7 +26,7 @@ public class DependencyInjectionPluginTest {
 		var plugin = new DependencyInjectionPlugin(new StubContext(createH2DataSource()));
 		plugin.initialize(List.of());
 
-		assertTrue(InsistenceLayerManagerFactory.isConfigured());
+		assertTrue(InsistenceLayerFactory.isConfigured());
 	}
 
 	@Test
@@ -34,18 +34,18 @@ public class DependencyInjectionPluginTest {
 		var plugin = new DependencyInjectionPlugin(new StubContext(null));
 		plugin.initialize(List.of());
 
-		assertFalse(InsistenceLayerManagerFactory.isConfigured());
+		assertFalse(InsistenceLayerFactory.isConfigured());
 	}
 
 	@Test
 	public void shouldNotOverrideManualConfiguration() {
-		InsistenceLayerManagerFactory.configure(createH2DataSource());
-		var manualDataSource = InsistenceLayerManagerFactory.dataSource();
+		InsistenceLayerFactory.configure(createH2DataSource());
+		var manualDataSource = InsistenceLayerFactory.dataSource();
 
 		var plugin = new DependencyInjectionPlugin(new StubContext(createH2DataSource()));
 		plugin.initialize(List.of());
 
-		assertSame(manualDataSource, InsistenceLayerManagerFactory.dataSource());
+		assertSame(manualDataSource, InsistenceLayerFactory.dataSource());
 	}
 
 	private static JdbcDataSource createH2DataSource() {

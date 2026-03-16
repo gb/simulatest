@@ -11,7 +11,7 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ class QueryTableModel extends AbstractTableModel {
 		cache = new Vector<Object>();
 		
 		try {
-			db = InsistenceLayerManagerFactory.dataSource().getConnection();
+			db = InsistenceLayerFactory.dataSource().getConnection();
 			statement = db.createStatement();
 		} catch (SQLException e) {
 			e.printStackTrace();

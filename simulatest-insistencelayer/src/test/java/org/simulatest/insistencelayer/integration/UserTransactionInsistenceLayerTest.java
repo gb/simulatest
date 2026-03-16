@@ -14,15 +14,15 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.insistencelayer.TestDataSources;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 public class UserTransactionInsistenceLayerTest {
 
-	private InsistenceLayerManager insistenceLayerManager;
+	private InsistenceLayer insistenceLayer;
 	private ConnectionWrapper wrapper;
 	private Connection connection;
 	private Statement statement;
@@ -32,21 +32,21 @@ public class UserTransactionInsistenceLayerTest {
 		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(TestDataSources.createH2("usertxtest"));
 		wrapper = ds.getConnectionWrapper();
 		connection = ds.getConnection();
-		insistenceLayerManager = InsistenceLayerManagerFactory.build(wrapper);
+		insistenceLayer = InsistenceLayerFactory.build(wrapper);
 		statement = connection.createStatement();
 
 		statement.executeUpdate("CREATE TABLE IF NOT EXISTS LOG (NAME VARCHAR(50))");
 
-		insistenceLayerManager.increaseLevel();
-		insistenceLayerManager.increaseLevel();
-		insistenceLayerManager.increaseLevel();
-		assertEquals(3, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.increaseLevel();
+		insistenceLayer.increaseLevel();
+		insistenceLayer.increaseLevel();
+		assertEquals(3, insistenceLayer.getCurrentLevel());
 	}
 
 	@After
 	public void teardown() throws Exception {
-		while (insistenceLayerManager.getCurrentLevel() > 0) {
-			insistenceLayerManager.decreaseLevel();
+		while (insistenceLayer.getCurrentLevel() > 0) {
+			insistenceLayer.decreaseLevel();
 		}
 		statement.executeUpdate("DELETE FROM LOG");
 	}
@@ -62,7 +62,7 @@ public class UserTransactionInsistenceLayerTest {
 		connection.rollback();
 
 		assertEquals(Arrays.asList("Entity-1"), valuesFromTableLog());
-		assertEquals(3, insistenceLayerManager.getCurrentLevel());
+		assertEquals(3, insistenceLayer.getCurrentLevel());
 	}
 
 	@Test
@@ -71,7 +71,7 @@ public class UserTransactionInsistenceLayerTest {
 		connection.rollback();
 
 		assertEquals(Arrays.asList("Entity-1"), valuesFromTableLog());
-		assertEquals(3, insistenceLayerManager.getCurrentLevel());
+		assertEquals(3, insistenceLayer.getCurrentLevel());
 	}
 
 	@Test
@@ -80,8 +80,8 @@ public class UserTransactionInsistenceLayerTest {
 		connection.commit();
 		assertEquals(Arrays.asList("at-level-3"), valuesFromTableLog());
 
-		insistenceLayerManager.decreaseLevel();
-		assertEquals(2, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.decreaseLevel();
+		assertEquals(2, insistenceLayer.getCurrentLevel());
 		assertTrue(valuesFromTableLog().isEmpty());
 
 		statement.executeUpdate("INSERT INTO LOG VALUES ('at-level-2')");
@@ -99,9 +99,9 @@ public class UserTransactionInsistenceLayerTest {
 		connection.commit();
 		assertEquals(Arrays.asList("before-reset"), valuesFromTableLog());
 
-		insistenceLayerManager.resetCurrentLevel();
+		insistenceLayer.resetCurrentLevel();
 		assertTrue(valuesFromTableLog().isEmpty());
-		assertEquals(3, insistenceLayerManager.getCurrentLevel());
+		assertEquals(3, insistenceLayer.getCurrentLevel());
 
 		statement.executeUpdate("INSERT INTO LOG VALUES ('after-reset')");
 		connection.commit();
@@ -114,8 +114,8 @@ public class UserTransactionInsistenceLayerTest {
 
 	@Test
 	public void userTransactionShouldWorkAfterSetLevelTo() throws SQLException {
-		insistenceLayerManager.setLevelTo(1);
-		assertEquals(1, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.setLevelTo(1);
+		assertEquals(1, insistenceLayer.getCurrentLevel());
 
 		statement.executeUpdate("INSERT INTO LOG VALUES ('Entity-1')");
 		connection.commit();
@@ -131,12 +131,12 @@ public class UserTransactionInsistenceLayerTest {
 		statement.executeUpdate("INSERT INTO LOG VALUES ('uncommitted')");
 		assertEquals(Arrays.asList("uncommitted"), valuesFromTableLog());
 
-		insistenceLayerManager.increaseLevel();
-		assertEquals(4, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.increaseLevel();
+		assertEquals(4, insistenceLayer.getCurrentLevel());
 		assertEquals(Arrays.asList("uncommitted"), valuesFromTableLog());
 
-		insistenceLayerManager.decreaseLevel();
-		assertEquals(3, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.decreaseLevel();
+		assertEquals(3, insistenceLayer.getCurrentLevel());
 		assertEquals(Arrays.asList("uncommitted"), valuesFromTableLog());
 	}
 

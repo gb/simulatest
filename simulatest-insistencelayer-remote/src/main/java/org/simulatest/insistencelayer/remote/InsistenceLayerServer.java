@@ -9,19 +9,19 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Lightweight TCP server that exposes an {@link InsistenceLayerManager} for remote control.
+ * Lightweight TCP server that exposes an {@link InsistenceLayer} for remote control.
  *
  * <p>Accepts one client connection at a time and processes commands sequentially on a single
  * daemon thread. This is correct because savepoints are bound to a single JDBC connection
  * and must not be manipulated concurrently.</p>
  *
  * <p>Embed this in the application process (e.g. during test startup) so that a remote
- * test driver can control the savepoint stack via {@link RemoteInsistenceLayerManager}.</p>
+ * test driver can control the savepoint stack via {@link RemoteInsistenceLayer}.</p>
  *
  * <h3>Usage:</h3>
  * <pre>{@code
@@ -35,7 +35,7 @@ public class InsistenceLayerServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerServer.class);
 
-	private final InsistenceLayerManager manager;
+	private final InsistenceLayer manager;
 	private final int requestedPort;
 	private ServerSocket serverSocket;
 	private Thread serverThread;
@@ -47,7 +47,7 @@ public class InsistenceLayerServer {
 	 * @param manager the local Insistence Layer manager (with a real DB connection)
 	 * @param port    the TCP port to bind to (use 0 for OS-assigned port)
 	 */
-	public InsistenceLayerServer(InsistenceLayerManager manager, int port) {
+	public InsistenceLayerServer(InsistenceLayer manager, int port) {
 		this.manager = manager;
 		this.requestedPort = port;
 	}

@@ -11,13 +11,13 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 
 public class InsistenceLayerForm extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
 
-	private InsistenceLayerManager insistenceLayerManager;
+	private InsistenceLayer insistenceLayer;
 	private JTextField tfCurrentLevel = new JTextField();
 	private JButton btnIncreaseLevel = new JButton("+");
 	private JButton btnDecreaseLevel = new JButton("-");
@@ -25,8 +25,8 @@ public class InsistenceLayerForm extends JFrame {
 	private JButton btnClear = new JButton("clear");
 	private JLabel lbCurrentLevel = new JLabel("Current Level");
 
-	public InsistenceLayerForm(InsistenceLayerManager insistenceLayerManager) throws SQLException {
-		this.insistenceLayerManager = insistenceLayerManager;
+	public InsistenceLayerForm(InsistenceLayer insistenceLayer) throws SQLException {
+		this.insistenceLayer = insistenceLayer;
 		
 		addComponents();
 		configureLayout();
@@ -81,27 +81,27 @@ public class InsistenceLayerForm extends JFrame {
 	}
 	
 	private void updateDisplayLevel() {
-		tfCurrentLevel.setText(Integer.toString(insistenceLayerManager.getCurrentLevel()));
+		tfCurrentLevel.setText(Integer.toString(insistenceLayer.getCurrentLevel()));
 	}
 	
 	private void createEvents() {
 		btnIncreaseLevel.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			insistenceLayerManager.increaseLevel();
+			insistenceLayer.increaseLevel();
 			updateDisplayLevel();
 		}});
 		
 		btnDecreaseLevel.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			insistenceLayerManager.decreaseLevel();
+			insistenceLayer.decreaseLevel();
 			updateDisplayLevel();
 		}});
 		
 		btnReset.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			insistenceLayerManager.decreaseAllLevels();
+			insistenceLayer.decreaseAllLevels();
 			updateDisplayLevel();
 		}});
 		
 		btnClear.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			insistenceLayerManager.resetCurrentLevel();
+			insistenceLayer.resetCurrentLevel();
 			updateDisplayLevel();
 		}});
 	}

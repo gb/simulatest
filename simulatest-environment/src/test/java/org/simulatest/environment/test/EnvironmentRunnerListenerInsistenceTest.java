@@ -19,21 +19,21 @@ import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnviro
 import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.EmpresaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.ProjetoEnvironment;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 
 public class EnvironmentRunnerListenerInsistenceTest {
 	
 	private EnvironmentTreeBuilder builder;
 	private EnvironmentFactory factory;
 	private EnvironmentRunnerListener insistenceListener;
-	private InsistenceLayerManager insistenceLayerManager;
+	private InsistenceLayer insistenceLayer;
 	
 	@Before
 	public void setup() {
 		builder = new EnvironmentTreeBuilder();
 		factory = new EnvironmentReflectionFactory();
-		insistenceLayerManager = mock(InsistenceLayerManager.class);
-		insistenceListener = new EnvironmentRunnerListenerInsistence(insistenceLayerManager);
+		insistenceLayer = mock(InsistenceLayer.class);
+		insistenceListener = new EnvironmentRunnerListenerInsistence(insistenceLayer);
 	}
 	
 	private void listenerWithMultiplesEnvironmentTest() {
@@ -51,8 +51,8 @@ public class EnvironmentRunnerListenerInsistenceTest {
 	public void testCallsToListenerInsistence() throws SQLException {
 		listenerWithMultiplesEnvironmentTest();
 
-		verify(insistenceLayerManager, times(8)).increaseLevel();
-		verify(insistenceLayerManager, times(8)).decreaseLevel();
+		verify(insistenceLayer, times(8)).increaseLevel();
+		verify(insistenceLayer, times(8)).decreaseLevel();
 	}
 
 	@Test
@@ -61,7 +61,7 @@ public class EnvironmentRunnerListenerInsistenceTest {
 
 		// Only PessoaFisica/PessoaJuridica are siblings, so resetCurrentLevel
 		// should fire exactly once (to clean PessoaEnvironment's level between siblings)
-		verify(insistenceLayerManager, times(1)).resetCurrentLevel();
+		verify(insistenceLayer, times(1)).resetCurrentLevel();
 	}
 
 	@Test
@@ -81,8 +81,8 @@ public class EnvironmentRunnerListenerInsistenceTest {
 		// and DummyEnvironment (increaseLevel x2), and afterChildrenRun fires
 		// during cleanup for both (decreaseLevel x2). The checkpoint stack
 		// is fully unwound by the runner's exception safety.
-		verify(insistenceLayerManager, times(2)).increaseLevel();
-		verify(insistenceLayerManager, times(2)).decreaseLevel();
+		verify(insistenceLayer, times(2)).increaseLevel();
+		verify(insistenceLayer, times(2)).decreaseLevel();
 	}
 
 }

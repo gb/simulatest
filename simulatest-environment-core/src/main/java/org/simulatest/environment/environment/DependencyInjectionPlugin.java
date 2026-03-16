@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import javax.sql.DataSource;
 
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +33,9 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 		context.initialize(testClasses);
 
 		DataSource ds = context.dataSource();
-		if (ds != null && !InsistenceLayerManagerFactory.isConfigured()) {
+		if (ds != null && !InsistenceLayerFactory.isConfigured()) {
 			logger.info("Auto-configuring InsistenceLayer from DI context");
-			InsistenceLayerManagerFactory.configure(ds);
+			InsistenceLayerFactory.configure(ds);
 		}
 	}
 

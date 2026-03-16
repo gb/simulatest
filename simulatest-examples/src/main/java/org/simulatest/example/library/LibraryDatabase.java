@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 /**
  * Simple JDBC helpers for the Community Library example.
@@ -17,7 +17,7 @@ import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
 public class LibraryDatabase {
 
 	public static Connection getConnection() throws SQLException {
-		return InsistenceLayerManagerFactory.dataSource().getConnection();
+		return InsistenceLayerFactory.dataSource().getConnection();
 	}
 
 	/**

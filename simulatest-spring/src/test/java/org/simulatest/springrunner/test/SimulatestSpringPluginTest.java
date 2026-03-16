@@ -14,7 +14,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.springrunner.test.testdouble.SimpleSpringJUnit5Test;
 
 class SimulatestSpringPluginTest {
@@ -24,7 +24,7 @@ class SimulatestSpringPluginTest {
 		JdbcDataSource h2 = new JdbcDataSource();
 		h2.setURL("jdbc:h2:mem:springjunit5test;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
-		InsistenceLayerManagerFactory.configure(h2);
+		InsistenceLayerFactory.configure(h2);
 	}
 
 	@Test

@@ -1,12 +1,13 @@
 package org.simulatest.insistencelayer;
 
 /**
- * Controls the depth of the Insistence Layer, a boundary where all data
- * changes are temporary.
+ * A transactional sandbox for your database.
  *
- * <p>Each level deepens the layer. Data written at a given level exists
- * only while that level is active and is undone when the level is left.
- * Consumers entering the same level always see the same initial state.</p>
+ * <p>The Insistence Layer wraps a database connection so that all data
+ * changes are temporary. It maintains a stack of checkpoints (levels);
+ * data written at a given level exists only while that level is active
+ * and is undone when the level is left. Consumers entering the same
+ * level always see the same initial state.</p>
  *
  * <p>"Insist, insist, insist ... but never persist."</p>
  *
@@ -20,9 +21,9 @@ package org.simulatest.insistencelayer;
  *   decreaseLevel()          // restore state, leaving subtree
  * </pre>
  *
- * @see LocalInsistenceLayerManager
+ * @see LocalInsistenceLayer
  */
-public interface InsistenceLayerManager {
+public interface InsistenceLayer {
 
 	/**
 	 * Returns the current depth of the checkpoint stack.

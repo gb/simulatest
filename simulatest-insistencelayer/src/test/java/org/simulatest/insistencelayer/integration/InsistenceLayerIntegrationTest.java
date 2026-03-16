@@ -10,15 +10,15 @@ import java.sql.Statement;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.insistencelayer.TestDataSources;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 public class InsistenceLayerIntegrationTest {
 
-	private InsistenceLayerManager insistenceLayerManager;
+	private InsistenceLayer insistenceLayer;
 	private ConnectionWrapper wrapper;
 	private Connection connection;
 	private Statement statement;
@@ -28,7 +28,7 @@ public class InsistenceLayerIntegrationTest {
 		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(TestDataSources.createH2("integrationtest"));
 		wrapper = ds.getConnectionWrapper();
 		connection = ds.getConnection();
-		insistenceLayerManager = InsistenceLayerManagerFactory.build(wrapper);
+		insistenceLayer = InsistenceLayerFactory.build(wrapper);
 		statement = connection.createStatement();
 
 		statement.executeUpdate("CREATE TABLE IF NOT EXISTS LOG (NAME VARCHAR(50))");
@@ -36,60 +36,60 @@ public class InsistenceLayerIntegrationTest {
 
 	@After
 	public void teardown() throws Exception {
-		while (insistenceLayerManager.getCurrentLevel() > 0) {
-			insistenceLayerManager.decreaseLevel();
+		while (insistenceLayer.getCurrentLevel() > 0) {
+			insistenceLayer.decreaseLevel();
 		}
 		statement.executeUpdate("DELETE FROM LOG");
 	}
 
 	@Test
 	public void integrationTest() throws SQLException {
-		insistenceLayerManager.increaseLevel();
+		insistenceLayer.increaseLevel();
 		statement.executeUpdate("INSERT INTO LOG VALUES ('1')");
 		assertEquals(1, countFromTableLog());
 
-		insistenceLayerManager.increaseLevel();
+		insistenceLayer.increaseLevel();
 		statement.executeUpdate("DELETE FROM LOG");
 		assertEquals(0, countFromTableLog());
 
-		insistenceLayerManager.increaseLevel();
+		insistenceLayer.increaseLevel();
 		statement.executeUpdate("INSERT INTO LOG values ('1')");
 		statement.executeUpdate("INSERT INTO LOG values ('2')");
 		statement.executeUpdate("INSERT INTO LOG values ('3')");
 		assertEquals(3, countFromTableLog());
 
-		insistenceLayerManager.increaseLevel();
+		insistenceLayer.increaseLevel();
 		assertEquals(3, countFromTableLog());
 
-		insistenceLayerManager.decreaseLevel();
+		insistenceLayer.decreaseLevel();
 		assertEquals(3, countFromTableLog());
 
-		insistenceLayerManager.decreaseLevel();
+		insistenceLayer.decreaseLevel();
 		assertEquals(0, countFromTableLog());
 
-		insistenceLayerManager.decreaseLevel();
+		insistenceLayer.decreaseLevel();
 		assertEquals(1, countFromTableLog());
 
-		insistenceLayerManager.decreaseLevel();
+		insistenceLayer.decreaseLevel();
 		assertEquals(0, countFromTableLog());
 	}
 
 	@Test
 	public void resetCurrentLevelTest() throws SQLException {
-		insistenceLayerManager.increaseLevel();
-		assertEquals(1, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.increaseLevel();
+		assertEquals(1, insistenceLayer.getCurrentLevel());
 		statement.executeUpdate("INSERT INTO LOG VALUES ('1')");
 
-		insistenceLayerManager.increaseLevel();
-		assertEquals(2, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.increaseLevel();
+		assertEquals(2, insistenceLayer.getCurrentLevel());
 
 		statement.executeUpdate("INSERT INTO LOG values ('1')");
 		statement.executeUpdate("INSERT INTO LOG values ('2')");
 		statement.executeUpdate("INSERT INTO LOG values ('3')");
 		assertEquals(4, countFromTableLog());
 
-		insistenceLayerManager.resetCurrentLevel();
-		assertEquals(2, insistenceLayerManager.getCurrentLevel());
+		insistenceLayer.resetCurrentLevel();
+		assertEquals(2, insistenceLayer.getCurrentLevel());
 
 		assertEquals(1, countFromTableLog());
 	}

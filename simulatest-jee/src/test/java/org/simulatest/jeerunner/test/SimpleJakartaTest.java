@@ -8,7 +8,7 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.simulatest.environment.annotation.UseEnvironment;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
 import org.simulatest.jeerunner.test.example.JakartaChildExampleEnvironment;
 import org.simulatest.jeerunner.test.example.LanguageTeacher;
@@ -22,7 +22,7 @@ public class SimpleJakartaTest {
 		JdbcDataSource h2 = new JdbcDataSource();
 		h2.setURL("jdbc:h2:~/.h2/test");
 		h2.setUser("sa");
-		InsistenceLayerManagerFactory.configure(h2);
+		InsistenceLayerFactory.configure(h2);
 	}
 
 	@Inject

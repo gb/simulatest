@@ -12,19 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * JDBC implementation of {@link InsistenceLayerManager} that uses savepoints
+ * JDBC implementation of {@link InsistenceLayer} that uses savepoints
  * as its checkpoint mechanism. Each level corresponds to a named savepoint
  * on the underlying connection.
  */
-public class LocalInsistenceLayerManager implements InsistenceLayerManager {
+public class LocalInsistenceLayer implements InsistenceLayer {
 
 	private static final String PREFIX_SAVEPOINT = "LAYER";
-	private static final Logger logger = LoggerFactory.getLogger(LocalInsistenceLayerManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(LocalInsistenceLayer.class);
 
 	private final ConnectionWrapper connection;
 	private final Deque<Savepoint> savepoints;
 
-	LocalInsistenceLayerManager(ConnectionWrapper connection) {
+	LocalInsistenceLayer(ConnectionWrapper connection) {
 		Objects.requireNonNull(connection, "Connection is null");
 		this.connection = connection;
 		this.savepoints = new ArrayDeque<>();

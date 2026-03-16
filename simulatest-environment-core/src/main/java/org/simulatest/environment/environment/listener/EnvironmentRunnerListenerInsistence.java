@@ -1,7 +1,7 @@
 package org.simulatest.environment.environment.listener;
 
 import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
+import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,10 +9,10 @@ public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerLis
 	
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunnerListenerInsistence.class);
 
-	private final InsistenceLayerManager insistenceLayerManager;
+	private final InsistenceLayer insistenceLayer;
 
-	public EnvironmentRunnerListenerInsistence(InsistenceLayerManager insistenceLayerManager) {
-		this.insistenceLayerManager = insistenceLayerManager;
+	public EnvironmentRunnerListenerInsistence(InsistenceLayer insistenceLayer) {
+		this.insistenceLayer = insistenceLayer;
 	}
 
 	@Override
@@ -23,19 +23,19 @@ public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerLis
 	@Override
 	public void afterRun(EnvironmentDefinition definition) {
 		logger.debug("[InsistenceListener] afterRun >> {}", definition);
-		insistenceLayerManager.increaseLevel();
+		insistenceLayer.increaseLevel();
 	}
 
 	@Override
 	public void afterChildrenRun(EnvironmentDefinition definition) {
 		logger.debug("[InsistenceListener] afterChildrenRun >> {}", definition);
-		insistenceLayerManager.decreaseLevel();
+		insistenceLayer.decreaseLevel();
 	}
 
 	@Override
 	public void afterSiblingCleanup(EnvironmentDefinition definition) {
 		logger.debug("[InsistenceListener] afterSiblingCleanup >> {}", definition);
-		insistenceLayerManager.resetCurrentLevel();
+		insistenceLayer.resetCurrentLevel();
 	}
 
 	@Override

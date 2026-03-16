@@ -11,28 +11,28 @@ import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.InsistenceLayerManager;
-import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
+import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 import org.simulatest.insistencelayer.infra.InsistenceLayerException;
 
 public class InsistenceLayerRemoteTest {
 
 	private Connection jdbcConnection;
-	private InsistenceLayerManager serverManager;
+	private InsistenceLayer serverManager;
 	private InsistenceLayerServer server;
-	private RemoteInsistenceLayerManager remoteManager;
+	private RemoteInsistenceLayer remoteManager;
 
 	@Before
 	public void setup() throws SQLException, IOException {
 		jdbcConnection = DriverManager.getConnection("jdbc:h2:mem:remote_test;DB_CLOSE_DELAY=-1");
 		ConnectionWrapper wrapper = new ConnectionWrapper(jdbcConnection);
-		serverManager = InsistenceLayerManagerFactory.build(wrapper);
+		serverManager = InsistenceLayerFactory.build(wrapper);
 
 		server = new InsistenceLayerServer(serverManager, 0);
 		server.start();
 
-		remoteManager = new RemoteInsistenceLayerManager("localhost", server.getPort());
+		remoteManager = new RemoteInsistenceLayer("localhost", server.getPort());
 	}
 
 	@After
@@ -84,7 +84,7 @@ public class InsistenceLayerRemoteTest {
 
 	@Test
 	public void remoteManagerWorksAsDropInReplacement() {
-		InsistenceLayerManager manager = remoteManager;
+		InsistenceLayer manager = remoteManager;
 
 		manager.increaseLevel();
 		manager.increaseLevel();
