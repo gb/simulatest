@@ -3,6 +3,8 @@ package org.simulatest.jeerunner.cdi;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
+import javax.sql.DataSource;
+
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
 import jakarta.inject.Inject;
@@ -34,6 +36,12 @@ public class CdiContext implements DependencyInjectionContext {
 	public void initialize(Collection<Class<?>> testClasses) {
 		if (container != null && container.isRunning()) return;
 		container = SeContainerInitializer.newInstance().initialize();
+	}
+
+	@Override
+	public DataSource dataSource() {
+		var instance = getContainer().select(DataSource.class);
+		return instance.isResolvable() ? instance.get() : null;
 	}
 
 	@Override

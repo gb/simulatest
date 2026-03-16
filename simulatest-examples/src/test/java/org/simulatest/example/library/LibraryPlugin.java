@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.h2.jdbcx.JdbcDataSource;
 import org.simulatest.environment.environment.SimulatestPlugin;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
 
 /**
  * Configures the H2 in-memory database and creates the schema before the
@@ -17,7 +17,7 @@ public class LibraryPlugin implements SimulatestPlugin {
 		JdbcDataSource h2 = new JdbcDataSource();
 		h2.setURL("jdbc:h2:mem:library;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
-		InsistenceLayerDataSource.configure(h2);
+		InsistenceLayerManagerFactory.configure(h2);
 
 		LibraryDatabase.createSchema();
 	}

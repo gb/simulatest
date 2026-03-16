@@ -5,19 +5,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
 
 /**
  * Simple JDBC helpers for the Community Library example.
  *
- * All operations go through the {@link InsistenceLayerDataSource}, so every
- * INSERT, UPDATE, and DELETE is automatically managed by the Insistence
- * Layer's savepoint stack. No ORM, no connection pooling — just raw JDBC.
+ * All operations go through the Insistence Layer's wrapped DataSource, so every
+ * INSERT, UPDATE, and DELETE is automatically managed by the savepoint stack.
+ * No ORM, no connection pooling — just raw JDBC.
  */
 public class LibraryDatabase {
 
 	public static Connection getConnection() throws SQLException {
-		return InsistenceLayerDataSource.getDefault().getConnection();
+		return InsistenceLayerManagerFactory.dataSource().getConnection();
 	}
 
 	/**

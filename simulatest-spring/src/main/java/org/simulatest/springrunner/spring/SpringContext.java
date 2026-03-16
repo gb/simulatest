@@ -2,8 +2,11 @@ package org.simulatest.springrunner.spring;
 
 import java.util.Collection;
 
+import javax.sql.DataSource;
+
 import org.simulatest.environment.environment.DependencyInjectionContext;
 import org.simulatest.environment.infra.AnnotationUtils;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class SpringContext implements DependencyInjectionContext {
@@ -43,6 +46,15 @@ public class SpringContext implements DependencyInjectionContext {
 			} finally {
 				context = null;
 			}
+		}
+	}
+
+	@Override
+	public DataSource dataSource() {
+		try {
+			return getContext().getBean(DataSource.class);
+		} catch (NoSuchBeanDefinitionException e) {
+			return null;
 		}
 	}
 

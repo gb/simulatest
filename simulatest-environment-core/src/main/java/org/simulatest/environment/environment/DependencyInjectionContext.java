@@ -2,6 +2,8 @@ package org.simulatest.environment.environment;
 
 import java.util.Collection;
 
+import javax.sql.DataSource;
+
 /**
  * Abstraction over a DI container (Spring, Guice, CDI, etc.).
  *
@@ -18,5 +20,7 @@ public interface DependencyInjectionContext {
 	void initialize(Collection<Class<?>> testClasses);
 
 	void destroy();
+
+	DataSource dataSource();
 
 }

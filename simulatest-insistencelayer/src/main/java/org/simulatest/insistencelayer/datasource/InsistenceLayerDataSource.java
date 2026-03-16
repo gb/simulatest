@@ -13,8 +13,6 @@ import org.simulatest.insistencelayer.connection.ConnectionWrapper;
 
 public class InsistenceLayerDataSource implements DataSource {
 
-	private static InsistenceLayerDataSource defaultInstance;
-
 	private final DataSource delegate;
 	private final ConnectionWrapper connectionWrapper;
 
@@ -22,26 +20,6 @@ public class InsistenceLayerDataSource implements DataSource {
 		Objects.requireNonNull(delegate, "DataSource is null");
 		this.delegate = delegate;
 		this.connectionWrapper = new ConnectionWrapper(delegate);
-	}
-
-	public static void configure(DataSource dataSource) {
-		defaultInstance = new InsistenceLayerDataSource(dataSource);
-	}
-
-	public static InsistenceLayerDataSource getDefault() {
-		if (defaultInstance == null) {
-			throw new IllegalStateException(
-				"InsistenceLayerDataSource not configured. Call InsistenceLayerDataSource.configure(dataSource) first.");
-		}
-		return defaultInstance;
-	}
-
-	public static boolean isConfigured() {
-		return defaultInstance != null;
-	}
-
-	public static void reset() {
-		defaultInstance = null;
 	}
 
 	public ConnectionWrapper getConnectionWrapper() {

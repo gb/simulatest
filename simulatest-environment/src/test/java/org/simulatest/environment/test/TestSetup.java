@@ -1,7 +1,7 @@
 package org.simulatest.environment.test;
 
 import org.h2.jdbcx.JdbcDataSource;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
 
 public class TestSetup {
 
@@ -12,7 +12,7 @@ public class TestSetup {
 			JdbcDataSource h2 = new JdbcDataSource();
 			h2.setURL("jdbc:h2:mem:envtest;DB_CLOSE_DELAY=-1");
 			h2.setUser("sa");
-			InsistenceLayerDataSource.configure(h2);
+			InsistenceLayerManagerFactory.configure(h2);
 			initialized = true;
 		}
 	}

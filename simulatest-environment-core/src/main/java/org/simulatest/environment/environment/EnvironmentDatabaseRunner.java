@@ -3,7 +3,6 @@ package org.simulatest.environment.environment;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 import org.simulatest.environment.tree.Tree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,7 @@ public class EnvironmentDatabaseRunner extends EnvironmentRunner {
 	private final InsistenceLayerManager insistenceLayer;
 
 	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
-		this(factory, environmentTree, InsistenceLayerManagerFactory.build(InsistenceLayerDataSource.getDefault().getConnectionWrapper()));
+		this(factory, environmentTree, InsistenceLayerManagerFactory.resolve());
 	}
 
 	public EnvironmentDatabaseRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree, InsistenceLayerManager insistenceLayer) {

@@ -7,7 +7,6 @@ import org.picocontainer.Startable;
 import org.picocontainer.behaviors.Caching;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 public class App implements Startable {
 
@@ -19,8 +18,7 @@ public class App implements Startable {
 
 	public static void main(String[] args) throws SQLException {
 		InsistenceLayerManager insistenceLayer =
-				InsistenceLayerManagerFactory.build(
-					InsistenceLayerDataSource.getDefault().getConnectionWrapper());
+				InsistenceLayerManagerFactory.resolve();
 		
 		DefaultPicoContainer container = new DefaultPicoContainer(new Caching());	
 		

@@ -4,8 +4,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import javax.sql.DataSource;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 
 import org.simulatest.environment.environment.DependencyInjectionContext;
@@ -37,6 +40,12 @@ public class GuiceContext implements DependencyInjectionContext {
 				.toArray(Module[]::new);
 
 		injector = Guice.createInjector(modules);
+	}
+
+	@Override
+	public DataSource dataSource() {
+		var binding = getInjector().getExistingBinding(Key.get(DataSource.class));
+		return binding != null ? binding.getProvider().get() : null;
 	}
 
 	@Override
