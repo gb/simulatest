@@ -54,7 +54,7 @@ class GuiceContextTest {
 
 	public static class EmptyModule extends AbstractModule {
 		@Override
-		protected void configure() {}
+		protected void configure() { /* no bindings: used to test the absent-DataSource path */ }
 	}
 
 }

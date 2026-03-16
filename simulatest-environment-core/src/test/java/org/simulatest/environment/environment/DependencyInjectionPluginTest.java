@@ -63,10 +63,10 @@ public class DependencyInjectionPluginTest {
 			this.dataSource = dataSource;
 		}
 
-		@Override public <T> T getInstance(Class<T> clazz) { return null; }
-		@Override public void injectMembers(Object instance) {}
-		@Override public void initialize(Collection<Class<?>> testClasses) {}
-		@Override public void destroy() {}
+		@Override public <T> T getInstance(Class<T> clazz) { throw new UnsupportedOperationException(); }
+		@Override public void injectMembers(Object instance) { throw new UnsupportedOperationException(); }
+		@Override public void initialize(Collection<Class<?>> testClasses) { /* no-op: stub has no container to bootstrap */ }
+		@Override public void destroy() { /* no-op: stub has no container to tear down */ }
 		@Override public DataSource dataSource() { return dataSource; }
 	}
 
