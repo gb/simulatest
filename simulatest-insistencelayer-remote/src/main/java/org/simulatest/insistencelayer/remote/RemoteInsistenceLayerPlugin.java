@@ -7,14 +7,14 @@ import java.util.Collection;
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayerManager;
 import org.simulatest.insistencelayer.InsistenceLayerManagerFactory;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
 
 /**
  * Plugin that interposes a TCP layer between the Simulatest engine and the
  * local Insistence Layer. All savepoint commands travel through the wire,
  * proving the remote protocol works as a drop-in replacement.
  *
- * <p>Requires {@link InsistenceLayerDataSource} to be configured first.
+ * <p>Requires a DataSource to be configured via
+ * {@link InsistenceLayerManagerFactory#configure} first.
  * List this plugin AFTER the datasource-configuring plugin in the
  * ServiceLoader file.
  */
@@ -26,7 +26,7 @@ public class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
 		InsistenceLayerManager local = InsistenceLayerManagerFactory.build(
-			InsistenceLayerDataSource.getDefault().getConnectionWrapper()
+			InsistenceLayerManagerFactory.dataSource().getConnectionWrapper()
 		);
 
 		try {
