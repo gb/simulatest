@@ -141,7 +141,7 @@ public class ConnectionWrapper {
 	}
 
 	private void handleCommit() throws SQLException {
-		logger.info("[InsistenceLayer] Commit (bumping savepoint)");
+		logger.debug("Commit (bumping savepoint)");
 		if (lastCommitSavepoint != null) {
 			realConnection.releaseSavepoint(lastCommitSavepoint);
 		}
@@ -149,7 +149,7 @@ public class ConnectionWrapper {
 	}
 
 	private void handleRollback() throws SQLException {
-		logger.info("[InsistenceLayer] Rollback");
+		logger.debug("Rollback");
 		if (lastCommitSavepoint != null) {
 			realConnection.rollback(lastCommitSavepoint);
 		}

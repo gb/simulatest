@@ -40,7 +40,7 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		setup();
 		createSavepoint();
 
-		logger.info("[InsistenceLayer] Level increased to {}", getCurrentLevel());
+		logger.info("Level increased to {}", getCurrentLevel());
 	}
 
 	private void setup() {
@@ -63,7 +63,7 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		if (isDisabled()) return;
 
 		rollbackSavepoint(savepoints.peek());
-		logger.info("[InsistenceLayer] Cleaned current level: {}", getCurrentLevel());
+		logger.info("Cleaned current level: {}", getCurrentLevel());
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		rollbackSavepoint(savepoints.pop());
 		tearDown();
 
-		logger.info("[InsistenceLayer] Level decreased to {}", getCurrentLevel());
+		logger.info("Level decreased to {}", getCurrentLevel());
 	}
 
 	private void tearDown() {
@@ -90,7 +90,7 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 	@Override
 	public void setLevelTo(int level) {
 		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
-		logger.info("[InsistenceLayer] Setting level {} to {}", getCurrentLevel(), level);
+		logger.info("Setting level {} to {}", getCurrentLevel(), level);
 
 		if (getCurrentLevel() > level) decreaseToLevel(level);
 		else if (getCurrentLevel() < level ) increaseToLevel(level);

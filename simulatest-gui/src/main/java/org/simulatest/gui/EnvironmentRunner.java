@@ -27,10 +27,13 @@ import org.simulatest.environment.environment.Environment;
 import org.simulatest.environment.environment.facade.EnvironmentRunnerFacade;
 import org.simulatest.environment.environment.EnvironmentScanner;
 import org.simulatest.insistencelayer.InsistenceLayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EnvironmentRunner extends JFrame implements ListSelectionListener {
 	
 	private static final long serialVersionUID = -568982423610625422L;
+	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunner.class);
 	
 	private JList list;
     private DefaultListModel listModel;
@@ -103,7 +106,7 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
 			try {
 				clazz = (Class<? extends Environment>) Class.forName((String) listModel.get(index));
 			} catch (ClassNotFoundException e1) {
-				e1.printStackTrace();
+				logger.error("Environment class not found: {}", listModel.get(index), e1);
 			}
             facade.runEnvironment(clazz);
 

@@ -11,7 +11,7 @@ public class EnvironmentReflectionFactory implements EnvironmentFactory {
 	@Override
 	public Environment create(EnvironmentDefinition definition) {
 		try {
-			logger.info("[ReflectionRunner] instantiation >> {}", definition.getName());
+			logger.trace("Instantiating environment: {}", definition.getName());
 			var constructor = definition.getEnvironmentClass().getDeclaredConstructor();
 			constructor.setAccessible(true);
 			return constructor.newInstance();

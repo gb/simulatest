@@ -41,11 +41,12 @@ class SimulatestSpringPluginTest {
 		TestExecutionSummary summary = summaryListener.getSummary();
 
 		if (!summary.getFailures().isEmpty()) {
+			StringBuilder details = new StringBuilder("Spring test failures:");
 			summary.getFailures().forEach(f ->
-				System.err.println(f.getTestIdentifier().getDisplayName() + ": " + f.getException()));
+				details.append("\n  ").append(f.getTestIdentifier().getDisplayName())
+					.append(": ").append(f.getException()));
+			assertEquals(0, summary.getTestsFailedCount(), details.toString());
 		}
-
-		assertEquals(0, summary.getTestsFailedCount(), "All Spring tests should pass");
 		assertEquals(2, summary.getTestsSucceededCount(), "Should run 2 test methods");
 	}
 

@@ -49,13 +49,13 @@ public class InsistenceLayerClient implements AutoCloseable {
 	 */
 	public void connect() {
 		try {
-			logger.debug("[InsistenceLayer Remote] Connecting to {}:{}", host, port);
+			logger.debug("Connecting to {}:{}", host, port);
 			socket = new Socket(host, port);
 			out = new DataOutputStream(socket.getOutputStream());
 			in = new DataInputStream(socket.getInputStream());
-			logger.info("[InsistenceLayer Remote] Connected to {}:{}", host, port);
+			logger.debug("Connected to {}:{}", host, port);
 		} catch (IOException e) {
-			logger.error("[InsistenceLayer Remote] Failed to connect to {}:{}", host, port, e);
+			logger.error("Failed to connect to {}:{}", host, port, e);
 			throw new InsistenceLayerException(
 				"Cannot connect to Insistence Layer server at " + host + ":" + port, e);
 		}
@@ -80,11 +80,11 @@ public class InsistenceLayerClient implements AutoCloseable {
 			readResponse();
 		} catch (InsistenceLayerException e) {
 			String context = String.format("Command 0x%02X failed on %s:%d", command, host, port);
-			logger.error("[InsistenceLayer Remote] {}: {}", context, e.getMessage());
+			logger.error("{}: {}", context, e.getMessage());
 			throw new InsistenceLayerException(context + ": " + e.getMessage(), e);
 		} catch (IOException e) {
 			resetConnection();
-			logger.error("[InsistenceLayer Remote] Lost connection to {}:{} during command 0x{}",
+			logger.error("Lost connection to {}:{} during command 0x{}",
 				host, port, String.format("%02X", command), e);
 			throw new InsistenceLayerException(
 				"Lost connection to Insistence Layer server at " + host + ":" + port, e);
@@ -107,7 +107,7 @@ public class InsistenceLayerClient implements AutoCloseable {
 				socket.close();
 			}
 		} catch (IOException e) {
-			logger.debug("[InsistenceLayer Remote] Error closing dead connection to {}:{}", host, port, e);
+			logger.debug("Error closing dead connection to {}:{}", host, port, e);
 		} finally {
 			socket = null;
 			out = null;

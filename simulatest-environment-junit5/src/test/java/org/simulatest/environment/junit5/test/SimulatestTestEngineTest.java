@@ -27,12 +27,16 @@ import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Integration test for the Simulatest JUnit 5 TestEngine.
  * Uses the JUnit Platform Launcher API to programmatically run the engine.
  */
 class SimulatestTestEngineTest {
+
+	private static final Logger logger = LoggerFactory.getLogger(SimulatestTestEngineTest.class);
 
 	@BeforeAll
 	static void configureDataSource() {
@@ -226,14 +230,16 @@ class SimulatestTestEngineTest {
 
 	private static void assertNoFailures(TestExecutionSummary summary) {
 		if (!summary.getFailures().isEmpty()) {
+			StringBuilder details = new StringBuilder("Test failures:");
 			summary.getFailures().forEach(f ->
-				System.err.println(f.getTestIdentifier().getDisplayName() + ": " + f.getException()));
+				details.append("\n  ").append(f.getTestIdentifier().getDisplayName())
+					.append(": ").append(f.getException()));
+			assertEquals(0, summary.getTestsFailedCount(), details.toString());
 		}
-		assertEquals(0, summary.getTestsFailedCount(), "All tests should pass");
 	}
 
 	private void printTree(TestPlan testPlan, TestIdentifier node, String indent) {
-		System.out.println(indent + node.getDisplayName() + " [" + node.getUniqueId() + "]");
+		logger.debug("{}{} [{}]", indent, node.getDisplayName(), node.getUniqueId());
 		for (TestIdentifier child : testPlan.getChildren(node)) {
 			printTree(testPlan, child, indent + "  ");
 		}

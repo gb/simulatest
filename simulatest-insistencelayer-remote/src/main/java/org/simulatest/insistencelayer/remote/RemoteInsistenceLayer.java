@@ -60,7 +60,7 @@ public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 	public void increaseLevel() {
 		client.sendCommand(InsistenceLayerProtocol.INCREASE);
 		level++;
-		logger.info("[InsistenceLayer Remote] Level increased to {}", level);
+		logger.info("Level increased to {}", level);
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 	public void decreaseLevel() {
 		client.sendCommand(InsistenceLayerProtocol.DECREASE);
 		level--;
-		logger.info("[InsistenceLayer Remote] Level decreased to {}", level);
+		logger.info("Level decreased to {}", level);
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 	@Override
 	public void resetCurrentLevel() {
 		client.sendCommand(InsistenceLayerProtocol.RESET);
-		logger.info("[InsistenceLayer Remote] Cleaned current level: {}", level);
+		logger.info("Cleaned current level: {}", level);
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 	@Override
 	public void setLevelTo(int level) {
 		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
-		logger.info("[InsistenceLayer Remote] Setting level {} to {}", this.level, level);
+		logger.info("Setting level {} to {}", this.level, level);
 
 		while (this.level > level) decreaseLevel();
 		while (this.level < level) increaseLevel();

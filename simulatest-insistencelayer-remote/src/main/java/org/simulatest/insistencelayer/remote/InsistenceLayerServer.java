@@ -59,7 +59,7 @@ public class InsistenceLayerServer {
 	 */
 	public void start() throws IOException {
 		serverSocket = new ServerSocket(requestedPort);
-		logger.info("[InsistenceLayer Remote] Server started on port {}", serverSocket.getLocalPort());
+		logger.info("Server started on port {}", serverSocket.getLocalPort());
 
 		serverThread = new Thread(this::acceptLoop, "insistence-layer-server");
 		serverThread.setDaemon(true);
@@ -73,7 +73,7 @@ public class InsistenceLayerServer {
 	 * @throws IOException if closing the socket fails
 	 */
 	public void stop() throws IOException {
-		logger.info("[InsistenceLayer Remote] Stopping server on port {}", requestedPort);
+		logger.info("Stopping server on port {}", requestedPort);
 		if (serverSocket != null && !serverSocket.isClosed()) {
 			serverSocket.close();
 		}
@@ -82,11 +82,11 @@ public class InsistenceLayerServer {
 			try {
 				serverThread.join(5000);
 				if (serverThread.isAlive()) {
-					logger.warn("[InsistenceLayer Remote] Server thread did not terminate within 5 seconds");
+					logger.warn("Server thread did not terminate within 5 seconds");
 				}
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
-				logger.warn("[InsistenceLayer Remote] Interrupted while waiting for server thread to stop");
+				logger.warn("Interrupted while waiting for server thread to stop");
 			}
 		}
 	}
@@ -104,17 +104,17 @@ public class InsistenceLayerServer {
 	private void acceptLoop() {
 		while (!serverSocket.isClosed()) {
 			try (Socket client = serverSocket.accept()) {
-				logger.info("[InsistenceLayer Remote] Client connected from {}", client.getRemoteSocketAddress());
+				logger.debug("Client connected from {}", client.getRemoteSocketAddress());
 				handleClient(client);
 			} catch (SocketException e) {
 				if (!serverSocket.isClosed()) {
-					logger.error("[InsistenceLayer Remote] Accept failed on port {}", serverSocket.getLocalPort(), e);
+					logger.error("Accept failed on port {}", serverSocket.getLocalPort(), e);
 				}
 			} catch (IOException e) {
-				logger.error("[InsistenceLayer Remote] I/O error on port {}", serverSocket.getLocalPort(), e);
+				logger.error("I/O error on port {}", serverSocket.getLocalPort(), e);
 			}
 		}
-		logger.info("[InsistenceLayer Remote] Server stopped on port {}", requestedPort);
+		logger.info("Server stopped on port {}", requestedPort);
 	}
 
 	private void handleClient(Socket client) throws IOException {
@@ -146,11 +146,11 @@ public class InsistenceLayerServer {
 			executeCommand(command, out);
 			return true;
 		} catch (EOFException e) {
-			logger.info("[InsistenceLayer Remote] Client {} disconnected", client.getRemoteSocketAddress());
+			logger.debug("Client {} disconnected", client.getRemoteSocketAddress());
 			return false;
 		} catch (SocketException e) {
 			if (serverSocket.isClosed()) {
-				logger.info("[InsistenceLayer Remote] Client connection closed during server shutdown");
+				logger.debug("Client connection closed during server shutdown");
 				return false;
 			}
 			throw e;
@@ -163,7 +163,7 @@ public class InsistenceLayerServer {
 			try {
 				client.close();
 			} catch (IOException e) {
-				logger.debug("[InsistenceLayer Remote] Error closing active client connection", e);
+				logger.debug("Error closing active client connection", e);
 			}
 		}
 	}
@@ -173,7 +173,7 @@ public class InsistenceLayerServer {
 			dispatch(command);
 			sendOk(out);
 		} catch (Exception e) {
-			logger.error("[InsistenceLayer Remote] Command 0x{} failed at level {}",
+			logger.error("Command 0x{} failed at level {}",
 				String.format("%02X", command), manager.getCurrentLevel(), e);
 			sendError(out, e.getMessage());
 		}

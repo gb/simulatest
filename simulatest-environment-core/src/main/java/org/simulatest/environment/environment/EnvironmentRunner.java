@@ -123,7 +123,7 @@ public class EnvironmentRunner {
 	}
 
 	private void runEnvironment(EnvironmentDefinition definition) {
-		logger.info("[Run Environment] >> {}", definition.getName());
+		logger.info("Running environment: {}", definition.getName());
 
 		fireBeforeRun(definition);
 		RuntimeException failure = null;

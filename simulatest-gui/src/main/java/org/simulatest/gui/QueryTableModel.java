@@ -34,7 +34,7 @@ class QueryTableModel extends AbstractTableModel {
 			db = InsistenceLayerFactory.dataSource().getConnection();
 			statement = db.createStatement();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.error("Failed to obtain connection", e);
 		}
 	}
 
@@ -77,8 +77,7 @@ class QueryTableModel extends AbstractTableModel {
 			
 			fireTableChanged(null);
 		} catch (Exception e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error("Query execution failed", e);
 		}
 	}
 
@@ -87,8 +86,7 @@ class QueryTableModel extends AbstractTableModel {
 			db = DriverManager.getConnection(url);
 			statement = db.createStatement();
 		} catch (Exception e) {
-			logger.error("Could not initialize the database.");
-			e.printStackTrace();
+			logger.error("Could not initialize the database", e);
 		}
 	}
 
@@ -97,8 +95,7 @@ class QueryTableModel extends AbstractTableModel {
 			if (statement != null) statement.close();
 			if (db != null) db.close();
 		} catch (Exception e) {
-			logger.error("Could not close the current connection.");
-			e.printStackTrace();
+			logger.error("Could not close the current connection", e);
 		}
 	}
 	
