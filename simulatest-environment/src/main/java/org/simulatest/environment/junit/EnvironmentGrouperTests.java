@@ -28,9 +28,7 @@ public class EnvironmentGrouperTests {
 	
 	public Runner get(Class<?> testCase) {
 		Runner runner = runnersByTest.get(testCase);
-		if (runner == null) {
-			throw new IllegalStateException("No runner found for test class: " + testCase.getName());
-		}
+		if (runner == null) throw new IllegalStateException("No runner found for test class: " + testCase.getName());
 		return runner;
 	}
 

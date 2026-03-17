@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.ServiceLoader;
+import java.util.function.Supplier;
 
 public final class SimulatestPlugins {
 
@@ -25,9 +26,8 @@ public final class SimulatestPlugins {
 	}
 
 	public static void initializeAll(List<SimulatestPlugin> plugins, Collection<Class<?>> testClasses) {
-		for (SimulatestPlugin plugin : plugins) {
+		for (SimulatestPlugin plugin : plugins)
 			plugin.initialize(testClasses);
-		}
 	}
 
 	public static void destroyAll(List<SimulatestPlugin> plugins) {
@@ -46,18 +46,18 @@ public final class SimulatestPlugins {
 		if (firstException != null) throw firstException;
 	}
 
-	public static Object createTestInstance(List<SimulatestPlugin> plugins, Class<?> testClass) {
-		for (SimulatestPlugin plugin : plugins) {
-			Object instance = plugin.createTestInstance(testClass);
-			if (instance != null) return instance;
-		}
-		return null;
+	public static Object createTestInstanceOrElse(List<SimulatestPlugin> plugins, Class<?> testClass,
+												   Supplier<Object> fallback) {
+		return plugins.stream()
+				.map(plugin -> plugin.createTestInstance(testClass))
+				.filter(Objects::nonNull)
+				.findFirst()
+				.orElseGet(fallback);
 	}
 
 	public static void postProcessAll(List<SimulatestPlugin> plugins, Object instance) {
-		for (SimulatestPlugin plugin : plugins) {
+		for (SimulatestPlugin plugin : plugins)
 			plugin.postProcessTestInstance(instance);
-		}
 	}
 
 }

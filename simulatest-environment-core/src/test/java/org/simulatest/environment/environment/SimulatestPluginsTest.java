@@ -2,7 +2,6 @@ package org.simulatest.environment.environment;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -104,7 +103,7 @@ public class SimulatestPluginsTest {
 	}
 
 	@Test
-	public void createTestInstance_shouldReturnFirstNonNullResult() {
+	public void createTestInstanceOrElse_shouldReturnFirstNonNullResult() {
 		Object expected = "created-by-second";
 		SimulatestPlugin returnsNull = new SimulatestPlugin() {};
 		SimulatestPlugin returnsInstance = new SimulatestPlugin() {
@@ -120,18 +119,20 @@ public class SimulatestPluginsTest {
 			}
 		};
 
-		Object result = SimulatestPlugins.createTestInstance(
-				List.of(returnsNull, returnsInstance, neverReached), String.class);
+		Object result = SimulatestPlugins.createTestInstanceOrElse(
+				List.of(returnsNull, returnsInstance, neverReached), String.class, () -> "fallback");
 
 		assertSame(expected, result);
 	}
 
 	@Test
-	public void createTestInstance_shouldReturnNullWhenNoPluginCreatesInstance() {
-		Object result = SimulatestPlugins.createTestInstance(
-				List.of(new SimulatestPlugin() {}), String.class);
+	public void createTestInstanceOrElse_shouldUseFallbackWhenNoPluginCreatesInstance() {
+		Object fallback = "fallback-instance";
 
-		assertNull(result);
+		Object result = SimulatestPlugins.createTestInstanceOrElse(
+				List.of(new SimulatestPlugin() {}), String.class, () -> fallback);
+
+		assertSame(fallback, result);
 	}
 
 	@Test
