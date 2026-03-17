@@ -5,13 +5,13 @@ import java.util.List;
 
 public class Node<T> {
 	
-	private T value;
+	private final T value;
 	private Node<T> parent;
-	private LinkedList<Node<T>> children;
+	private final LinkedList<Node<T>> children;
 	
 	public Node(T value) {
 		this.value = value;
-		this.children = new LinkedList<Node<T>>();
+		this.children = new LinkedList<>();
 	}
 
 	public void addChild(Node<T> child) {

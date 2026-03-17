@@ -4,6 +4,8 @@ import org.simulatest.environment.infra.exception.EnvironmentInstantiationExcept
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
+
 public class EnvironmentReflectionFactory implements EnvironmentFactory {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentReflectionFactory.class);
@@ -12,7 +14,7 @@ public class EnvironmentReflectionFactory implements EnvironmentFactory {
 	public Environment create(EnvironmentDefinition definition) {
 		try {
 			logger.trace("Instantiating environment: {}", definition.getName());
-			var constructor = definition.getEnvironmentClass().getDeclaredConstructor();
+			Constructor<? extends Environment> constructor = definition.getEnvironmentClass().getDeclaredConstructor();
 			constructor.setAccessible(true);
 			return constructor.newInstance();
 		} catch (Exception exception) {

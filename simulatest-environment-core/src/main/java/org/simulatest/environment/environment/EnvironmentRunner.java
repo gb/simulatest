@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EnvironmentRunner {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunner.class);
 
 	private final EnvironmentFactory factory;
@@ -23,7 +23,7 @@ public class EnvironmentRunner {
 		this.tree = environmentTree;
 		this.listeners = new ArrayList<>();
 	}
-	
+
 	public EnvironmentRunner(EnvironmentFactory factory, EnvironmentTreeBuilder builder) {
 		this(factory, builder.getTree());
 	}
@@ -39,11 +39,58 @@ public class EnvironmentRunner {
 		}
 		listeners.add(insertIndex, listener);
 	}
-	
-	public void removeListener(EnvironmentRunnerListener listener) {
-		listeners.remove(listener);
+
+	public void run() {
+		for (Node<EnvironmentDefinition> node : tree) runNode(node);
 	}
-	
+
+	private void runNode(Node<EnvironmentDefinition> node) {
+		runWithSuppression(
+				() -> runEnvironment(node.getValue()),
+				() -> fireLeafCallbacks(node));
+	}
+
+	private void runEnvironment(EnvironmentDefinition definition) {
+		logger.info("Running environment: {}", definition.getName());
+
+		fireBeforeRun(definition);
+		runWithSuppression(
+				() -> executeEnvironment(definition),
+				() -> fireAfterRun(definition));
+	}
+
+	private void executeEnvironment(EnvironmentDefinition definition) {
+		if (EnvironmentDefinition.bigBang().equals(definition)) return;
+
+		try {
+			factory.create(definition).run();
+		} catch (Exception exception) {
+			throw new EnvironmentExecutionException(
+					"Failed during run for environment '" + definition.getName() + "'", exception);
+		}
+	}
+
+	private void fireLeafCallbacks(Node<EnvironmentDefinition> node) {
+		if (!node.getChildren().isEmpty()) return;
+
+		runWithSuppression(
+				() -> fireAfterChildrenRun(node.getValue()),
+				() -> fireParentBoundaryCallbacks(node));
+	}
+
+	private void fireParentBoundaryCallbacks(Node<EnvironmentDefinition> node) {
+		if (!node.hasParent()) return;
+
+		if (node.isLastChild()) propagateAfterChildrenRun(node.getParent());
+		else fireAfterSiblingCleanup(node.getParentValue());
+	}
+
+	private void propagateAfterChildrenRun(Node<EnvironmentDefinition> parent) {
+		runWithSuppression(
+				() -> fireAfterChildrenRun(parent.getValue()),
+				() -> fireParentBoundaryCallbacks(parent));
+	}
+
 	private void fireBeforeRun(EnvironmentDefinition definition) {
 		fireEvent(definition, "beforeRun", EnvironmentRunnerListener::beforeRun);
 	}
@@ -83,88 +130,19 @@ public class EnvironmentRunner {
 	private interface ListenerAction {
 		void execute(EnvironmentRunnerListener listener, EnvironmentDefinition definition);
 	}
-	
-	public void run() {
-		for (Node<EnvironmentDefinition> node : tree) run(node);
-	}
-	
-	private void run(Node<EnvironmentDefinition> node) {
+
+	private static void runWithSuppression(Runnable first, Runnable second) {
 		RuntimeException failure = null;
 		try {
-			runEnvironment(node.getValue());
+			first.run();
 		} catch (RuntimeException e) {
 			failure = e;
 		}
 		try {
-			executeAfterEnvironment(node);
+			second.run();
 		} catch (RuntimeException e) {
 			if (failure != null) failure.addSuppressed(e);
 			else failure = e;
-		}
-		if (failure != null) throw failure;
-	}
-
-	private void executeAfterEnvironment(Node<EnvironmentDefinition> node) {
-		if (!node.getChildren().isEmpty()) return;
-		RuntimeException failure = null;
-		try {
-			fireAfterChildrenRun(node.getValue());
-		} catch (RuntimeException e) {
-			failure = e;
-		}
-		try {
-			if (node.isLastChild()) fireAfterChildrenRunForParent(node.getParent());
-			else if (node.hasParent()) fireAfterSiblingCleanup(node.getParentValue());
-		} catch (RuntimeException e) {
-			if (failure != null) failure.addSuppressed(e);
-			else failure = e;
-		}
-		if (failure != null) throw failure;
-	}
-
-	private void runEnvironment(EnvironmentDefinition definition) {
-		logger.info("Running environment: {}", definition.getName());
-
-		fireBeforeRun(definition);
-		RuntimeException failure = null;
-		try {
-			if (!definition.equals(EnvironmentDefinition.bigBang())) executeEnvironment(definition);
-		} catch (RuntimeException e) {
-			failure = e;
-		}
-		try {
-			fireAfterRun(definition);
-		} catch (RuntimeException e) {
-			if (failure != null) failure.addSuppressed(e);
-			else failure = e;
-		}
-		if (failure != null) throw failure;
-	}
-
-	protected void executeEnvironment(EnvironmentDefinition definition) {
-		try {
-			factory.create(definition).run();
-		} catch (Exception exception) {
-			throw new EnvironmentExecutionException(
-					"Failed during run for environment '" + definition.getName() + "'", exception);
-		}
-	}
-	
-	private void fireAfterChildrenRunForParent(Node<EnvironmentDefinition> parent) {
-		RuntimeException failure = null;
-		try {
-			fireAfterChildrenRun(parent.getValue());
-		} catch (RuntimeException e) {
-			failure = e;
-		}
-		if (parent.hasParent()) {
-			try {
-				if (parent.isLastChild()) fireAfterChildrenRunForParent(parent.getParent());
-				else fireAfterSiblingCleanup(parent.getParentValue());
-			} catch (RuntimeException e) {
-				if (failure != null) failure.addSuppressed(e);
-				else failure = e;
-			}
 		}
 		if (failure != null) throw failure;
 	}

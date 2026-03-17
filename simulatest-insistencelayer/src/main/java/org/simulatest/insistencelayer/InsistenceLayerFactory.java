@@ -24,6 +24,14 @@ public class InsistenceLayerFactory {
 		return dataSources.isEmpty() ? null : dataSources.values().iterator().next();
 	}
 
+	public static InsistenceLayerDataSource requireDataSource() {
+		InsistenceLayerDataSource ds = dataSource();
+		if (ds == null) {
+			throw new IllegalStateException("InsistenceLayer not configured - call InsistenceLayerFactory.configure(dataSource) first");
+		}
+		return ds;
+	}
+
 	public static boolean isConfigured() {
 		return !registry.isEmpty();
 	}

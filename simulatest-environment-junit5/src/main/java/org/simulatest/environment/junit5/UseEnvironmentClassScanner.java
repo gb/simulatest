@@ -1,6 +1,7 @@
 package org.simulatest.environment.junit5;
 
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.platform.commons.support.ReflectionSupport;
@@ -27,10 +28,7 @@ class UseEnvironmentClassScanner {
 		Set<Class<?>> result = new LinkedHashSet<>();
 
 		for (ClassSelector selector : request.getSelectorsByType(ClassSelector.class)) {
-			Class<?> resolved = resolveUseEnvironmentClass(selector.getJavaClass());
-			if (resolved != null) {
-				result.add(resolved);
-			}
+			resolveUseEnvironmentClass(selector.getJavaClass()).ifPresent(result::add);
 			collectAnnotatedInnerClasses(selector.getJavaClass(), result);
 		}
 
@@ -49,13 +47,13 @@ class UseEnvironmentClassScanner {
 
 	/**
 	 * Walks the enclosing class chain looking for {@link UseEnvironment}.
-	 * Returns the annotated class, or {@code null} if none is found.
 	 */
-	static Class<?> resolveUseEnvironmentClass(Class<?> clazz) {
-		for (Class<?> c = clazz; c != null; c = c.getEnclosingClass()) {
-			if (c.isAnnotationPresent(UseEnvironment.class)) return c;
-		}
-		return null;
+	static Optional<Class<?>> resolveUseEnvironmentClass(Class<?> clazz) {
+		for (Class<?> currentClass = clazz; currentClass != null; currentClass = currentClass.getEnclosingClass())
+			if (currentClass.isAnnotationPresent(UseEnvironment.class))
+				return Optional.of(currentClass);
+
+		return Optional.empty();
 	}
 
 	private static boolean isAnnotated(Class<?> clazz) {
@@ -64,9 +62,7 @@ class UseEnvironmentClassScanner {
 
 	private static void collectAnnotatedInnerClasses(Class<?> clazz, Set<Class<?>> result) {
 		for (Class<?> inner : clazz.getDeclaredClasses()) {
-			if (inner.isAnnotationPresent(UseEnvironment.class)) {
-				result.add(inner);
-			}
+			if (inner.isAnnotationPresent(UseEnvironment.class)) result.add(inner);
 			collectAnnotatedInnerClasses(inner, result);
 		}
 	}

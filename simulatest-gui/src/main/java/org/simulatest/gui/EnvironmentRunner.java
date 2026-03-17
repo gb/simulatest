@@ -3,7 +3,6 @@ package org.simulatest.gui;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -173,14 +172,8 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
     }
 
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting() == false) {
-
-            if (list.getSelectedIndex() == -1) {
-                fireButton.setEnabled(false);
-
-            } else {
-                fireButton.setEnabled(true);
-            }
+        if (!e.getValueIsAdjusting()) {
+            fireButton.setEnabled(list.getSelectedIndex() != -1);
         }
     }
 

@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 /**
@@ -17,7 +16,7 @@ import org.simulatest.insistencelayer.InsistenceLayerFactory;
 public class LibraryDatabase {
 
 	public static Connection getConnection() throws SQLException {
-		return InsistenceLayerFactory.dataSource().getConnection();
+		return InsistenceLayerFactory.requireDataSource().getConnection();
 	}
 
 	/**

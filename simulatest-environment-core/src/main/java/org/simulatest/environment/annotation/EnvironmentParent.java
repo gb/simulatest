@@ -11,6 +11,6 @@ import org.simulatest.environment.environment.Environment;
 @Target({ ElementType.TYPE })
 public @interface EnvironmentParent {
 	
-	public Class<? extends Environment> value();
+	Class<? extends Environment> value();
 	
 }

@@ -13,7 +13,7 @@ import org.simulatest.environment.infra.exception.EnvironmentGeneralException;
 public class EnvironmentRunnerFacade {
 
 	private EnvironmentFactory environmentFactory;
-	private EnvironmentTreeBuilder builder = new EnvironmentTreeBuilder();
+	private final EnvironmentTreeBuilder builder = new EnvironmentTreeBuilder();
 
 	public EnvironmentRunnerFacade() {
 		ServiceLoader<EnvironmentFactory> loader = ServiceLoader.load(EnvironmentFactory.class);

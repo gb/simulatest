@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.table.AbstractTableModel;
 
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -27,7 +26,7 @@ class SQLTableModel extends AbstractTableModel {
 
 	SQLTableModel() {
 		try {
-			Connection connection = InsistenceLayerFactory.dataSource().getConnection();
+			Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
 			statement = connection.createStatement();
 		} catch (SQLException e) {
 			throw new IllegalStateException("Failed to obtain connection", e);

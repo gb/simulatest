@@ -22,9 +22,7 @@ public class EnvironmentScanner {
 
 	private void scan(String basePackage) {
 		ClassGraph classGraph = new ClassGraph().enableClassInfo();
-		if (!basePackage.isEmpty()) {
-			classGraph.acceptPackages(basePackage);
-		}
+		if (!basePackage.isEmpty()) classGraph.acceptPackages(basePackage);
 
 		try (ScanResult result = classGraph.scan()) {
 			environments.addAll(result.getClassesImplementing(Environment.class)

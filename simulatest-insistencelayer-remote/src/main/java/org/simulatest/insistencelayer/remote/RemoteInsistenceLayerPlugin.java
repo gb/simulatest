@@ -3,7 +3,6 @@ package org.simulatest.insistencelayer.remote;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collection;
-
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -26,7 +25,7 @@ public class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
 		InsistenceLayer local = InsistenceLayerFactory.build(
-			InsistenceLayerFactory.dataSource().getConnectionWrapper()
+			InsistenceLayerFactory.requireDataSource().getConnectionWrapper()
 		);
 
 		try {

@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 public final class SimulatestPlugins {
 
 	private SimulatestPlugins() {
+		// Static methods only
 	}
 
 	public static List<SimulatestPlugin> loadAll() {
@@ -26,12 +27,12 @@ public final class SimulatestPlugins {
 	}
 
 	public static void initializeAll(List<SimulatestPlugin> plugins, Collection<Class<?>> testClasses) {
-		for (SimulatestPlugin plugin : plugins)
-			plugin.initialize(testClasses);
+		for (SimulatestPlugin plugin : plugins) plugin.initialize(testClasses);
 	}
 
 	public static void destroyAll(List<SimulatestPlugin> plugins) {
 		RuntimeException firstException = null;
+
 		for (SimulatestPlugin plugin : plugins) {
 			try {
 				plugin.destroy();
@@ -43,6 +44,7 @@ public final class SimulatestPlugins {
 				}
 			}
 		}
+
 		if (firstException != null) throw firstException;
 	}
 

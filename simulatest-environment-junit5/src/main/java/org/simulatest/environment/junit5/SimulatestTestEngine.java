@@ -44,13 +44,9 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 
 	@Override
 	public TestDescriptor discover(EngineDiscoveryRequest request, UniqueId uniqueId) {
-		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(uniqueId);
-
 		Set<Class<?>> testClasses = scanner.scan(request);
-		engineDescriptor.setTestClasses(testClasses);
-		if (!testClasses.isEmpty()) {
-			populateDescriptors(engineDescriptor, testClasses);
-		}
+		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(uniqueId, testClasses);
+		if (!testClasses.isEmpty()) populateDescriptors(engineDescriptor, testClasses);
 
 		return engineDescriptor;
 	}
@@ -62,18 +58,17 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		buildDescriptorTree(engineDescriptor, envTree, extractor);
 	}
 
-	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor,
-			Tree<EnvironmentDefinition> envTree, EnvironmentExtractor extractor) {
+	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor, Tree<EnvironmentDefinition> envTree,
+									 EnvironmentExtractor extractor) {
 		Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv = new HashMap<>();
 
-		for (var node : envTree) {
+		for (Node<EnvironmentDefinition> node : envTree) {
 			TestDescriptor parent = resolveParent(node, engineDescriptor, descriptorsByEnv);
-			EnvironmentTestDescriptor envDesc = createEnvironmentDescriptor(parent, node.getValue());
+			EnvironmentTestDescriptor environmentDescriptor = createEnvironmentDescriptor(parent, node.getValue());
 
-			descriptorsByEnv.put(node.getValue(), envDesc);
-			parent.addChild(envDesc);
-
-			addTestClassChildren(envDesc, extractor.getTests(node.getValue()));
+			descriptorsByEnv.put(node.getValue(), environmentDescriptor);
+			parent.addChild(environmentDescriptor);
+			addTestClassChildren(environmentDescriptor, extractor.getTests(node.getValue()));
 		}
 	}
 
@@ -82,9 +77,10 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 		return node.hasParent() ? descriptorsByEnv.get(node.getParentValue()) : root;
 	}
 
-	private EnvironmentTestDescriptor createEnvironmentDescriptor(TestDescriptor parent, EnvironmentDefinition def) {
-		UniqueId id = parent.getUniqueId().append("environment", def.getEnvironmentClass().getName());
-		return new EnvironmentTestDescriptor(id, def);
+	private EnvironmentTestDescriptor createEnvironmentDescriptor(TestDescriptor parent, EnvironmentDefinition environmentDefinition) {
+		UniqueId id = parent.getUniqueId()
+				.append("environment", environmentDefinition.getEnvironmentClass().getName());
+		return new EnvironmentTestDescriptor(id, environmentDefinition);
 	}
 
 	private void addTestClassChildren(EnvironmentTestDescriptor parent, List<Class<?>> testClasses) {

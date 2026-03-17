@@ -13,13 +13,10 @@ import java.util.List;
 
 class SimulatestEngineDescriptor extends EngineDescriptor implements Node<SimulatestExecutionContext> {
 
-	private Collection<Class<?>> testClasses;
+	private final Collection<Class<?>> testClasses;
 
-	SimulatestEngineDescriptor(UniqueId uniqueId) {
+	SimulatestEngineDescriptor(UniqueId uniqueId, Collection<Class<?>> testClasses) {
 		super(uniqueId, "Simulatest");
-	}
-
-	void setTestClasses(Collection<Class<?>> testClasses) {
 		this.testClasses = testClasses;
 	}
 
