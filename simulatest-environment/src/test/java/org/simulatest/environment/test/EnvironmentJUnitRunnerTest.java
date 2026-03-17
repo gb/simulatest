@@ -1,14 +1,27 @@
 package org.simulatest.environment.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.Description;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
+import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
+import org.simulatest.environment.junit.EnvironmentJUnitSuite;
+import org.simulatest.environment.test.testdouble.AnotherDummyTest;
+import org.simulatest.environment.test.testdouble.DatabaseMock;
 import org.simulatest.environment.test.testdouble.DummyTest;
+import org.simulatest.environment.test.testdouble.MultiEnvironmentSuite;
+import org.simulatest.environment.test.testdouble.SecondLevelDummyTest;
+import org.simulatest.environment.test.testdouble.SuiteTest;
 
 public class EnvironmentJUnitRunnerTest {
 	
@@ -43,6 +56,101 @@ public class EnvironmentJUnitRunnerTest {
 		 */
 		
 		assertEquals(root, runner.getDescription());
+	}
+
+	@Test(expected = NoTestsRemainException.class)
+	public void filterShouldThrowWhenNoTestsRemain() throws NoTestsRemainException {
+		runner.filter(new Filter() {
+			@Override
+			public boolean shouldRun(Description description) {
+				return false;
+			}
+
+			@Override
+			public String describe() {
+				return "exclude all";
+			}
+		});
+	}
+
+	@Test
+	public void filterShouldKeepMatchingTestsAndUpdateDescription() throws NoTestsRemainException {
+		runner.filter(new Filter() {
+			@Override
+			public boolean shouldRun(Description description) {
+				return description.getMethodName() == null || "testSum".equals(description.getMethodName());
+			}
+
+			@Override
+			public String describe() {
+				return "keep only testSum";
+			}
+		});
+
+		Description filtered = runner.getDescription();
+		assertEquals(1, filtered.getChildren().size());
+		assertEquals(1, filtered.getChildren().get(0).getChildren().size());
+		assertEquals("testSum", filtered.getChildren().get(0).getChildren().get(0).getMethodName());
+	}
+
+	@Test
+	public void runningSuiteAfterFilteringOutEntireClassShouldNotFail() throws Exception {
+		EnvironmentJUnitSuite suite = new EnvironmentJUnitSuite(SuiteTest.class, null);
+
+		suite.filter(new Filter() {
+			@Override
+			public boolean shouldRun(Description description) {
+				String className = description.getClassName();
+				return className == null || !className.equals(AnotherDummyTest.class.getName());
+			}
+
+			@Override
+			public String describe() {
+				return "exclude AnotherDummyTest";
+			}
+		});
+
+		RunNotifier notifier = new RunNotifier();
+		FailureCollector collector = new FailureCollector();
+		notifier.addListener(collector);
+
+		suite.run(notifier);
+
+		assertNull("Suite run should have no failures after filtering out a class", collector.failure);
+	}
+
+	@Test
+	public void filteringOutEntireEnvironmentShouldNotRunItsLifecycle() throws Exception {
+		EnvironmentJUnitSuite suite = new EnvironmentJUnitSuite(MultiEnvironmentSuite.class, null);
+
+		suite.filter(new Filter() {
+			@Override
+			public boolean shouldRun(Description description) {
+				String className = description.getClassName();
+				return className == null || !className.equals(SecondLevelDummyTest.class.getName());
+			}
+
+			@Override
+			public String describe() {
+				return "exclude SecondLevelDummyTest";
+			}
+		});
+
+		DatabaseMock.reset();
+		RunNotifier notifier = new RunNotifier();
+		suite.run(notifier);
+
+		assertFalse("Filtered-out environment's lifecycle should not run, but EnvironmentSecondLevel executed",
+				DatabaseMock.getMessages().contains("second"));
+	}
+
+	private static class FailureCollector extends RunListener {
+		Failure failure;
+
+		@Override
+		public void testFailure(Failure failure) {
+			if (this.failure == null) this.failure = failure;
+		}
 	}
 
 }

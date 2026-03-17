@@ -1,5 +1,6 @@
 package org.simulatest.environment.junit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -70,17 +71,14 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	private void populateDescriptionTreeBuilder() {
-		for (EnvironmentDefinition environment : environmentExtractor.getEnvironments())
-			for (Class<?> testCase : environmentExtractor.getTests(environment))
-				addTestDescription(environment, testCase);
-	}
-
-	private void addTestDescription(EnvironmentDefinition environment, Class<?> testCase) {
-		descriptionTreeBuilder.addTestDescription(environment, getDescription(testCase));
-	}
-
-	private Description getDescription(Class<?> testCase) {
-		return environmentGrouperTests.get(testCase).getDescription();
+		for (EnvironmentDefinition environment : environmentExtractor.getEnvironments()) {
+			for (Class<?> testCase : environmentExtractor.getTests(environment)) {
+				Runner runner = environmentGrouperTests.get(testCase);
+				if (runner != null) {
+					descriptionTreeBuilder.addTestDescription(environment, runner.getDescription());
+				}
+			}
+		}
 	}
 
 	@Override
@@ -111,11 +109,10 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 
 	private void runTestOfEnvironment(RunNotifier notifier, EnvironmentDefinition environment) {
 		if (!environmentExtractor.hasEnvironment(environment)) return;
-		for (Class<?> testCase : environmentExtractor.getTests(environment)) runTestCase(testCase, notifier);
-	}
-
-	private void runTestCase(Class<?> testCase, RunNotifier notifier) {
-		environmentGrouperTests.get(testCase).run(notifier);
+		for (Class<?> testCase : environmentExtractor.getTests(environment)) {
+			Runner runner = environmentGrouperTests.get(testCase);
+			if (runner != null) runner.run(notifier);
+		}
 	}
 
 	public EnvironmentDatabaseRunner getEnvironmentRunner() {
@@ -128,12 +125,30 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 
 	@Override
 	public void filter(Filter filter) throws NoTestsRemainException {
+		List<Class<?>> removed = new ArrayList<>();
 		for (Class<?> testCase : environmentGrouperTests.getTestClasses()) {
 			Runner runner = environmentGrouperTests.get(testCase);
 			if (runner instanceof Filterable filterable) {
-				filterable.filter(filter);
+				try {
+					filterable.filter(filter);
+				} catch (NoTestsRemainException e) {
+					removed.add(testCase);
+				}
 			}
 		}
+
+		for (Class<?> testCase : removed) {
+			environmentGrouperTests.remove(testCase);
+		}
+
+		if (environmentGrouperTests.getTestClasses().isEmpty()) {
+			throw new NoTestsRemainException();
+		}
+
+		initializeEnvironmentExtractor();
+		createEnvironmentTree();
+		initializeDescriptionTreeBuilder();
+		populateDescriptionTreeBuilder();
 	}
 
 	private void initializeTestClasses() {
