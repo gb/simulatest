@@ -83,7 +83,7 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 	}
 
 	private EnvironmentTestDescriptor createEnvironmentDescriptor(TestDescriptor parent, EnvironmentDefinition def) {
-		UniqueId id = parent.getUniqueId().append("environment", def.getName());
+		UniqueId id = parent.getUniqueId().append("environment", def.getEnvironmentClass().getName());
 		return new EnvironmentTestDescriptor(id, def);
 	}
 

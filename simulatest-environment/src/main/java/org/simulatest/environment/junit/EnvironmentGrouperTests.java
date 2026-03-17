@@ -30,4 +30,9 @@ public class EnvironmentGrouperTests {
 		return runnersByTest.get(testCase);
 	}
 
+	public void remove(Class<?> testCase) {
+		testClasses.remove(testCase);
+		runnersByTest.remove(testCase);
+	}
+
 }

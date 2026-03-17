@@ -121,6 +121,26 @@ class SimulatestTestEngineTest {
 	}
 
 	@Test
+	void environmentUniqueIdShouldUseFullyQualifiedClassName() {
+		LauncherDiscoveryRequest request = simulatestRequest(FirstLevelTest.class);
+		TestPlan testPlan = LauncherFactory.create().discover(request);
+
+		TestIdentifier engineRoot = testPlan.getRoots().stream()
+				.filter(r -> r.getDisplayName().equals("Simulatest"))
+				.findFirst()
+				.orElseThrow();
+
+		TestIdentifier envNode = testPlan.getDescendants(engineRoot).stream()
+				.filter(id -> id.getDisplayName().equals("FirstLevelEnvironment"))
+				.findFirst()
+				.orElseThrow();
+
+		assertTrue(envNode.getUniqueIdObject().toString()
+				.contains("org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelEnvironment"),
+				"Environment UniqueId segment should use fully qualified class name to avoid collisions");
+	}
+
+	@Test
 	void shouldDelegateAllJupiterTestTypesToJupiter() {
 		TestExecutionSummary summary = runSimulatest(AdvancedJupiterTest.class);
 
