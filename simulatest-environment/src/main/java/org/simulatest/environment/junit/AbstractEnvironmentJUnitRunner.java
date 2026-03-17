@@ -74,9 +74,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 		for (EnvironmentDefinition environment : environmentExtractor.getEnvironments()) {
 			for (Class<?> testCase : environmentExtractor.getTests(environment)) {
 				Runner runner = environmentGrouperTests.get(testCase);
-				if (runner != null) {
-					descriptionTreeBuilder.addTestDescription(environment, runner.getDescription());
-				}
+				descriptionTreeBuilder.addTestDescription(environment, runner.getDescription());
 			}
 		}
 	}
@@ -111,7 +109,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 		if (!environmentExtractor.hasEnvironment(environment)) return;
 		for (Class<?> testCase : environmentExtractor.getTests(environment)) {
 			Runner runner = environmentGrouperTests.get(testCase);
-			if (runner != null) runner.run(notifier);
+			runner.run(notifier);
 		}
 	}
 
