@@ -1,6 +1,7 @@
 package org.simulatest.environment.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Before;
@@ -12,12 +13,14 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.RunnerBuilder;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
 import org.simulatest.environment.junit.EnvironmentJUnitSuite;
 import org.simulatest.environment.test.testdouble.AnotherDummyTest;
+import org.simulatest.environment.test.testdouble.DatabaseMock;
 import org.simulatest.environment.test.testdouble.DummyTest;
+import org.simulatest.environment.test.testdouble.MultiEnvironmentSuiteTest;
+import org.simulatest.environment.test.testdouble.SecondLevelDummyTest;
 import org.simulatest.environment.test.testdouble.SuiteTest;
 
 public class EnvironmentJUnitRunnerTest {
@@ -114,6 +117,31 @@ public class EnvironmentJUnitRunnerTest {
 		suite.run(notifier);
 
 		assertNull("Suite run should have no failures after filtering out a class", collector.failure);
+	}
+
+	@Test
+	public void filteringOutEntireEnvironmentShouldNotRunItsLifecycle() throws Exception {
+		EnvironmentJUnitSuite suite = new EnvironmentJUnitSuite(MultiEnvironmentSuiteTest.class, null);
+
+		suite.filter(new Filter() {
+			@Override
+			public boolean shouldRun(Description description) {
+				String className = description.getClassName();
+				return className == null || !className.equals(SecondLevelDummyTest.class.getName());
+			}
+
+			@Override
+			public String describe() {
+				return "exclude SecondLevelDummyTest";
+			}
+		});
+
+		DatabaseMock.reset();
+		RunNotifier notifier = new RunNotifier();
+		suite.run(notifier);
+
+		assertFalse("Filtered-out environment's lifecycle should not run, but EnvironmentSecondLevel executed",
+				DatabaseMock.getMessages().contains("second"));
 	}
 
 	private static class FailureCollector extends RunListener {

@@ -145,6 +145,8 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 			throw new NoTestsRemainException();
 		}
 
+		initializeEnvironmentExtractor();
+		createEnvironmentTree();
 		initializeDescriptionTreeBuilder();
 		populateDescriptionTreeBuilder();
 	}
