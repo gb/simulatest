@@ -11,24 +11,28 @@
 	<artifactId>simulatest-environment-core</artifactId>
 	<name>Simulatest - Environment Core</name>
 
-	<properties>
-		<classgraph.version>4.8.179</classgraph.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>io.github.classgraph</groupId>
 			<artifactId>classgraph</artifactId>
-			<version>${classgraph.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simulatest</groupId>
 			<artifactId>simulatest-insistencelayer</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

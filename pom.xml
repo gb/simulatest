@@ -12,12 +12,14 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<classgraph.version>4.8.179</classgraph.version>
 		<h2.version>2.4.240</h2.version>
 		<junit.version>4.13.2</junit.version>
 		<junit-platform.version>1.11.4</junit-platform.version>
 		<junit-jupiter.version>5.11.4</junit-jupiter.version>
 		<mockito.version>5.23.0</mockito.version>
 		<slf4j.version>2.0.17</slf4j.version>
+		<surefire.version>3.5.5</surefire.version>
 	</properties>
 
 	<modules>
@@ -45,20 +47,6 @@
 			<email>lohandus@gmail.com</email>
 		</developer>
 	</developers>
-
-	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>${slf4j.version}</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
@@ -88,6 +76,23 @@
 				<artifactId>simulatest-insistencelayer-remote</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<!-- Logging -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-simple</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<!-- Third-party -->
+			<dependency>
+				<groupId>io.github.classgraph</groupId>
+				<artifactId>classgraph</artifactId>
+				<version>${classgraph.version}</version>
+			</dependency>
 			<!-- Testing -->
 			<dependency>
 				<groupId>junit</groupId>
@@ -111,7 +116,17 @@
 			</dependency>
 			<dependency>
 				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-engine</artifactId>
+				<version>${junit-jupiter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
 				<artifactId>junit-jupiter-params</artifactId>
+				<version>${junit-jupiter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.vintage</groupId>
+				<artifactId>junit-vintage-engine</artifactId>
 				<version>${junit-jupiter.version}</version>
 			</dependency>
 			<dependency>
@@ -142,7 +157,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.2</version>
+				<version>${surefire.version}</version>
 				<configuration>
 					<argLine>-XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
 				</configuration>
