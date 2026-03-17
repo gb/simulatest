@@ -19,7 +19,7 @@ import org.simulatest.environment.junit.EnvironmentJUnitSuite;
 import org.simulatest.environment.test.testdouble.AnotherDummyTest;
 import org.simulatest.environment.test.testdouble.DatabaseMock;
 import org.simulatest.environment.test.testdouble.DummyTest;
-import org.simulatest.environment.test.testdouble.MultiEnvironmentSuiteTest;
+import org.simulatest.environment.test.testdouble.MultiEnvironmentSuite;
 import org.simulatest.environment.test.testdouble.SecondLevelDummyTest;
 import org.simulatest.environment.test.testdouble.SuiteTest;
 
@@ -121,7 +121,7 @@ public class EnvironmentJUnitRunnerTest {
 
 	@Test
 	public void filteringOutEntireEnvironmentShouldNotRunItsLifecycle() throws Exception {
-		EnvironmentJUnitSuite suite = new EnvironmentJUnitSuite(MultiEnvironmentSuiteTest.class, null);
+		EnvironmentJUnitSuite suite = new EnvironmentJUnitSuite(MultiEnvironmentSuite.class, null);
 
 		suite.filter(new Filter() {
 			@Override

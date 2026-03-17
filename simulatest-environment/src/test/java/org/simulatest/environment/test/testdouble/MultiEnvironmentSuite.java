@@ -7,7 +7,7 @@ import org.simulatest.environment.test.TestSetup;
 
 @RunWith(EnvironmentJUnitSuite.class)
 @SuiteClasses({ FirstLevelDummyTest.class, SecondLevelDummyTest.class })
-public class MultiEnvironmentSuiteTest {
+public class MultiEnvironmentSuite {
 
 	static { TestSetup.configure(); }
 
