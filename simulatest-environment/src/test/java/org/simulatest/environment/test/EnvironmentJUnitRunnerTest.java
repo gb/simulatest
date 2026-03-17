@@ -1,7 +1,7 @@
 package org.simulatest.environment.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -113,8 +113,7 @@ public class EnvironmentJUnitRunnerTest {
 
 		suite.run(notifier);
 
-		assertTrue("Suite run should have no failures after filtering out a class, but got: " + collector.failure,
-				collector.failure == null);
+		assertNull("Suite run should have no failures after filtering out a class", collector.failure);
 	}
 
 	private static class FailureCollector extends RunListener {
