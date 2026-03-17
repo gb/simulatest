@@ -3,6 +3,8 @@ package org.simulatest.environment.junit5.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
+
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -10,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.EngineFilter;
-import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -18,6 +19,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
+import org.simulatest.environment.junit5.ParallelExecutionSettings;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
 import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
@@ -25,6 +27,7 @@ import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
+import org.simulatest.environment.junit5.test.testdouble.ParallelProbeTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
@@ -210,16 +213,77 @@ class SimulatestTestEngineTest {
 						.map(TestIdentifier::getDisplayName).toList());
 	}
 
+
+	@Test
+	void shouldRunDelegatedJupiterSequentiallyByDefault() {
+		ParallelProbeTest.reset();
+		TestExecutionSummary summary = runSimulatestWithConfig(Map.of(), ParallelProbeTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(3, summary.getTestsSucceededCount());
+		assertEquals(1, ParallelProbeTest.maxActive(),
+				"Default should remain sequential for delegated Jupiter execution");
+	}
+
+	@Test
+	void shouldIgnoreJupiterParallelWhenInsistenceLayerIsActive() {
+		ParallelProbeTest.reset();
+		TestExecutionSummary summary = runSimulatestWithConfig(parallelConfig(), ParallelProbeTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(3, summary.getTestsSucceededCount());
+		assertEquals(1, ParallelProbeTest.maxActive(),
+				"Parallel should be disabled when Insistence Layer is active by default");
+	}
+
+	@Test
+	void shouldAllowJupiterParallelWhenExplicitlyEnabledForInsistenceLayer() {
+		ParallelProbeTest.reset();
+		TestExecutionSummary summary = runSimulatestWithConfig(parallelConfigWithInsistenceOverride(), ParallelProbeTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(3, summary.getTestsSucceededCount());
+		assertTrue(ParallelProbeTest.maxActive() > 1,
+				"When explicitly enabled, delegated Jupiter should execute tests in parallel");
+	}
+
 	// --- helpers ---
 
 	private static LauncherDiscoveryRequest simulatestRequest(Class<?>... testClasses) {
-		return LauncherDiscoveryRequestBuilder.request()
+		return simulatestRequest(Map.of(), testClasses);
+	}
+
+	private static LauncherDiscoveryRequest simulatestRequest(Map<String, String> parameters, Class<?>... testClasses) {
+		LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request()
 				.selectors(DiscoverySelectors.selectClasspathRoots(java.util.Set.of()))
 				.selectors(java.util.Arrays.stream(testClasses)
 						.map(DiscoverySelectors::selectClass)
 						.toList())
-				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
-				.build();
+				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID));
+
+		parameters.forEach(builder::configurationParameter);
+		return builder.build();
+	}
+
+
+	private static TestExecutionSummary runSimulatestWithConfig(Map<String, String> parameters, Class<?>... testClasses) {
+		SummaryGeneratingListener listener = new SummaryGeneratingListener();
+		LauncherFactory.create().execute(simulatestRequest(parameters, testClasses), listener);
+		return listener.getSummary();
+	}
+
+	private static Map<String, String> parallelConfig() {
+		return Map.of(
+				ParallelExecutionSettings.JUPITER_PARALLEL_ENABLED, "true",
+				ParallelExecutionSettings.JUPITER_MODE_DEFAULT, "concurrent",
+				ParallelExecutionSettings.JUPITER_PARALLEL_CONFIG_PREFIX + "strategy", "fixed",
+				ParallelExecutionSettings.JUPITER_PARALLEL_CONFIG_PREFIX + "fixed.parallelism", "4");
+	}
+
+	private static Map<String, String> parallelConfigWithInsistenceOverride() {
+		Map<String, String> parameters = new java.util.LinkedHashMap<>(parallelConfig());
+		parameters.put(ParallelExecutionSettings.SIMULATEST_ALLOW_INSISTENCE_PARALLEL, "true");
+		return parameters;
 	}
 
 	private static TestExecutionSummary runSimulatest(Class<?>... testClasses) {

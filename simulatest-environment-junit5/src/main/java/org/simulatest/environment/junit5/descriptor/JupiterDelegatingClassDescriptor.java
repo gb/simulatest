@@ -2,7 +2,9 @@ package org.simulatest.environment.junit5.descriptor;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.TestExecutionResult;
@@ -20,7 +22,10 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
+import org.simulatest.environment.junit5.ParallelExecutionSettings;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Delegates test execution for a single class to Jupiter.
@@ -38,6 +43,8 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  */
 public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 		implements Node<SimulatestExecutionContext> {
+
+	private static final Logger logger = LoggerFactory.getLogger(JupiterDelegatingClassDescriptor.class);
 
 	private static final String JUPITER_ENGINE_ID = "junit-jupiter";
 	private static final String AUTODETECTION_KEY = "junit.jupiter.extensions.autodetection.enabled";
@@ -81,7 +88,7 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 			DynamicTestExecutor dynamicTestExecutor) {
 		SimulatestExecutionContext.setCurrent(context);
 		try {
-			List<CapturedResult> results = runJupiter();
+			List<CapturedResult> results = runJupiter(context);
 			registerDynamicTests(results, dynamicTestExecutor);
 		} finally {
 			SimulatestExecutionContext.clearCurrent();
@@ -89,12 +96,25 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 		return context;
 	}
 
-	private List<CapturedResult> runJupiter() {
-		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+	private List<CapturedResult> runJupiter(SimulatestExecutionContext context) {
+		LauncherDiscoveryRequestBuilder requestBuilder = LauncherDiscoveryRequestBuilder.request()
 				.selectors(selectTestClass())
 				.filters(EngineFilter.includeEngines(JUPITER_ENGINE_ID))
-				.configurationParameter(AUTODETECTION_KEY, "true")
-				.build();
+				.configurationParameter(AUTODETECTION_KEY, "true");
+
+		Map<String, String> effectiveParameters = new LinkedHashMap<>(context.jupiterConfigurationParameters());
+		boolean parallelEnabled = Boolean.parseBoolean(effectiveParameters
+				.getOrDefault(ParallelExecutionSettings.JUPITER_PARALLEL_ENABLED, "false"));
+		boolean allowInsistenceParallel = Boolean.parseBoolean(context.jupiterConfigurationParameters()
+				.getOrDefault(ParallelExecutionSettings.SIMULATEST_ALLOW_INSISTENCE_PARALLEL, "false"));
+		if (parallelEnabled && context.insistenceLayer() != null && !allowInsistenceParallel) {
+			logger.debug("Disabling JUnit Jupiter parallel execution for {} because Insistence Layer is active",
+					testClass.getName());
+			effectiveParameters.put(ParallelExecutionSettings.JUPITER_PARALLEL_ENABLED, "false");
+		}
+
+		effectiveParameters.forEach(requestBuilder::configurationParameter);
+		LauncherDiscoveryRequest request = requestBuilder.build();
 
 		ResultCapturingListener listener = new ResultCapturingListener();
 		jupiterLauncher().execute(request, listener);

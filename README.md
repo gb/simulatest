@@ -141,6 +141,131 @@ Every level of the tree multiplies the savings. The deeper the tree, the bigger 
 
 The best part? You don't optimize for this. You don't write caching logic or parallel setup code. You just organize your environments into a tree that reflects how your data depends on other data, the natural, readable structure, and the performance comes for free.
 
+### Is DFS the optimal traversal for environment reuse?
+
+For the current Simulatest model (tree-shaped dependencies, parent state reused by children, sibling branches isolated after completion), a depth-first traversal is the right default and is effectively optimal for setup reuse:
+
+- It maximizes **prefix reuse**. Once a parent path is created, DFS executes all descendants before tearing that path down.
+- It minimizes **environment switches** between unrelated branches (the expensive part in setup-heavy suites).
+- It naturally matches level-based rollback semantics: descend (create more specific state), then unwind (discard branch-specific state), then move to the next sibling.
+
+Could something beat DFS? Only in extended scenarios where plain trees are no longer the full cost model:
+
+- If setup costs are highly asymmetric, a **cost-aware sibling ordering** (still DFS) can reduce wall clock time.
+- If dependencies are a DAG (shared nodes with multiple parents), the scheduling problem changes and may need a different planner.
+- If environments are pure/read-only and parallel-safe, selective **parallel execution of disjoint subtrees** can improve throughput.
+
+So the short answer is: for tree dependencies with rollback isolation and a goal of maximal state reuse, DFS is the best baseline. Improvements usually come from smarter sibling ordering or safe parallelism, not replacing DFS itself.
+
+### Orchestrated parallelism: how to do it safely
+
+If you want parallel speedups **without letting same-level tests interfere with each other**, use coordinated, branch-aware scheduling:
+
+1. **Keep DFS semantics per worker**
+   - Each worker executes its assigned branch depth-first to preserve maximum reuse.
+
+2. **Parallelize only independent branches**
+   - Two branches can run together only when their nearest common ancestor is already materialized and neither branch mutates shared global state outside rollback control.
+
+3. **Use one transactional context per worker**
+   - Give each worker its own DB connection/session + insistence level stack.
+   - Never share a mutable transaction context across workers.
+
+4. **Enforce a same-level write policy**
+   - Default policy: tests/environments at the same level run in isolation (separate worker contexts).
+   - If an environment is marked non-parallel-safe, serialize it with a lock/tag (for example: `db-schema`, `external-api`, `filesystem`).
+
+5. **Add capability metadata to environments**
+   - `parallelSafe=true|false`
+   - `resourceLocks={...}`
+   - Optional estimated cost for smarter scheduling.
+
+6. **Use a bounded scheduler**
+   - Build ready queues from the tree.
+   - Dispatch runnable branches up to `maxWorkers` while respecting lock conflicts.
+   - Prefer heavier branches first to reduce tail latency.
+
+7. **Fail-safe fallback**
+   - If lock contention or unsafe markers dominate, automatically degrade that region of the tree to sequential DFS.
+
+This gives you a hybrid model: **DFS for reuse, orchestration for concurrency**. In practice, that is usually the best throughput/isolation trade-off.
+
+### Multiple connections vs orchestration: what is the best strategy?
+
+Short answer: **use both, with orchestration as the control plane and multiple connections as the execution primitive**.
+
+- **Multiple connections only** (fire everything in parallel) is risky:
+  - good raw throughput potential
+  - poor safety unless you add coordination for shared resources
+  - easy to create lock contention and flaky cross-test interference
+
+- **Orchestration only** (single connection, scheduled ordering) is safe:
+  - maximal determinism
+  - but limited parallel speedup
+
+- **Best practical model**: orchestrated fork/join + isolated connections per parallel branch:
+  - scheduler decides *where* parallelism is allowed
+  - each parallel branch gets its own transaction context/connection
+  - branches join at the parent before any shared-dependent step continues
+
+A good mental model is:
+
+```
+run(node):
+  if node is parallel-safe and children are independent:
+    parallelize(leftSubtree on ConnA)
+    parallelize(rightSubtree on ConnB)
+    wait/join
+  else:
+    run children sequentially (DFS)
+
+  if next step needs shared mutable state:
+    execute sequentially or under a resource lock
+```
+
+When shared state is needed, prefer this order of options:
+
+1. **Avoid sharing** (best): duplicate/partition resource per worker (schema, tenant, queue namespace).
+2. **Serialize only the critical section**: keep parallelism outside the shared segment, lock only the shared operation.
+3. **Degrade subtree to sequential DFS** if the shared dependency dominates and lock contention is high.
+
+Rule of thumb:
+
+- CPU/IO-heavy but isolated setup → increase `maxWorkers` and run independent branches in parallel.
+- DB-hotspot or global singleton dependency → keep that zone sequential/locked.
+- Start conservative, measure contention/latency, then widen parallel windows gradually.
+
+
+### JUnit 5 configuration (natural defaults)
+
+Simulatest now follows JUnit-style configuration with a safe default:
+
+- Default: **sequential** (`junit.jupiter.execution.parallel.enabled=false`).
+- If the user enables Jupiter parallelism, Simulatest forwards those settings to delegated Jupiter execution.
+- When the Insistence Layer is active, Simulatest keeps execution sequential by default to preserve rollback isolation.
+- Expert opt-in exists for forcing parallel with Insistence Layer:
+  - `simulatest.execution.parallel.allow-insistence=true`
+
+Typical configuration examples:
+
+```properties
+# Sequential by default (implicit)
+junit.jupiter.execution.parallel.enabled=false
+```
+
+```properties
+# Parallel Jupiter execution
+junit.jupiter.execution.parallel.enabled=true
+junit.jupiter.execution.parallel.mode.default=concurrent
+junit.jupiter.execution.parallel.config.strategy=fixed
+junit.jupiter.execution.parallel.config.fixed.parallelism=4
+```
+
+```properties
+# Expert mode: allow parallel even with Insistence Layer (use with care)
+simulatest.execution.parallel.allow-insistence=true
+```
+
 **The honest caveat:** designing good environments is not trivial. You need to think carefully about what data belongs at each level, what depends on what, and how to draw the boundaries. It takes a thoughtful process to get the tree right. But once you do, once it clicks... it's like seeing the Matrix. You'll look at integration test suites full of duplicated setup and teardown and wonder how you ever tolerated it. You won't go back.
 
 ---

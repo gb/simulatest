@@ -44,7 +44,9 @@ public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecu
 
 	@Override
 	public TestDescriptor discover(EngineDiscoveryRequest request, UniqueId uniqueId) {
-		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(uniqueId);
+		ParallelExecutionSettings parallelSettings = ParallelExecutionSettings.from(request.getConfigurationParameters());
+		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(
+				uniqueId, parallelSettings.jupiterParameters());
 
 		Set<Class<?>> testClasses = scanner.scan(request);
 		engineDescriptor.setTestClasses(testClasses);

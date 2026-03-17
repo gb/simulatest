@@ -10,13 +10,16 @@ import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 class SimulatestEngineDescriptor extends EngineDescriptor implements Node<SimulatestExecutionContext> {
 
+	private final Map<String, String> jupiterConfigurationParameters;
 	private Collection<Class<?>> testClasses;
 
-	SimulatestEngineDescriptor(UniqueId uniqueId) {
+	SimulatestEngineDescriptor(UniqueId uniqueId, Map<String, String> jupiterConfigurationParameters) {
 		super(uniqueId, "Simulatest");
+		this.jupiterConfigurationParameters = Map.copyOf(jupiterConfigurationParameters);
 	}
 
 	void setTestClasses(Collection<Class<?>> testClasses) {
@@ -37,7 +40,8 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 			insistenceLayer.increaseLevel();
 		}
 
-		return new SimulatestExecutionContext(insistenceLayer, SimulatestPlugins.resolveFactory(plugins), plugins);
+		return new SimulatestExecutionContext(insistenceLayer, SimulatestPlugins.resolveFactory(plugins),
+				plugins, jupiterConfigurationParameters);
 	}
 
 	@Override
