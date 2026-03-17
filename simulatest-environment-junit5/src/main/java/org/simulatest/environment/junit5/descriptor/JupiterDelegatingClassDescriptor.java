@@ -11,6 +11,7 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.engine.support.hierarchical.Node;
 import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
@@ -119,13 +120,22 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 		int index = 0;
 		for (CapturedResult captured : results) {
 			TestSource source = captured.source != null ? captured.source : fallbackSource;
-			UniqueId testId = getUniqueId().append("test", captured.displayName + "#" + (index++));
+			UniqueId testId = getUniqueId().append("test", stableTestSegment(source, captured.displayName, index++));
 			TestResultDescriptor descriptor = captured.isSkipped()
 					? TestResultDescriptor.skipped(testId, captured.displayName, source, captured.skipReason)
 					: TestResultDescriptor.fromResult(testId, captured.displayName, source, captured.result);
 			addChild(descriptor);
 			executor.execute(descriptor);
 		}
+	}
+
+	private static String stableTestSegment(TestSource source, String displayName, int index) {
+		String sourceId = switch (source) {
+			case MethodSource s -> s.getClassName() + "#" + s.getMethodName();
+			case ClassSource s -> s.getClassName();
+			default -> displayName;
+		};
+		return sourceId + "[" + index + "]";
 	}
 
 	private static class ResultCapturingListener implements TestExecutionListener {

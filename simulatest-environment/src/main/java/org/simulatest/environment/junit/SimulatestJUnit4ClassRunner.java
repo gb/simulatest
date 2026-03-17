@@ -30,8 +30,11 @@ public class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 
 	@Override
 	protected void runChild(FrameworkMethod method, RunNotifier notifier) {
-		super.runChild(method, notifier);
-		runner.resetInsistenceLevel();
+		try {
+			super.runChild(method, notifier);
+		} finally {
+			runner.resetInsistenceLevel();
+		}
 	}
 
 }

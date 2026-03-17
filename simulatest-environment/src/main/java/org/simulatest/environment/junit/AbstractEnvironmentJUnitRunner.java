@@ -128,11 +128,24 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 
 	@Override
 	public void filter(Filter filter) throws NoTestsRemainException {
-		for (Class<?> testCase : environmentGrouperTests.getTestClasses()) {
+		Set<Class<?>> removed = new java.util.HashSet<>();
+		for (Class<?> testCase : Set.copyOf(environmentGrouperTests.getTestClasses())) {
 			Runner runner = environmentGrouperTests.get(testCase);
 			if (runner instanceof Filterable filterable) {
-				filterable.filter(filter);
+				try {
+					filterable.filter(filter);
+				} catch (NoTestsRemainException e) {
+					removed.add(testCase);
+				}
 			}
+		}
+
+		for (Class<?> testCase : removed) {
+			environmentGrouperTests.remove(testCase);
+		}
+
+		if (environmentGrouperTests.getTestClasses().isEmpty()) {
+			throw new NoTestsRemainException();
 		}
 	}
 
