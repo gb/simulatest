@@ -1,10 +1,11 @@
-package org.simulatest.environment;
+package org.simulatest.environment.tree;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 import org.simulatest.environment.tree.Tree;
 

@@ -15,7 +15,7 @@ import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
 import org.simulatest.environment.EnvironmentReflectionFactory;
 import org.simulatest.environment.EnvironmentRunner;
-import org.simulatest.environment.EnvironmentTreeBuilder;
+import org.simulatest.environment.tree.EnvironmentTreeBuilder;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.listener.ListenerPhase;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;

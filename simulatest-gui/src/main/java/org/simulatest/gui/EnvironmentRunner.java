@@ -23,7 +23,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.simulatest.environment.Environment;
-import org.simulatest.environment.facade.EnvironmentRunnerFacade;
 import org.simulatest.environment.EnvironmentScanner;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
@@ -40,18 +39,14 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
     private JButton fireButton;
     private JTextField employeeName;
     
-    private EnvironmentRunnerFacade facade;
-
     public EnvironmentRunner(InsistenceLayer insistenceLayer) {
         super("Environment Runner");
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        
+
         this.setSize(500, 375);
         this.setLocationRelativeTo(null);
-        
+
         this.setLayout(new BorderLayout());
-        
-        facade = new EnvironmentRunnerFacade();
 
         listModel = new DefaultListModel();
         
@@ -107,7 +102,7 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
 			} catch (ClassNotFoundException e1) {
 				logger.error("Environment class not found: {}", listModel.get(index), e1);
 			}
-            facade.runEnvironment(clazz);
+            org.simulatest.environment.EnvironmentRunner.runEnvironment(clazz);
 
             int size = listModel.getSize();
 

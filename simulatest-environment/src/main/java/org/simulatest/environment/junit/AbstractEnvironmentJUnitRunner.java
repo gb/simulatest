@@ -17,7 +17,7 @@ import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentExtractor;
 import org.simulatest.environment.EnvironmentRunner;
-import org.simulatest.environment.EnvironmentTreeBuilder;
+import org.simulatest.environment.tree.EnvironmentTreeBuilder;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;

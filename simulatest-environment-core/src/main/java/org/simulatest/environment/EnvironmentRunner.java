@@ -2,10 +2,13 @@ package org.simulatest.environment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
+import org.simulatest.environment.infra.exception.EnvironmentGeneralException;
+import org.simulatest.environment.tree.EnvironmentTreeBuilder;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
 import org.simulatest.insistencelayer.InsistenceLayer;
@@ -38,6 +41,25 @@ public class EnvironmentRunner {
 
 	public EnvironmentRunner(EnvironmentFactory factory, EnvironmentTreeBuilder builder) {
 		this(factory, builder.getTree());
+	}
+
+	public static void runEnvironment(Class<? extends Environment> environment) {
+		runEnvironment(environment, loadFactory());
+	}
+
+	public static void runEnvironment(Class<? extends Environment> environment, EnvironmentFactory factory) {
+		EnvironmentTreeBuilder builder = new EnvironmentTreeBuilder();
+		builder.add(EnvironmentDefinition.create(environment));
+		new EnvironmentRunner(factory, builder).run();
+	}
+
+	private static EnvironmentFactory loadFactory() {
+		EnvironmentFactory factory = null;
+		for (EnvironmentFactory f : ServiceLoader.load(EnvironmentFactory.class)) factory = f;
+		if (factory == null) {
+			throw new EnvironmentGeneralException("META-INF/services environmentFactory was not found!");
+		}
+		return factory;
 	}
 
 	public InsistenceLayer insistenceLayer() {

@@ -8,7 +8,7 @@ import static org.simulatest.environment.EnvironmentDefinition.create;
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.environment.BigBangEnvironment;
-import org.simulatest.environment.EnvironmentTreeBuilder;
+import org.simulatest.environment.tree.EnvironmentTreeBuilder;
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.CyclicEnvironmentA;
