@@ -3,13 +3,9 @@ package org.simulatest.environment.junit5;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
-import org.simulatest.environment.environment.SimulatestPlugin;
-import org.simulatest.environment.environment.SimulatestPlugins;
-import org.simulatest.insistencelayer.InsistenceLayer;
-import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.simulatest.environment.environment.SimulatestSession;
 
 import java.util.Collection;
-import java.util.List;
 
 class SimulatestEngineDescriptor extends EngineDescriptor implements Node<SimulatestExecutionContext> {
 
@@ -26,21 +22,22 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 			return SimulatestExecutionContext.EMPTY;
 		}
 
-		List<SimulatestPlugin> plugins = SimulatestPlugins.loadAll();
-		SimulatestPlugins.initializeAll(plugins, testClasses);
+		SimulatestSession session = SimulatestSession.open(testClasses);
 
-		InsistenceLayer insistenceLayer = InsistenceLayerFactory.resolve();
-		if (insistenceLayer != null) {
-			insistenceLayer.increaseLevel();
+		if (session.insistenceLayer() != null) {
+			session.insistenceLayer().increaseLevel();
 		}
 
-		return new SimulatestExecutionContext(insistenceLayer, SimulatestPlugins.resolveFactory(plugins), plugins);
+		return new SimulatestExecutionContext(session);
 	}
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
-		if (context.insistenceLayer() != null) context.insistenceLayer().decreaseLevel();
-		SimulatestPlugins.destroyAll(context.plugins());
+		try {
+			if (context.insistenceLayer() != null) context.insistenceLayer().decreaseLevel();
+		} finally {
+			context.close();
+		}
 	}
 
 }

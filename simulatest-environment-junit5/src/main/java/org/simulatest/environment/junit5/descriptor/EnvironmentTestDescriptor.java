@@ -6,7 +6,9 @@ import org.junit.platform.engine.support.hierarchical.Node;
 import org.simulatest.environment.environment.BigBangEnvironment;
 import org.simulatest.environment.environment.Environment;
 import org.simulatest.environment.environment.EnvironmentDefinition;
+import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
+import org.simulatest.insistencelayer.InsistenceLayer;
 
 /**
  * Describes a single environment node in the test tree.
@@ -34,8 +36,13 @@ public class EnvironmentTestDescriptor extends AbstractTestDescriptor
 	@Override
 	public SimulatestExecutionContext before(SimulatestExecutionContext context) {
 		if (definition.getEnvironmentClass() != BigBangEnvironment.class) {
-			Environment env = context.factory().create(definition);
-			env.run();
+			try {
+				Environment env = context.factory().create(definition);
+				env.run();
+			} catch (Exception exception) {
+				throw new EnvironmentExecutionException(
+						"Failed during run for environment '" + definition.getName() + "'", exception);
+			}
 		}
 		if (context.insistenceLayer() != null) {
 			context.insistenceLayer().increaseLevel();
@@ -45,10 +52,11 @@ public class EnvironmentTestDescriptor extends AbstractTestDescriptor
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
-		if (context.insistenceLayer() != null) {
-			context.insistenceLayer().decreaseLevel();
-			context.insistenceLayer().resetCurrentLevel();
-		}
+		InsistenceLayer insistenceLayer = context.insistenceLayer();
+		if (insistenceLayer == null) return;
+
+		insistenceLayer.decreaseLevelOrCleanup();
+		insistenceLayer.resetCurrentLevel();
 	}
 
 }

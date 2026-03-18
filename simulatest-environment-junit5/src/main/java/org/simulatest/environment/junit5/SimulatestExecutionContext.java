@@ -5,35 +5,35 @@ import java.util.List;
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.environment.environment.SimulatestPlugin;
+import org.simulatest.environment.environment.SimulatestSession;
 import org.simulatest.insistencelayer.InsistenceLayer;
 
 public class SimulatestExecutionContext implements EngineExecutionContext {
 
-	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null, null, List.of());
+	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null);
 
 	private static final ThreadLocal<SimulatestExecutionContext> CURRENT = new ThreadLocal<>();
 
-	private final InsistenceLayer insistenceLayer;
-	private final EnvironmentFactory factory;
-	private final List<SimulatestPlugin> plugins;
+	private final SimulatestSession session;
 
-	public SimulatestExecutionContext(InsistenceLayer insistenceLayer, EnvironmentFactory factory,
-			List<SimulatestPlugin> plugins) {
-		this.insistenceLayer = insistenceLayer;
-		this.factory = factory;
-		this.plugins = plugins;
+	public SimulatestExecutionContext(SimulatestSession session) {
+		this.session = session;
 	}
 
 	public InsistenceLayer insistenceLayer() {
-		return insistenceLayer;
+		return session != null ? session.insistenceLayer() : null;
 	}
 
 	public EnvironmentFactory factory() {
-		return factory;
+		return session != null ? session.factory() : null;
 	}
 
 	public List<SimulatestPlugin> plugins() {
-		return plugins;
+		return session != null ? session.plugins() : List.of();
+	}
+
+	public void close() {
+		if (session != null) session.close();
 	}
 
 	public static SimulatestExecutionContext getCurrent() {

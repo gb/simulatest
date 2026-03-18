@@ -67,4 +67,24 @@ public interface InsistenceLayer {
 	 */
 	void setLevelTo(int level);
 
+	/**
+	 * Attempts to {@link #decreaseLevel()}. If that fails, falls back to
+	 * {@link #decreaseAllLevels()} as emergency cleanup, suppressing any
+	 * secondary exception onto the original.
+	 *
+	 * @throws RuntimeException the original exception from {@code decreaseLevel()}
+	 */
+	default void decreaseLevelOrCleanup() {
+		try {
+			decreaseLevel();
+		} catch (RuntimeException exception) {
+			try {
+				decreaseAllLevels();
+			} catch (RuntimeException cleanupException) {
+				exception.addSuppressed(cleanupException);
+			}
+			throw exception;
+		}
+	}
+
 }
