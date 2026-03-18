@@ -1,9 +1,10 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment.environment.plugin;
 
 import java.util.Collection;
 
 import javax.sql.DataSource;
 
+import org.simulatest.environment.environment.EnvironmentFactory;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

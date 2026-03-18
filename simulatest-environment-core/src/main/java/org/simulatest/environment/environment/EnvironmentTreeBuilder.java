@@ -11,7 +11,7 @@ import org.simulatest.environment.tree.Tree;
 
 public class EnvironmentTreeBuilder {
 	
-	private Tree<EnvironmentDefinition> tree;
+	private final Tree<EnvironmentDefinition> tree;
 
 	public EnvironmentTreeBuilder() {
 		this.tree = new Tree<>(EnvironmentDefinition.bigBang());

@@ -1,4 +1,4 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment.environment.plugin;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;

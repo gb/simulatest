@@ -11,8 +11,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 
-import org.simulatest.environment.environment.DependencyInjectionContext;
-import org.simulatest.environment.infra.AnnotationUtils;
+import org.simulatest.environment.environment.plugin.DependencyInjectionContext;
 
 public class GuiceContext implements DependencyInjectionContext {
 
@@ -32,7 +31,7 @@ public class GuiceContext implements DependencyInjectionContext {
 	public void initialize(Collection<Class<?>> testClasses) {
 		if (injector != null) return;
 
-		Class<? extends Module>[] moduleClasses = AnnotationUtils
+		Class<? extends Module>[] moduleClasses = DependencyInjectionContext
 				.findConfigAnnotation(testClasses, SimulatestGuiceConfig.class).value();
 
 		Module[] modules = Arrays.stream(moduleClasses)

@@ -6,8 +6,8 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
-import org.simulatest.environment.environment.SimulatestPlugin;
-import org.simulatest.environment.environment.SimulatestPlugins;
+import org.simulatest.environment.environment.plugin.SimulatestPlugin;
+import org.simulatest.environment.environment.SimulatestSession;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 
 public class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
@@ -23,8 +23,8 @@ public class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 
 	@Override
 	protected Object createTest() throws Exception {
-		Object instance = SimulatestPlugins.createTestInstanceOrElse(plugins, getTestClass().getJavaClass(), this::newTestInstance);
-		SimulatestPlugins.postProcessAll(plugins, instance);
+		Object instance = SimulatestSession.createTestInstanceOrElse(plugins, getTestClass().getJavaClass(), this::newTestInstance);
+		SimulatestSession.postProcessWithPlugins(plugins, instance);
 		return instance;
 	}
 

@@ -2,14 +2,13 @@ package org.simulatest.environment.environment;
 
 import java.util.Objects;
 
-import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironmentParent;
-
+import org.simulatest.environment.annotation.EnvironmentParent;
 
 public class EnvironmentDefinition {
 
 	private final Class<? extends Environment> environmentClass;
 	private final Class<? extends Environment> parentClass;
-	
+
 	public static EnvironmentDefinition create(Class<? extends Environment> environmentClass) {
 		Objects.requireNonNull(environmentClass, "Null Argument! Don't you want create a Definition?");
 		return new EnvironmentDefinition(environmentClass);
@@ -20,10 +19,11 @@ public class EnvironmentDefinition {
 	public static EnvironmentDefinition bigBang() {
 		return BIG_BANG;
 	}
-	
+
 	private EnvironmentDefinition(Class<? extends Environment> environmentClass) {
 		this.environmentClass = environmentClass;
-		this.parentClass = extractEnvironmentParent(environmentClass);
+		EnvironmentParent annotation = environmentClass.getAnnotation(EnvironmentParent.class);
+		this.parentClass = annotation == null ? BigBangEnvironment.class : annotation.value();
 	}
 	
 	public Class<? extends Environment> getEnvironmentClass() {

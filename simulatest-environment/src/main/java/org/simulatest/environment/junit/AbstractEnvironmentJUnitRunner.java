@@ -1,6 +1,10 @@
 package org.simulatest.environment.junit;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.runner.Description;
@@ -10,12 +14,11 @@ import org.junit.runner.manipulation.Filterable;
 import org.junit.runner.manipulation.NoTestsRemainException;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
-import org.simulatest.environment.environment.EnvironmentDatabaseRunner;
 import org.simulatest.environment.environment.EnvironmentDefinition;
 import org.simulatest.environment.environment.EnvironmentExtractor;
+import org.simulatest.environment.environment.EnvironmentRunner;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
-import org.simulatest.environment.environment.SimulatestPlugin;
-import org.simulatest.environment.environment.SimulatestPlugins;
+import org.simulatest.environment.environment.plugin.SimulatestPlugin;
 import org.simulatest.environment.environment.SimulatestSession;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
@@ -23,16 +26,17 @@ import org.simulatest.environment.tree.Tree;
 
 public abstract class AbstractEnvironmentJUnitRunner extends Runner implements Filterable {
 
-	private final EnvironmentGrouperTests environmentGrouperTests;
+	private final Map<Class<?>, Runner> runnersByTest = new HashMap<>();
+	private final Set<Class<?>> testClasses = new HashSet<>();
 	private final List<SimulatestPlugin> plugins;
 	private Tree<EnvironmentDefinition> environmentTree;
 	private EnvironmentExtractor environmentExtractor;
 	private EnvironmentDescriptionTreeBuilder descriptionTreeBuilder;
-	private EnvironmentDatabaseRunner environmentRunner;
+	private EnvironmentRunner environmentRunner;
 
 	public AbstractEnvironmentJUnitRunner(Set<Class<?>> testClasses) throws InitializationError {
-		this.environmentGrouperTests = new EnvironmentGrouperTests(testClasses);
-		this.plugins = SimulatestPlugins.loadAll();
+		this.testClasses.addAll(testClasses);
+		this.plugins = SimulatestSession.loadPlugins();
 		setup();
 	}
 
@@ -49,7 +53,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	private void initializeEnvironmentExtractor() {
-		environmentExtractor = EnvironmentExtractor.extract(environmentGrouperTests.getTestClasses());
+		environmentExtractor = EnvironmentExtractor.extract(Collections.unmodifiableCollection(testClasses));
 	}
 
 	private void createEnvironmentTree() {
@@ -62,19 +66,24 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	private void createTestRunners() throws InitializationError {
-		for (Class<?> testCase : environmentGrouperTests.getTestClasses())
-			environmentGrouperTests.put(testCase, instanceTest(testCase));
+		for (Class<?> testCase : testClasses)
+			runnersByTest.put(testCase, createTestRunner(testCase));
 	}
 
-	protected Runner instanceTest(Class<?> test) throws InitializationError {
+	protected Runner createTestRunner(Class<?> test) throws InitializationError {
 		return new SimulatestJUnit4ClassRunner(this, test, plugins);
+	}
+
+	private Runner requireRunner(Class<?> testCase) {
+		Runner runner = runnersByTest.get(testCase);
+		if (runner == null) throw new IllegalStateException("No runner found for test class: " + testCase.getName());
+		return runner;
 	}
 
 	private void populateDescriptionTreeBuilder() {
 		for (EnvironmentDefinition environment : environmentExtractor.getEnvironments()) {
 			for (Class<?> testCase : environmentExtractor.getTests(environment)) {
-				Runner runner = environmentGrouperTests.get(testCase);
-				descriptionTreeBuilder.addTestDescription(environment, runner.getDescription());
+				descriptionTreeBuilder.addTestDescription(environment, requireRunner(testCase).getDescription());
 			}
 		}
 	}
@@ -88,8 +97,8 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	public void run(final RunNotifier notifier) {
 		initializeTestClasses();
 
-		try (SimulatestSession session = SimulatestSession.open(plugins, environmentGrouperTests.getTestClasses())) {
-			environmentRunner = new EnvironmentDatabaseRunner(session.factory(), environmentTree, session.insistenceLayer());
+		try (SimulatestSession session = SimulatestSession.open(plugins, Collections.unmodifiableCollection(testClasses))) {
+			environmentRunner = new EnvironmentRunner(session.factory(), environmentTree, session.insistenceLayer());
 
 			environmentRunner.addListener(new EnvironmentRunnerListener() {
 				@Override
@@ -106,7 +115,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 		if (!environmentExtractor.hasEnvironment(environment)) return;
 
 		for (Class<?> testCase : environmentExtractor.getTests(environment))
-			environmentGrouperTests.get(testCase).run(notifier);
+			requireRunner(testCase).run(notifier);
 	}
 
 	public void resetInsistenceLevel() {
@@ -115,15 +124,16 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 
 	@Override
 	public void filter(Filter filter) throws NoTestsRemainException {
-		for (Class<?> testCase : List.copyOf(environmentGrouperTests.getTestClasses())) {
+		for (Class<?> testCase : List.copyOf(testClasses)) {
 			try {
-				((Filterable) environmentGrouperTests.get(testCase)).filter(filter);
+				((Filterable) requireRunner(testCase)).filter(filter);
 			} catch (NoTestsRemainException e) {
-				environmentGrouperTests.remove(testCase);
+				testClasses.remove(testCase);
+				runnersByTest.remove(testCase);
 			}
 		}
 
-		if (environmentGrouperTests.getTestClasses().isEmpty())
+		if (testClasses.isEmpty())
 			throw new NoTestsRemainException();
 
 		initializeEnvironmentExtractor();
@@ -133,7 +143,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	private void initializeTestClasses() {
-		for (Class<?> testClass : environmentGrouperTests.getTestClasses()) {
+		for (Class<?> testClass : testClasses) {
 			try {
 				Class.forName(testClass.getName(), true, testClass.getClassLoader());
 			} catch (ClassNotFoundException e) {

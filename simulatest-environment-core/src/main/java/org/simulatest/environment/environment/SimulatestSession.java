@@ -2,7 +2,11 @@ package org.simulatest.environment.environment;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.ServiceLoader;
+import java.util.function.Supplier;
 
+import org.simulatest.environment.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
@@ -27,12 +31,62 @@ public class SimulatestSession implements AutoCloseable {
 		this.insistenceLayer = insistenceLayer;
 	}
 
+	public static List<SimulatestPlugin> loadPlugins() {
+		return ServiceLoader.load(SimulatestPlugin.class).stream()
+				.map(ServiceLoader.Provider::get)
+				.toList();
+	}
+
+	public static EnvironmentFactory resolveFactory(List<SimulatestPlugin> plugins) {
+		return plugins.stream()
+				.map(SimulatestPlugin::environmentFactory)
+				.filter(Objects::nonNull)
+				.findFirst()
+				.orElseGet(EnvironmentReflectionFactory::new);
+	}
+
+	public static void initializePlugins(List<SimulatestPlugin> plugins, Collection<Class<?>> testClasses) {
+		for (SimulatestPlugin plugin : plugins) plugin.initialize(testClasses);
+	}
+
+	public static void destroyPlugins(List<SimulatestPlugin> plugins) {
+		RuntimeException firstException = null;
+
+		for (SimulatestPlugin plugin : plugins) {
+			try {
+				plugin.destroy();
+			} catch (RuntimeException e) {
+				if (firstException == null) {
+					firstException = e;
+				} else {
+					firstException.addSuppressed(e);
+				}
+			}
+		}
+
+		if (firstException != null) throw firstException;
+	}
+
+	public static Object createTestInstanceOrElse(List<SimulatestPlugin> plugins, Class<?> testClass,
+												   Supplier<Object> fallback) {
+		return plugins.stream()
+				.map(plugin -> plugin.createTestInstance(testClass))
+				.filter(Objects::nonNull)
+				.findFirst()
+				.orElseGet(fallback);
+	}
+
+	public static void postProcessWithPlugins(List<SimulatestPlugin> plugins, Object instance) {
+		for (SimulatestPlugin plugin : plugins)
+			plugin.postProcessTestInstance(instance);
+	}
+
 	/**
 	 * Loads plugins via ServiceLoader, initializes them, resolves the factory
 	 * and Insistence Layer. Typical entry point for JUnit 5.
 	 */
 	public static SimulatestSession open(Collection<Class<?>> testClasses) {
-		List<SimulatestPlugin> plugins = SimulatestPlugins.loadAll();
+		List<SimulatestPlugin> plugins = loadPlugins();
 		return open(plugins, testClasses);
 	}
 
@@ -43,10 +97,10 @@ public class SimulatestSession implements AutoCloseable {
 	 */
 	public static SimulatestSession open(List<SimulatestPlugin> plugins,
 										 Collection<Class<?>> testClasses) {
-		SimulatestPlugins.initializeAll(plugins, testClasses);
+		initializePlugins(plugins, testClasses);
 		return new SimulatestSession(
 				plugins,
-				SimulatestPlugins.resolveFactory(plugins),
+				resolveFactory(plugins),
 				InsistenceLayerFactory.resolve());
 	}
 
@@ -64,7 +118,7 @@ public class SimulatestSession implements AutoCloseable {
 
 	@Override
 	public void close() {
-		SimulatestPlugins.destroyAll(plugins);
+		destroyPlugins(plugins);
 	}
 
 }

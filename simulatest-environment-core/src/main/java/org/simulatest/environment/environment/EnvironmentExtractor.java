@@ -1,7 +1,6 @@
 package org.simulatest.environment.environment;
 
 import static org.simulatest.environment.environment.EnvironmentDefinition.create;
-import static org.simulatest.environment.infra.AnnotationUtils.extractEnvironment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.simulatest.environment.annotation.UseEnvironment;
 
 public class EnvironmentExtractor {
 
@@ -25,8 +26,9 @@ public class EnvironmentExtractor {
 	}
 
 	private void addTestIntoEnvironmentNode(Class<?> test) {
-		EnvironmentDefinition environment = create(extractEnvironment(test));
-		testsByEnvironment.computeIfAbsent(environment, key -> new ArrayList<>()).add(test);
+		UseEnvironment annotation = test.getAnnotation(UseEnvironment.class);
+		Class<? extends Environment> envClass = annotation == null ? BigBangEnvironment.class : annotation.value();
+		testsByEnvironment.computeIfAbsent(create(envClass), key -> new ArrayList<>()).add(test);
 	}
 
 	public int size() {

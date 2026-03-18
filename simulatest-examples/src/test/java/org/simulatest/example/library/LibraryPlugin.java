@@ -3,7 +3,7 @@ package org.simulatest.example.library;
 import java.util.Collection;
 
 import org.h2.jdbcx.JdbcDataSource;
-import org.simulatest.environment.environment.SimulatestPlugin;
+import org.simulatest.environment.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 /**

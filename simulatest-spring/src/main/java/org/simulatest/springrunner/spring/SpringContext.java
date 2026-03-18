@@ -4,8 +4,7 @@ import java.util.Collection;
 
 import javax.sql.DataSource;
 
-import org.simulatest.environment.environment.DependencyInjectionContext;
-import org.simulatest.environment.infra.AnnotationUtils;
+import org.simulatest.environment.environment.plugin.DependencyInjectionContext;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -27,7 +26,7 @@ public class SpringContext implements DependencyInjectionContext {
 	public void initialize(Collection<Class<?>> testClasses) {
 		if (context != null) return;
 
-		Class<?>[] configClasses = AnnotationUtils
+		Class<?>[] configClasses = DependencyInjectionContext
 				.findConfigAnnotation(testClasses, SimulatestSpringConfig.class).value();
 
 		if (configClasses.length == 0) {

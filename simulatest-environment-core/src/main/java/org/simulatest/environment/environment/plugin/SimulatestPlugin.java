@@ -1,4 +1,7 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment.environment.plugin;
+
+import org.simulatest.environment.environment.EnvironmentFactory;
+import org.simulatest.environment.environment.SimulatestSession;
 
 import java.util.Collection;
 
@@ -10,7 +13,7 @@ import java.util.Collection;
  * A single plugin bridges a DI framework into both JUnit 4 and JUnit 5,
  * keeping the two concerns orthogonal.</p>
  *
- * @see SimulatestPlugins
+ * @see SimulatestSession
  */
 public interface SimulatestPlugin {
 

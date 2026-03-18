@@ -9,8 +9,8 @@ import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
 import jakarta.inject.Inject;
 
-import org.simulatest.environment.environment.DependencyInjectionContext;
-import org.simulatest.environment.environment.TestInstantiationException;
+import org.simulatest.environment.environment.plugin.DependencyInjectionContext;
+import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 
 public class CdiContext implements DependencyInjectionContext {
 
@@ -68,7 +68,7 @@ public class CdiContext implements DependencyInjectionContext {
 		try {
 			field.set(instance, getInstance(field.getType()));
 		} catch (IllegalAccessException e) {
-			throw new TestInstantiationException("Failed to inject CDI bean into field: " + field.getName(), e);
+			throw new EnvironmentInstantiationException("Failed to inject CDI bean into field: " + field.getName(), e);
 		}
 	}
 

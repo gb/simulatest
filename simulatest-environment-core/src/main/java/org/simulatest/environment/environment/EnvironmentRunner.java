@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
+import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
+import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,15 +19,29 @@ public class EnvironmentRunner {
 	private final EnvironmentFactory factory;
 	private final Tree<EnvironmentDefinition> tree;
 	private final List<EnvironmentRunnerListener> listeners;
+	private final InsistenceLayer insistenceLayer;
 
 	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
+		this(factory, environmentTree, null);
+	}
+
+	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree,
+							 InsistenceLayer insistenceLayer) {
 		this.factory = factory;
 		this.tree = environmentTree;
 		this.listeners = new ArrayList<>();
+		this.insistenceLayer = insistenceLayer;
+		if (insistenceLayer != null) {
+			addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
+		}
 	}
 
 	public EnvironmentRunner(EnvironmentFactory factory, EnvironmentTreeBuilder builder) {
 		this(factory, builder.getTree());
+	}
+
+	public InsistenceLayer insistenceLayer() {
+		return insistenceLayer;
 	}
 
 	public void addListener(EnvironmentRunnerListener listener) {
@@ -41,6 +57,31 @@ public class EnvironmentRunner {
 	}
 
 	public void run() {
+		if (insistenceLayer != null) {
+			runWithInsistence();
+		} else {
+			runTree();
+		}
+	}
+
+	private void runWithInsistence() {
+		insistenceLayer.increaseLevel();
+
+		try {
+			runTree();
+			insistenceLayer.decreaseLevel();
+		} catch (RuntimeException exception) {
+			try {
+				insistenceLayer.decreaseAllLevels();
+			} catch (RuntimeException cleanupException) {
+				logger.error("Checkpoint cleanup failed after environment failure", cleanupException);
+				exception.addSuppressed(cleanupException);
+			}
+			throw exception;
+		}
+	}
+
+	private void runTree() {
 		for (Node<EnvironmentDefinition> node : tree) runNode(node);
 	}
 

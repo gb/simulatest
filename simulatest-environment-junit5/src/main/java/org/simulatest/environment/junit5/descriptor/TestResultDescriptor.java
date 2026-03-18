@@ -5,7 +5,7 @@ import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
-import org.simulatest.environment.environment.TestInvocationException;
+import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 /**
@@ -59,7 +59,7 @@ class TestResultDescriptor extends AbstractTestDescriptor implements Node<Simula
 			DynamicTestExecutor dynamicTestExecutor) throws Exception {
 		if (failure instanceof Exception e) throw e;
 		if (failure instanceof Error e) throw e;
-		if (failure != null) throw new TestInvocationException("Test failed with unexpected throwable", failure);
+		if (failure != null) throw new EnvironmentExecutionException("Test failed with unexpected throwable", failure);
 		return context;
 	}
 
