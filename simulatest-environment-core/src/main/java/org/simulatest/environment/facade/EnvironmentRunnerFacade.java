@@ -1,13 +1,13 @@
-package org.simulatest.environment.environment.facade;
+package org.simulatest.environment.facade;
 
 import java.util.Objects;
 import java.util.ServiceLoader;
 
-import org.simulatest.environment.environment.Environment;
-import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentFactory;
-import org.simulatest.environment.environment.EnvironmentRunner;
-import org.simulatest.environment.environment.EnvironmentTreeBuilder;
+import org.simulatest.environment.Environment;
+import org.simulatest.environment.EnvironmentDefinition;
+import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.EnvironmentRunner;
+import org.simulatest.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.infra.exception.EnvironmentGeneralException;
 
 public class EnvironmentRunnerFacade {

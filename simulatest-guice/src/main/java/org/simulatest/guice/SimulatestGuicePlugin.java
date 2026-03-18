@@ -1,6 +1,6 @@
 package org.simulatest.guice;
 
-import org.simulatest.environment.environment.plugin.DependencyInjectionPlugin;
+import org.simulatest.environment.plugin.DependencyInjectionPlugin;
 
 public class SimulatestGuicePlugin extends DependencyInjectionPlugin {
 

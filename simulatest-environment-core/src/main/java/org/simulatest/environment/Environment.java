@@ -1,4 +1,4 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment;
 
 public interface Environment extends Runnable {
 	

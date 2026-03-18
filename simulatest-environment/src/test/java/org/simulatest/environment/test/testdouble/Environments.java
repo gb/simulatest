@@ -1,7 +1,7 @@
 package org.simulatest.environment.test.testdouble;
 
 import org.simulatest.environment.annotation.EnvironmentParent;
-import org.simulatest.environment.environment.Environment;
+import org.simulatest.environment.Environment;
 
 public class Environments {
 	

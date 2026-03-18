@@ -1,4 +1,4 @@
-package org.simulatest.environment.environment.plugin;
+package org.simulatest.environment.plugin;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;

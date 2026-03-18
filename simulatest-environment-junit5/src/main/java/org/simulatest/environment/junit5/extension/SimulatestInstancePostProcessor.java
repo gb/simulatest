@@ -2,7 +2,7 @@ package org.simulatest.environment.junit5.extension;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
-import org.simulatest.environment.environment.SimulatestSession;
+import org.simulatest.environment.SimulatestSession;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 /**

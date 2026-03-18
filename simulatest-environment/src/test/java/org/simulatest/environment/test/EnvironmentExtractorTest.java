@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.environment.annotation.UseEnvironment;
-import org.simulatest.environment.environment.EnvironmentDefinition;
-import org.simulatest.environment.environment.EnvironmentExtractor;
+import org.simulatest.environment.EnvironmentDefinition;
+import org.simulatest.environment.EnvironmentExtractor;
 import org.simulatest.environment.test.testdouble.Environments.PessoaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.Root;
 

@@ -4,7 +4,7 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.simulatest.environment.annotation.EnvironmentParent;
-import org.simulatest.environment.environment.Environment;
+import org.simulatest.environment.Environment;
 import org.simulatest.jeerunner.test.example.mock.DatabaseMock;
 
 @Dependent

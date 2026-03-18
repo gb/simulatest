@@ -1,4 +1,4 @@
-package org.simulatest.environment.environment.listener;
+package org.simulatest.environment.listener;
 
 /**
  * Determines the firing order of {@link EnvironmentRunnerListener} instances.

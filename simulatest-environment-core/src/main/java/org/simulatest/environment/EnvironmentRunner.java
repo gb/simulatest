@@ -1,10 +1,10 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
-import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerInsistence;
+import org.simulatest.environment.listener.EnvironmentRunnerListener;
+import org.simulatest.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;

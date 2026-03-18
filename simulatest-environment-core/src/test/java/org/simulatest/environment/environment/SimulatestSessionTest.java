@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
-import org.simulatest.environment.environment.plugin.SimulatestPlugin;
+import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.EnvironmentReflectionFactory;
+import org.simulatest.environment.SimulatestSession;
+import org.simulatest.environment.plugin.SimulatestPlugin;
 
 public class SimulatestSessionTest {
 

@@ -3,8 +3,8 @@ package org.simulatest.environment.test.infra;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.simulatest.environment.environment.BigBangEnvironment;
-import org.simulatest.environment.environment.EnvironmentDefinition;
+import org.simulatest.environment.BigBangEnvironment;
+import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.test.testdouble.Environments.PessoaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.PessoaFisicaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.PessoaJuridicaEnvironment;

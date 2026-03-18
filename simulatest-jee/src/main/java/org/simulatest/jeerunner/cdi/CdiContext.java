@@ -9,7 +9,7 @@ import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
 import jakarta.inject.Inject;
 
-import org.simulatest.environment.environment.plugin.DependencyInjectionContext;
+import org.simulatest.environment.plugin.DependencyInjectionContext;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 
 public class CdiContext implements DependencyInjectionContext {

@@ -3,7 +3,7 @@ package org.simulatest.environment.junit5;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
-import org.simulatest.environment.environment.SimulatestSession;
+import org.simulatest.environment.SimulatestSession;
 
 import java.util.Collection;
 

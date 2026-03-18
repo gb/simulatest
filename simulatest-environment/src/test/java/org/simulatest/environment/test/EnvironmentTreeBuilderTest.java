@@ -3,12 +3,12 @@ package org.simulatest.environment.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.simulatest.environment.environment.EnvironmentDefinition.create;
+import static org.simulatest.environment.EnvironmentDefinition.create;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.environment.environment.BigBangEnvironment;
-import org.simulatest.environment.environment.EnvironmentTreeBuilder;
+import org.simulatest.environment.BigBangEnvironment;
+import org.simulatest.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.CyclicEnvironmentA;

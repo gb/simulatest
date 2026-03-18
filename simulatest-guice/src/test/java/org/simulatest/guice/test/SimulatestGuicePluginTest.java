@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.simulatest.environment.environment.plugin.SimulatestPlugin;
-import org.simulatest.environment.environment.SimulatestSession;
+import org.simulatest.environment.plugin.SimulatestPlugin;
+import org.simulatest.environment.SimulatestSession;
 import org.simulatest.guice.SimulatestGuicePlugin;
 
 class SimulatestGuicePluginTest {

@@ -3,9 +3,9 @@ package org.simulatest.environment.junit5;
 import java.util.List;
 
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
-import org.simulatest.environment.environment.EnvironmentFactory;
-import org.simulatest.environment.environment.plugin.SimulatestPlugin;
-import org.simulatest.environment.environment.SimulatestSession;
+import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.plugin.SimulatestPlugin;
+import org.simulatest.environment.SimulatestSession;
 import org.simulatest.insistencelayer.InsistenceLayer;
 
 public class SimulatestExecutionContext implements EngineExecutionContext {

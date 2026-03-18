@@ -1,4 +1,4 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment;
 
 import java.util.Collection;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.function.Supplier;
 
-import org.simulatest.environment.environment.plugin.SimulatestPlugin;
+import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 

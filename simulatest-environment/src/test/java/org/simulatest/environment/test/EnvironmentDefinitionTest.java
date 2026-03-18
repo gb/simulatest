@@ -3,7 +3,7 @@ package org.simulatest.environment.test;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.simulatest.environment.environment.EnvironmentDefinition;
+import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.test.testdouble.Environments.PessoaEnvironment;
 
 public class EnvironmentDefinitionTest {

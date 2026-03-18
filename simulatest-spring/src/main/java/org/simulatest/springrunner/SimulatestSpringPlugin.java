@@ -1,6 +1,6 @@
 package org.simulatest.springrunner;
 
-import org.simulatest.environment.environment.plugin.DependencyInjectionPlugin;
+import org.simulatest.environment.plugin.DependencyInjectionPlugin;
 import org.simulatest.springrunner.spring.SpringContext;
 
 public class SimulatestSpringPlugin extends DependencyInjectionPlugin {

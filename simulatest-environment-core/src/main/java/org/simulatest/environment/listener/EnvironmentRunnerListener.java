@@ -1,6 +1,6 @@
-package org.simulatest.environment.environment.listener;
+package org.simulatest.environment.listener;
 
-import org.simulatest.environment.environment.EnvironmentDefinition;
+import org.simulatest.environment.EnvironmentDefinition;
 
 public interface EnvironmentRunnerListener {
 

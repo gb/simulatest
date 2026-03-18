@@ -11,7 +11,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 
-import org.simulatest.environment.environment.plugin.DependencyInjectionContext;
+import org.simulatest.environment.plugin.DependencyInjectionContext;
 
 public class GuiceContext implements DependencyInjectionContext {
 

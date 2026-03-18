@@ -1,4 +1,4 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment;
 
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.slf4j.Logger;

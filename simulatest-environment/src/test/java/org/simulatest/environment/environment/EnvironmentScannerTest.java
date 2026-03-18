@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collection;
 
 import org.junit.Test;
+import org.simulatest.environment.BigBangEnvironment;
+import org.simulatest.environment.EnvironmentScanner;
 
 public class EnvironmentScannerTest {
 

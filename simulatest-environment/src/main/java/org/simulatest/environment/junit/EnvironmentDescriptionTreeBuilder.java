@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.runner.Description;
-import org.simulatest.environment.environment.EnvironmentDefinition;
+import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
 

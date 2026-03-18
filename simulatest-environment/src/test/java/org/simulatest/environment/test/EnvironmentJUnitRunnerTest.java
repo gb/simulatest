@@ -13,7 +13,7 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
-import org.simulatest.environment.environment.BigBangEnvironment;
+import org.simulatest.environment.BigBangEnvironment;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
 import org.simulatest.environment.junit.EnvironmentJUnitSuite;
 import org.simulatest.environment.test.testdouble.AnotherDummyTest;

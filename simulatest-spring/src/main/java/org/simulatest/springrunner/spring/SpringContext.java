@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import javax.sql.DataSource;
 
-import org.simulatest.environment.environment.plugin.DependencyInjectionContext;
+import org.simulatest.environment.plugin.DependencyInjectionContext;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 

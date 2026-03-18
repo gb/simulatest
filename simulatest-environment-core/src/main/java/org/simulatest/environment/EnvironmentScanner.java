@@ -1,4 +1,4 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment;
 
 import java.util.Collection;
 import java.util.Collections;

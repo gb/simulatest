@@ -1,6 +1,6 @@
-package org.simulatest.environment.environment;
+package org.simulatest.environment;
 
-import static org.simulatest.environment.environment.EnvironmentDefinition.create;
+import static org.simulatest.environment.EnvironmentDefinition.create;
 
 import java.util.ArrayList;
 import java.util.Collection;

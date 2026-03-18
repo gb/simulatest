@@ -1,7 +1,7 @@
-package org.simulatest.environment.environment.plugin;
+package org.simulatest.environment.plugin;
 
-import org.simulatest.environment.environment.EnvironmentFactory;
-import org.simulatest.environment.environment.SimulatestSession;
+import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.SimulatestSession;
 
 import java.util.Collection;
 

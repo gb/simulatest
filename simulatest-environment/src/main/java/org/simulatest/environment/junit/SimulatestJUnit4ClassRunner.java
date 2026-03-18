@@ -6,8 +6,8 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
-import org.simulatest.environment.environment.plugin.SimulatestPlugin;
-import org.simulatest.environment.environment.SimulatestSession;
+import org.simulatest.environment.plugin.SimulatestPlugin;
+import org.simulatest.environment.SimulatestSession;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 
 public class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {

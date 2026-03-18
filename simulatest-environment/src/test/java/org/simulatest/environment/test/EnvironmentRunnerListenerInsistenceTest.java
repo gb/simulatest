@@ -1,19 +1,19 @@
 package org.simulatest.environment.test;
 
 import static org.mockito.Mockito.*;
-import static org.simulatest.environment.environment.EnvironmentDefinition.*;
+import static org.simulatest.environment.EnvironmentDefinition.*;
 
 import java.sql.SQLException;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import org.simulatest.environment.environment.EnvironmentFactory;
-import org.simulatest.environment.environment.EnvironmentReflectionFactory;
-import org.simulatest.environment.environment.EnvironmentRunner;
-import org.simulatest.environment.environment.EnvironmentTreeBuilder;
-import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
-import org.simulatest.environment.environment.listener.EnvironmentRunnerListenerInsistence;
+import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.EnvironmentReflectionFactory;
+import org.simulatest.environment.EnvironmentRunner;
+import org.simulatest.environment.EnvironmentTreeBuilder;
+import org.simulatest.environment.listener.EnvironmentRunnerListener;
+import org.simulatest.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;

@@ -1,7 +1,7 @@
 package org.simulatest.example.library.environment;
 
 import org.simulatest.environment.annotation.EnvironmentParent;
-import org.simulatest.environment.environment.Environment;
+import org.simulatest.environment.Environment;
 import org.simulatest.example.library.LibraryDatabase;
 
 /**
