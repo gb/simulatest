@@ -16,6 +16,7 @@ import org.simulatest.environment.environment.EnvironmentExtractor;
 import org.simulatest.environment.environment.EnvironmentTreeBuilder;
 import org.simulatest.environment.environment.SimulatestPlugin;
 import org.simulatest.environment.environment.SimulatestPlugins;
+import org.simulatest.environment.environment.SimulatestSession;
 import org.simulatest.environment.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.Tree;
@@ -86,10 +87,9 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	@Override
 	public void run(final RunNotifier notifier) {
 		initializeTestClasses();
-		SimulatestPlugins.initializeAll(plugins, environmentGrouperTests.getTestClasses());
 
-		try {
-			environmentRunner = new EnvironmentDatabaseRunner(SimulatestPlugins.resolveFactory(plugins), environmentTree);
+		try (SimulatestSession session = SimulatestSession.open(plugins, environmentGrouperTests.getTestClasses())) {
+			environmentRunner = new EnvironmentDatabaseRunner(session.factory(), environmentTree, session.insistenceLayer());
 
 			environmentRunner.addListener(new EnvironmentRunnerListener() {
 				@Override
@@ -99,8 +99,6 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 			});
 
 			environmentRunner.run();
-		} finally {
-			SimulatestPlugins.destroyAll(plugins);
 		}
 	}
 
