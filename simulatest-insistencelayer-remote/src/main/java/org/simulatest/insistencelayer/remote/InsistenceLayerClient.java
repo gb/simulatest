@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
-import org.simulatest.insistencelayer.infra.InsistenceLayerException;
+import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

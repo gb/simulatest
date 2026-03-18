@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer.connection;
+package org.simulatest.insistencelayer.sql;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -14,6 +14,7 @@ import java.sql.SQLException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
 
 public class ConnectionWrapperTest {
 

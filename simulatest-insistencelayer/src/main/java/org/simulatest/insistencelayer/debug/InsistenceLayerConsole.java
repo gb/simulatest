@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer;
+package org.simulatest.insistencelayer.debug;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -12,6 +12,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

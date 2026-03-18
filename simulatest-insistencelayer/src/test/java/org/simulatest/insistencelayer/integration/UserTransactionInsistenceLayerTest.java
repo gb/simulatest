@@ -16,9 +16,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
-import org.simulatest.insistencelayer.TestDataSources;
-import org.simulatest.insistencelayer.connection.ConnectionWrapper;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.util.TestDataSources;
+import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 
 public class UserTransactionInsistenceLayerTest {
 

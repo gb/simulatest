@@ -6,8 +6,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 
-import org.simulatest.insistencelayer.connection.ConnectionWrapper;
-import org.simulatest.insistencelayer.infra.InsistenceLayerException;
+import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

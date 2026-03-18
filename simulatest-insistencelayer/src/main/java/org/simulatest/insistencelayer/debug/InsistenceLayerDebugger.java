@@ -1,7 +1,8 @@
-package org.simulatest.insistencelayer;
+package org.simulatest.insistencelayer.debug;
 
 import java.awt.GraphicsEnvironment;
 
+import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.gui.SQLWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

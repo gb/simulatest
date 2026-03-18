@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer;
+package org.simulatest.insistencelayer.util;
 
 import org.h2.jdbcx.JdbcDataSource;
 

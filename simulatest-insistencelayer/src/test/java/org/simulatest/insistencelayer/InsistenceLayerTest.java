@@ -12,7 +12,7 @@ import java.sql.Savepoint;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.connection.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
 import org.simulatest.insistencelayer.mock.ConnectionMock;
 
 public class InsistenceLayerTest {

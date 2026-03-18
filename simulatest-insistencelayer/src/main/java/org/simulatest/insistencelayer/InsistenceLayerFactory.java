@@ -5,8 +5,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.simulatest.insistencelayer.connection.ConnectionWrapper;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 
 public class InsistenceLayerFactory {
 

@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer.connection;
+package org.simulatest.insistencelayer.infra.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +14,7 @@ import java.util.Objects;
 
 import javax.sql.DataSource;
 
-import org.simulatest.insistencelayer.infra.InsistenceLayerException;
+import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 
 
 public class ConnectionWrapper {

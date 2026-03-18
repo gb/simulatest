@@ -5,8 +5,9 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.After;
 import org.junit.Test;
-import org.simulatest.insistencelayer.connection.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
 import org.simulatest.insistencelayer.mock.ConnectionMock;
+import org.simulatest.insistencelayer.util.TestDataSources;
 
 public class InsistenceLayerFactoryTest {
 

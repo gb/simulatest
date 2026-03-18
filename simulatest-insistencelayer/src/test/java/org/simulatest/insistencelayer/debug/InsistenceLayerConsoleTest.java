@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer;
+package org.simulatest.insistencelayer.debug;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -14,7 +14,10 @@ import java.sql.Statement;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.simulatest.insistencelayer.datasource.InsistenceLayerDataSource;
+import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.simulatest.insistencelayer.util.TestDataSources;
+import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 
 public class InsistenceLayerConsoleTest {
 

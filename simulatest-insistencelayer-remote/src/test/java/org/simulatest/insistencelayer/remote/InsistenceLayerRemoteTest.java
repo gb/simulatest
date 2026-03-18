@@ -13,8 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
-import org.simulatest.insistencelayer.connection.ConnectionWrapper;
-import org.simulatest.insistencelayer.infra.InsistenceLayerException;
+import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 
 public class InsistenceLayerRemoteTest {
 
