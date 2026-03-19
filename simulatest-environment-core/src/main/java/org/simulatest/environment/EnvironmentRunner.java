@@ -86,6 +86,8 @@ public class EnvironmentRunner {
 		}
 	}
 
+	// Manages the outermost insistence level (suite scope).
+	// Per-environment level changes are handled by EnvironmentRunnerListenerInsistence.
 	private void runWithInsistence() {
 		insistenceLayer.increaseLevel();
 
