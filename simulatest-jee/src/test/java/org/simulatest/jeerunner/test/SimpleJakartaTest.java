@@ -20,7 +20,7 @@ public class SimpleJakartaTest {
 
 	static {
 		JdbcDataSource h2 = new JdbcDataSource();
-		h2.setURL("jdbc:h2:~/.h2/test");
+		h2.setURL("jdbc:h2:mem:jeetest;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
 		InsistenceLayerFactory.configure(h2);
 	}
