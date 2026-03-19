@@ -20,6 +20,7 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
 import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
+import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
 import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
@@ -228,6 +229,15 @@ class SimulatestTestEngineTest {
 				"ClasspathRootSelector scan should discover package-private @UseEnvironment test classes. " +
 				"Found: " + testPlan.getDescendants(engineRoot).stream()
 						.map(TestIdentifier::getDisplayName).toList());
+	}
+
+	@Test
+	void insistenceLevelShouldResetBetweenTests() {
+		TestExecutionSummary summary = runSimulatest(InsistenceIsolationTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(2, summary.getTestsSucceededCount(),
+				"Both isolation tests should pass, proving per-test insistence reset works");
 	}
 
 	// --- helpers ---
