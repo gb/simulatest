@@ -46,7 +46,7 @@
 
 		<dependency>
 			<groupId>org.simulatest</groupId>
-			<artifactId>simulatest-environment</artifactId>
+			<artifactId>simulatest-environment-junit4</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

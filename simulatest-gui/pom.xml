@@ -40,7 +40,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.simulatest</groupId>
-			<artifactId>simulatest-environment</artifactId>
+			<artifactId>simulatest-environment-junit4</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.picocontainer</groupId>
