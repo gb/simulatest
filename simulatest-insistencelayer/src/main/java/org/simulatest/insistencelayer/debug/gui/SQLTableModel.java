@@ -1,4 +1,4 @@
-package org.simulatest.insistencelayer.gui;
+package org.simulatest.insistencelayer.debug.gui;
 
 import java.io.Serial;
 import java.sql.Connection;

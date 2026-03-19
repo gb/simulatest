@@ -23,8 +23,7 @@
 	</properties>
 
 	<modules>
-				<module>simulatest-insistencelayer</module>
-		<module>simulatest-insistencelayer-remote</module>
+		<module>simulatest-insistencelayer</module>
 		<module>simulatest-environment-core</module>
 		<module>simulatest-environment-junit4</module>
 		<module>simulatest-environment-junit5</module>
@@ -69,11 +68,6 @@
 			<dependency>
 				<groupId>org.simulatest</groupId>
 				<artifactId>simulatest-environment-junit5</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.simulatest</groupId>
-				<artifactId>simulatest-insistencelayer-remote</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<!-- Logging -->

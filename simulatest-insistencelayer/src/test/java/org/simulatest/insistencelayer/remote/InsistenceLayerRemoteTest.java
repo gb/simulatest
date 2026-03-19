@@ -15,6 +15,8 @@ import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
 import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
+import org.simulatest.insistencelayer.remote.InsistenceLayerServer;
+import org.simulatest.insistencelayer.remote.RemoteInsistenceLayer;
 
 public class InsistenceLayerRemoteTest {
 

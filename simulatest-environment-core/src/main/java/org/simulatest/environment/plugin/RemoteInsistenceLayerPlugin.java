@@ -1,11 +1,12 @@
-package org.simulatest.insistencelayer.remote;
+package org.simulatest.environment.plugin;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collection;
-import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.simulatest.insistencelayer.remote.InsistenceLayerServer;
+import org.simulatest.insistencelayer.remote.RemoteInsistenceLayer;
 
 /**
  * Plugin that interposes a TCP layer between the Simulatest engine and the

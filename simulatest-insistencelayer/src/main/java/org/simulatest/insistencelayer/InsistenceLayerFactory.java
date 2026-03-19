@@ -18,10 +18,6 @@ public class InsistenceLayerFactory {
 
 	private static final InsistenceLayerRegistry defaultRegistry = new InsistenceLayerRegistry();
 
-	public static InsistenceLayerRegistry defaultRegistry() {
-		return defaultRegistry;
-	}
-
 	public static void configure(DataSource dataSource) {
 		defaultRegistry.configure(dataSource);
 	}

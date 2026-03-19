@@ -1,6 +1,6 @@
 package org.simulatest.gui;
 
-import org.simulatest.insistencelayer.gui.SQLWindow;
+import org.simulatest.insistencelayer.debug.gui.SQLWindow;
 
 /**
  * @deprecated Use {@link SQLWindow} directly.
