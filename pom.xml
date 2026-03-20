@@ -12,7 +12,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<classgraph.version>4.8.179</classgraph.version>
+		<classgraph.version>4.8.184</classgraph.version>
 		<h2.version>2.4.240</h2.version>
 		<junit.version>4.13.2</junit.version>
 		<junit-platform.version>1.11.4</junit-platform.version>
