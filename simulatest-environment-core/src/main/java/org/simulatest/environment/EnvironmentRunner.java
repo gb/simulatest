@@ -54,12 +54,10 @@ public class EnvironmentRunner {
 	}
 
 	private static EnvironmentFactory loadFactory() {
-		EnvironmentFactory factory = null;
-		for (EnvironmentFactory f : ServiceLoader.load(EnvironmentFactory.class)) factory = f;
-		if (factory == null) {
-			throw new EnvironmentGeneralException("META-INF/services environmentFactory was not found!");
-		}
-		return factory;
+		return ServiceLoader.load(EnvironmentFactory.class)
+				.findFirst()
+				.orElseThrow(() -> new EnvironmentGeneralException(
+						"META-INF/services environmentFactory was not found!"));
 	}
 
 	public InsistenceLayer insistenceLayer() {

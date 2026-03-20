@@ -10,7 +10,7 @@ public class EnvironmentDefinition {
 	private final Class<? extends Environment> parentClass;
 
 	public static EnvironmentDefinition create(Class<? extends Environment> environmentClass) {
-		Objects.requireNonNull(environmentClass, "Null Argument! Don't you want create a Definition?");
+		Objects.requireNonNull(environmentClass, "environmentClass must not be null");
 		return new EnvironmentDefinition(environmentClass);
 	}
 
@@ -50,11 +50,8 @@ public class EnvironmentDefinition {
 
 	@Override
 	public boolean equals(Object obj) {
-	   if (obj == null) return false;
-	   if (obj == this) return true; 
-	   if (obj.getClass() != getClass()) return false;
-	   
-	   return ((EnvironmentDefinition) obj).environmentClass == environmentClass;
+		return obj instanceof EnvironmentDefinition that
+				&& this.environmentClass == that.environmentClass;
 	}
 
 }

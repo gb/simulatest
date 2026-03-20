@@ -7,8 +7,6 @@ import java.util.Set;
 
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
-import org.simulatest.environment.tree.Tree;
-
 
 public class EnvironmentTreeBuilder {
 	

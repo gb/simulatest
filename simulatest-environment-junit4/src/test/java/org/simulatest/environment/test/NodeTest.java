@@ -105,7 +105,7 @@ public class NodeTest {
 	
 	@Test
 	public void testSize() {
-		assertEquals(6, jose.totalQuantityOfNodes());
+		assertEquals(6, jose.size());
 	}
 
 }

@@ -93,7 +93,7 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		logger.info("Setting level {} to {}", getCurrentLevel(), level);
 
 		if (getCurrentLevel() > level) decreaseToLevel(level);
-		else if (getCurrentLevel() < level ) increaseToLevel(level);
+		else if (getCurrentLevel() < level) increaseToLevel(level);
 	}
 
 	private void increaseToLevel(int level) {
@@ -117,7 +117,7 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		try {
 			connection.rollback(savepoint);
 		} catch (SQLException exception) {
-			throw new InsistenceLayerException("Error rollbacking the savepoint", exception);
+			throw new InsistenceLayerException("Error rolling back the savepoint", exception);
 		}
 	}
 

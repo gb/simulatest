@@ -1,11 +1,11 @@
 package org.simulatest.environment.tree;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 
 public class Tree<T> implements Iterable<Node<T>> {
@@ -26,9 +26,9 @@ public class Tree<T> implements Iterable<Node<T>> {
 	}
 
 	public List<T> getValues() {
-		List<T> values = new ArrayList<T>();
-		for (Node<T> node : this) values.add(node.getValue());
-		return values;
+		return StreamSupport.stream(spliterator(), false)
+				.map(Node::getValue)
+				.toList();
 	}
 
 	public int size() {
@@ -36,11 +36,11 @@ public class Tree<T> implements Iterable<Node<T>> {
 	}
 
 	public T addChild(T parent, T child) {
-		if (!contains(parent)) throw new IllegalArgumentException(String.format("The parent \"%s\" doesn't exists in Tree", parent));
+		if (!contains(parent)) throw new IllegalArgumentException(String.format("The parent \"%s\" doesn't exist in Tree", parent));
 		if (contains(child)) throw new IllegalArgumentException(String.format("The value \"%s\" already exists in Tree", child));
 
 		Node<T> parentNode = getNode(parent);
-		Node<T> childNode = new Node<T>(child);
+		Node<T> childNode = new Node<>(child);
 		
 		parentNode.addChild(childNode);
 		nodesByValue.put(child, childNode);
@@ -49,12 +49,11 @@ public class Tree<T> implements Iterable<Node<T>> {
 	}
 	
 	public List<T> getChildren(T parent) {
-		if (!contains(parent)) throw new IllegalArgumentException(String.format("The parent \"%s\" doesn't exists in Tree", parent));
-		
-		List<T> children = new ArrayList<T>();
-		for (Node<T> childNode : getNode(parent).getChildren()) children.add(childNode.getValue());		
-		
-		return children;
+		if (!contains(parent)) throw new IllegalArgumentException(String.format("The parent \"%s\" doesn't exist in Tree", parent));
+
+		return getNode(parent).getChildren().stream()
+				.map(Node::getValue)
+				.toList();
 	}
 	
 	public boolean contains(T value) {
@@ -67,7 +66,7 @@ public class Tree<T> implements Iterable<Node<T>> {
 
 	@Override
 	public Iterator<Node<T>> iterator() {
-		return new TreeDepthFirstIterator<T>(rootNode);
+		return new TreeDepthFirstIterator<>(rootNode);
 	}
 	
 	public String print() {

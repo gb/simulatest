@@ -46,7 +46,7 @@ public class TreeTest {
 			tree.addChild("leonidas", "goro");
 			fail();
 		} catch (Exception e) {
-			assertEquals("The parent \"leonidas\" doesn't exists in Tree", e.getMessage());
+			assertEquals("The parent \"leonidas\" doesn't exist in Tree", e.getMessage());
 		}
 	}
 	
@@ -105,7 +105,7 @@ public class TreeTest {
 		try {
 			tree.getChildren("leonidas");
 		} catch (IllegalArgumentException e) {
-			assertEquals("The parent \"leonidas\" doesn't exists in Tree", e.getMessage());
+			assertEquals("The parent \"leonidas\" doesn't exist in Tree", e.getMessage());
 		}
 	}
 

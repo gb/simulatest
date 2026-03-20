@@ -55,9 +55,9 @@ public class Node<T> {
 		return this == getParent().getLastChild();
 	}
 	
-	public int totalQuantityOfNodes() {
+	public int size() {
 		int size = 1;
-		for (Node<T> child : children) size += child.totalQuantityOfNodes();
+		for (Node<T> child : children) size += child.size();
 		
 		return size;
 	}

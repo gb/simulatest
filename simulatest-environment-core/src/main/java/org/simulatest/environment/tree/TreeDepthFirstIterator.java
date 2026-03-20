@@ -3,7 +3,6 @@ package org.simulatest.environment.tree;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 public class TreeDepthFirstIterator<T> implements Iterator<Node<T>> {
@@ -24,16 +23,10 @@ public class TreeDepthFirstIterator<T> implements Iterator<Node<T>> {
 	public Node<T> next() {
 		if (!hasNext()) throw new NoSuchElementException();
 		Node<T> next = stack.pop();
-		List<Node<T>> children = next.getChildren();
-		for (int i = children.size() - 1; i >= 0; i--) {
-			stack.push(children.get(i));
+		for (Node<T> child : next.getChildren().reversed()) {
+			stack.push(child);
 		}
 		return next;
-	}
-
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException();
 	}
 
 }

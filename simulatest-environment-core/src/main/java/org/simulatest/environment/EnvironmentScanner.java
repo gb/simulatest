@@ -30,7 +30,7 @@ public class EnvironmentScanner {
 		}
 	}
 
-	public Collection<Class<?>> getEnvironmentList() {
+	public Collection<Class<?>> getEnvironments() {
 		return Collections.unmodifiableSet(environments);
 	}
 

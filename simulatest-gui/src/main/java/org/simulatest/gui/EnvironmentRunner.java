@@ -50,7 +50,7 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
 
         listModel = new DefaultListModel();
         
-        for (Class<?> clazz : new EnvironmentScanner().getEnvironmentList())
+        for (Class<?> clazz : new EnvironmentScanner().getEnvironments())
         	listModel.addElement(clazz.getName());
 
         //Create the list and put it in a scroll pane.
