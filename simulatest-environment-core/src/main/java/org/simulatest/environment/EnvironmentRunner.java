@@ -123,8 +123,6 @@ public class EnvironmentRunner {
 	}
 
 	private void executeEnvironment(EnvironmentDefinition definition) {
-		if (EnvironmentDefinition.bigBang().equals(definition)) return;
-
 		try {
 			factory.create(definition).run();
 		} catch (Exception exception) {

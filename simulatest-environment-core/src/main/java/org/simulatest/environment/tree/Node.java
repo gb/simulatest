@@ -14,7 +14,7 @@ public class Node<T> {
 		this.children = new LinkedList<>();
 	}
 
-	public void addChild(Node<T> child) {
+	void addChild(Node<T> child) {
 		child.setParent(this);
 		children.add(child);
 	}
@@ -27,7 +27,7 @@ public class Node<T> {
 		return parent;
 	}
 
-	protected void setParent(Node<T> parent) {
+	private void setParent(Node<T> parent) {
 		this.parent = parent;
 	}
 
