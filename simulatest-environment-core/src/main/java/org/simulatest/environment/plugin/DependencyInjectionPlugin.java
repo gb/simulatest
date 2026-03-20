@@ -5,6 +5,7 @@ import java.util.Collection;
 import javax.sql.DataSource;
 
 import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.EnvironmentReflectionFactory;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 	private static final Logger logger = LoggerFactory.getLogger(DependencyInjectionPlugin.class);
 
 	private final DependencyInjectionContext context;
+	private final EnvironmentReflectionFactory reflectionFallback = new EnvironmentReflectionFactory();
 
 	protected DependencyInjectionPlugin(DependencyInjectionContext context) {
 		this.context = context;
@@ -26,7 +28,15 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 
 	@Override
 	public final EnvironmentFactory environmentFactory() {
-		return definition -> context.getInstance(definition.getEnvironmentClass());
+		return definition -> {
+			try {
+				return context.getInstance(definition.getEnvironmentClass());
+			} catch (Exception e) {
+				logger.debug("DI context could not create environment {}, falling back to reflection",
+						definition.getName(), e);
+				return reflectionFallback.create(definition);
+			}
+		};
 	}
 
 	@Override
