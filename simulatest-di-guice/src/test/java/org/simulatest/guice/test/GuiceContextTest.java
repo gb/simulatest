@@ -1,5 +1,6 @@
 package org.simulatest.guice.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -10,9 +11,11 @@ import javax.sql.DataSource;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 import org.simulatest.guice.GuiceContext;
+import org.simulatest.guice.GuiceModuleProvider;
 import org.simulatest.guice.SimulatestGuiceConfig;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 
 class GuiceContextTest {
 
@@ -55,6 +58,56 @@ class GuiceContextTest {
 	public static class EmptyModule extends AbstractModule {
 		@Override
 		protected void configure() { /* no bindings: used to test the absent-DataSource path */ }
+	}
+
+	@Test
+	void moduleProviderShouldSupplyParameterizedModules() {
+		GuiceContext context = new GuiceContext();
+		context.initialize(List.of(TestWithProvider.class));
+
+		assertNotNull(context.getInstance(Greeting.class));
+		assertEquals("hello", context.getInstance(Greeting.class).value());
+
+		context.destroy();
+	}
+
+	@Test
+	void valueAndProvidersShouldCombine() {
+		GuiceContext context = new GuiceContext();
+		context.initialize(List.of(TestWithValueAndProvider.class));
+
+		assertNotNull(context.dataSource());
+		assertEquals("hello", context.getInstance(Greeting.class).value());
+
+		context.destroy();
+	}
+
+	@SimulatestGuiceConfig(providers = GreetingModuleProvider.class)
+	private static class TestWithProvider {}
+
+	@SimulatestGuiceConfig(value = DataSourceModule.class, providers = GreetingModuleProvider.class)
+	private static class TestWithValueAndProvider {}
+
+	public record Greeting(String value) {}
+
+	public static class ParameterizedModule extends AbstractModule {
+		private final String greeting;
+
+		public ParameterizedModule(String greeting) {
+			this.greeting = greeting;
+		}
+
+		@Override
+		protected void configure() {
+			bind(Greeting.class).toInstance(new Greeting(greeting));
+		}
+	}
+
+	public static class GreetingModuleProvider implements GuiceModuleProvider {
+		@Override
+		public Module[] modules() {
+			return new Module[] { new ParameterizedModule("hello") };
+		}
 	}
 
 }

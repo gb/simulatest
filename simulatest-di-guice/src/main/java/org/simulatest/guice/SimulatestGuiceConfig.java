@@ -13,6 +13,8 @@ import com.google.inject.Module;
 @Inherited
 public @interface SimulatestGuiceConfig {
 
-	Class<? extends Module>[] value();
+	Class<? extends Module>[] value() default {};
+
+	Class<? extends GuiceModuleProvider>[] providers() default {};
 
 }

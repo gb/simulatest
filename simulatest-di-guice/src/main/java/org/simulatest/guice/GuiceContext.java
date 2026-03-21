@@ -1,8 +1,10 @@
 package org.simulatest.guice;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -31,12 +33,19 @@ public class GuiceContext implements DependencyInjectionContext {
 	public void initialize(Collection<Class<?>> testClasses) {
 		if (injector != null) return;
 
-		Class<? extends Module>[] moduleClasses = DependencyInjectionContext
-				.findConfigAnnotation(testClasses, SimulatestGuiceConfig.class).value();
+		SimulatestGuiceConfig config = DependencyInjectionContext
+				.findConfigAnnotation(testClasses, SimulatestGuiceConfig.class);
 
-		Module[] modules = Arrays.stream(moduleClasses)
+		List<Module> modules = new ArrayList<>();
+
+		Arrays.stream(config.value())
 				.map(GuiceContext::instantiate)
-				.toArray(Module[]::new);
+				.forEach(modules::add);
+
+		for (Class<? extends GuiceModuleProvider> providerClass : config.providers()) {
+			GuiceModuleProvider provider = instantiateProvider(providerClass);
+			modules.addAll(Arrays.asList(provider.modules()));
+		}
 
 		injector = Guice.createInjector(modules);
 	}
@@ -68,6 +77,17 @@ public class GuiceContext implements DependencyInjectionContext {
 		} catch (InstantiationException | IllegalAccessException |
 				 InvocationTargetException | NoSuchMethodException e) {
 			throw new IllegalStateException("Failed to instantiate Guice module: " + moduleClass.getName(), e);
+		}
+	}
+
+	private static GuiceModuleProvider instantiateProvider(Class<? extends GuiceModuleProvider> providerClass) {
+		try {
+			var constructor = providerClass.getDeclaredConstructor();
+			constructor.setAccessible(true);
+			return constructor.newInstance();
+		} catch (InstantiationException | IllegalAccessException |
+				 InvocationTargetException | NoSuchMethodException e) {
+			throw new IllegalStateException("Failed to instantiate Guice module provider: " + providerClass.getName(), e);
 		}
 	}
 
