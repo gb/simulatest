@@ -26,12 +26,12 @@
 		<module>simulatest-insistencelayer</module>
 		<module>simulatest-environment-core</module>
 		<module>simulatest-environment-junit4</module>
-		<module>simulatest-environment-junit5</module>
-		<module>simulatest-spring</module>
+		<module>simulatest-environment-junit-platform</module>
+		<module>simulatest-di-spring</module>
 		<module>simulatest-gui</module>
-		<module>simulatest-jee</module>
-		<module>simulatest-guice</module>
-		<module>simulatest-examples</module>
+		<module>simulatest-di-jee</module>
+		<module>simulatest-di-guice</module>
+		<module>examples</module>
 	</modules>
 
 	<developers>
@@ -67,7 +67,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.simulatest</groupId>
-				<artifactId>simulatest-environment-junit5</artifactId>
+				<artifactId>simulatest-environment-junit-platform</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<!-- Logging -->
