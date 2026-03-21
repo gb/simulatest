@@ -1,19 +1,19 @@
 package org.simulatest.di.spring;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class SpringContextTest {
 
 	@Test
 	void shouldDiscoverConfigurationViaComponentScanning() {
 		SpringContext context = new SpringContext();
-		context.initialize(List.of(SimpleSpringJUnit5Sample.class));
+		context.initialize(List.of(SimpleSpringJUnit5IT.class));
 
-		assertNotNull(context.getInstance(SimpleSpringJUnit5Sample.Greeter.class));
+		assertNotNull(context.getInstance(SimpleSpringJUnit5IT.Greeter.class));
 
 		context.destroy();
 	}

@@ -1,24 +1,22 @@
 package org.simulatest.di.spring;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
-import org.simulatest.environment.junit5.SimulatestTestEngine;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SimulatestSpringPluginTest {
 
 	@Test
 	void springPluginShouldAutowireAndRunEnvironments() {
 		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(DiscoverySelectors.selectClass(SimpleSpringJUnit5Sample.class))
+				.selectors(DiscoverySelectors.selectClass(SimpleSpringJUnit5IT.class))
 				.build();
 
 		SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
