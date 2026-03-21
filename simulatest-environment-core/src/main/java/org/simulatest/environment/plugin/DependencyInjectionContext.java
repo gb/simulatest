@@ -2,6 +2,7 @@ package org.simulatest.environment.plugin;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -24,13 +25,11 @@ public interface DependencyInjectionContext {
 
 	DataSource dataSource();
 
-	static <A extends Annotation> A findConfigAnnotation(Collection<Class<?>> testClasses, Class<A> annotationType) {
+	static <A extends Annotation> Optional<A> findConfigAnnotation(Collection<Class<?>> testClasses, Class<A> annotationType) {
 		return testClasses.stream()
 				.filter(clazz -> clazz.isAnnotationPresent(annotationType))
 				.findFirst()
-				.map(clazz -> clazz.getAnnotation(annotationType))
-				.orElseThrow(() -> new IllegalStateException(
-						"No test class annotated with @" + annotationType.getSimpleName() + " found."));
+				.map(clazz -> clazz.getAnnotation(annotationType));
 	}
 
 }

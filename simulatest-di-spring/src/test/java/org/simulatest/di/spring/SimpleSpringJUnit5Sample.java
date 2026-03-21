@@ -14,9 +14,8 @@ import org.springframework.context.annotation.Configuration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SimulatestSpringConfig(SimpleSpringJUnit5Test.Config.class)
-@UseEnvironment(SimpleSpringJUnit5Test.ChildEnv.class)
-public class SimpleSpringJUnit5Test {
+@UseEnvironment(SimpleSpringJUnit5Sample.ChildEnv.class)
+public class SimpleSpringJUnit5Sample {
 
 	@Configuration
 	static class Config {

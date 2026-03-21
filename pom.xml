@@ -32,6 +32,7 @@
 		<module>simulatest-di-jee</module>
 		<module>simulatest-di-guice</module>
 		<module>examples</module>
+		<module>examples-spring-boot-kotlin</module>
 	</modules>
 
 	<developers>

@@ -1,59 +1,21 @@
 package org.simulatest.di.spring;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
-import javax.sql.DataSource;
-
-import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
-import org.simulatest.di.spring.SimulatestSpringConfig;
-import org.simulatest.di.spring.SpringContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 class SpringContextTest {
 
 	@Test
-	void dataSourceShouldReturnBeanWhenPresent() {
+	void shouldDiscoverConfigurationViaComponentScanning() {
 		SpringContext context = new SpringContext();
-		context.initialize(List.of(TestWithDataSource.class));
+		context.initialize(List.of(SimpleSpringJUnit5Sample.class));
 
-		assertNotNull(context.dataSource());
+		assertNotNull(context.getInstance(SimpleSpringJUnit5Sample.Greeter.class));
 
 		context.destroy();
 	}
-
-	@Test
-	void dataSourceShouldReturnNullWhenAbsent() {
-		SpringContext context = new SpringContext();
-		context.initialize(List.of(TestWithoutDataSource.class));
-
-		assertNull(context.dataSource());
-
-		context.destroy();
-	}
-
-	@SimulatestSpringConfig(DataSourceConfig.class)
-	private static class TestWithDataSource {}
-
-	@SimulatestSpringConfig(EmptyConfig.class)
-	private static class TestWithoutDataSource {}
-
-	@Configuration
-	static class DataSourceConfig {
-		@Bean
-		DataSource dataSource() {
-			JdbcDataSource ds = new JdbcDataSource();
-			ds.setURL("jdbc:h2:mem:spring-context-test;DB_CLOSE_DELAY=-1");
-			ds.setUser("sa");
-			return ds;
-		}
-	}
-
-	@Configuration
-	static class EmptyConfig {}
 
 }
