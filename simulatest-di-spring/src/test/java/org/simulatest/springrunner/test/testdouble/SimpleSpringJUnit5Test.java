@@ -1,33 +1,64 @@
 package org.simulatest.springrunner.test.testdouble;
 
-import org.junit.jupiter.api.Assertions;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
+import org.simulatest.environment.Environment;
+import org.simulatest.environment.annotation.EnvironmentParent;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.springrunner.spring.SimulatestSpringConfig;
-import org.simulatest.springrunner.test.testdouble.environment.SpringChildExampleEnvironment;
-import org.simulatest.springrunner.test.testdouble.mock.DatabaseMock;
-import org.springframework.beans.factory.annotation.Autowired;
 
-@SimulatestSpringConfig(org.simulatest.springrunner.test.TestDoubleConfig.class)
-@UseEnvironment(SpringChildExampleEnvironment.class)
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@SimulatestSpringConfig(SimpleSpringJUnit5Test.Config.class)
+@UseEnvironment(SimpleSpringJUnit5Test.ChildEnv.class)
 public class SimpleSpringJUnit5Test {
 
-	@Autowired
-	private LanguageTeacher languageTeacher;
+	@Configuration
+	static class Config {
+		@Bean Greeter greeter() { return new Greeter(); }
+		@Bean MessageLog messageLog() { return new MessageLog(); }
+	}
 
-	@Autowired
-	private DatabaseMock databaseMock;
+	public static class Greeter {
+		public String greet() { return "Hello"; }
+	}
+
+	public static class MessageLog {
+		private final List<String> messages = new ArrayList<>();
+		public void add(String msg) { messages.add(msg); }
+		public List<String> all() { return List.copyOf(messages); }
+	}
+
+	public static class ParentEnv implements Environment {
+		@Autowired Greeter greeter;
+		@Autowired MessageLog log;
+		@Override public void run() { log.add(greeter.greet()); }
+	}
+
+	@EnvironmentParent(ParentEnv.class)
+	public static class ChildEnv implements Environment {
+		@Autowired Greeter greeter;
+		@Autowired MessageLog log;
+		@Override public void run() { log.add(greeter.greet() + " by child"); }
+	}
+
+	@Autowired private Greeter greeter;
+	@Autowired private MessageLog log;
 
 	@Test
 	void springDIShouldWork() {
-		Assertions.assertEquals("Hello", languageTeacher.sayHello());
+		assertEquals("Hello", greeter.greet());
 	}
 
 	@Test
 	void environmentsShouldHaveRun() {
-		Assertions.assertEquals(2, databaseMock.getMessages().size());
-		Assertions.assertEquals("Hello", databaseMock.getMessages().get(0));
-		Assertions.assertEquals("Hello by child", databaseMock.getMessages().get(1));
+		assertEquals(List.of("Hello", "Hello by child"), log.all());
 	}
 
 }
