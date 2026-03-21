@@ -34,7 +34,9 @@ public class GuiceContext implements DependencyInjectionContext {
 		if (injector != null) return;
 
 		SimulatestGuiceConfig config = DependencyInjectionContext
-				.findConfigAnnotation(testClasses, SimulatestGuiceConfig.class);
+				.findConfigAnnotation(testClasses, SimulatestGuiceConfig.class)
+				.orElseThrow(() -> new IllegalStateException(
+						"No test class annotated with @SimulatestGuiceConfig found."));
 
 		List<Module> modules = new ArrayList<>();
 

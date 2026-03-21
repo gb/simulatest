@@ -1,22 +1,20 @@
 package org.simulatest.di.spring;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.simulatest.environment.Environment;
 import org.simulatest.environment.annotation.EnvironmentParent;
 import org.simulatest.environment.annotation.UseEnvironment;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SimulatestSpringConfig(SimpleSpringJUnit5Test.Config.class)
-@UseEnvironment(SimpleSpringJUnit5Test.ChildEnv.class)
-public class SimpleSpringJUnit5Test {
+@UseEnvironment(SimpleSpringJUnit5IT.ChildEnv.class)
+class SimpleSpringJUnit5IT {
 
 	@Configuration
 	static class Config {
