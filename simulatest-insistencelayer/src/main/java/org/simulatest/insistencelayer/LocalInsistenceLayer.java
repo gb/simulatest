@@ -83,11 +83,6 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 	}
 
 	@Override
-	public void decreaseAllLevels() {
-		setLevelTo(0);
-	}
-
-	@Override
 	public void setLevelTo(int level) {
 		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
 		logger.info("Setting level {} to {}", getCurrentLevel(), level);

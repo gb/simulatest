@@ -56,7 +56,9 @@ public interface InsistenceLayer {
 	/**
 	 * Restores all levels back to zero, equivalent to {@code setLevelTo(0)}.
 	 */
-	void decreaseAllLevels();
+	default void decreaseAllLevels() {
+		setLevelTo(0);
+	}
 
 	/**
 	 * Adjusts the stack to the given target level by increasing or

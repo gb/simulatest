@@ -2,6 +2,7 @@ package org.simulatest.environment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.ServiceLoader;
 
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
@@ -65,6 +66,7 @@ public class EnvironmentRunner {
 	}
 
 	public void addListener(EnvironmentRunnerListener listener) {
+		Objects.requireNonNull(listener, "listener must not be null");
 		int insertIndex = 0;
 		for (int i = 0; i < listeners.size(); i++) {
 			if (listeners.get(i).getPhase().ordinal() <= listener.getPhase().ordinal()) {

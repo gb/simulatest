@@ -124,7 +124,6 @@ public class InsistenceLayerServer {
 			DataOutputStream out = new DataOutputStream(client.getOutputStream());
 
 			while (processNextCommand(client, in, out)) {
-				// each iteration reads and executes one command
 			}
 		} finally {
 			activeClient = null;

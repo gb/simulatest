@@ -42,21 +42,14 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 	private static final String JUPITER_ENGINE_ID = "junit-jupiter";
 	private static final String AUTODETECTION_KEY = "junit.jupiter.extensions.autodetection.enabled";
 
-	private static volatile Launcher jupiterLauncher;
+	private static final Launcher JUPITER_LAUNCHER;
 
-	private static Launcher jupiterLauncher() {
-		if (jupiterLauncher == null) {
-			synchronized (JupiterDelegatingClassDescriptor.class) {
-				if (jupiterLauncher == null) {
-					LauncherConfig config = LauncherConfig.builder()
-							.enablePostDiscoveryFilterAutoRegistration(false)
-							.enableTestExecutionListenerAutoRegistration(false)
-							.build();
-					jupiterLauncher = LauncherFactory.create(config);
-				}
-			}
-		}
-		return jupiterLauncher;
+	static {
+		LauncherConfig config = LauncherConfig.builder()
+				.enablePostDiscoveryFilterAutoRegistration(false)
+				.enableTestExecutionListenerAutoRegistration(false)
+				.build();
+		JUPITER_LAUNCHER = LauncherFactory.create(config);
 	}
 
 	private final Class<?> testClass;
@@ -97,7 +90,7 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 				.build();
 
 		ResultCapturingListener listener = new ResultCapturingListener();
-		jupiterLauncher().execute(request, listener);
+		JUPITER_LAUNCHER.execute(request, listener);
 		return listener.results;
 	}
 

@@ -1,5 +1,6 @@
 package org.simulatest.environment.tree;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class Node<T> {
 	}
 
 	public List<Node<T>> getChildren() {
-		return children;
+		return Collections.unmodifiableList(children);
 	}
 	
 	public Node<T> getFirstChild() {

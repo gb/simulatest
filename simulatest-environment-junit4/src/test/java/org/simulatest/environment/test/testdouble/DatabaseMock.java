@@ -6,8 +6,8 @@ import java.util.List;
 
 public class DatabaseMock {
 	
-	private static List<String> messages = new ArrayList<String>();
-	
+	private static final List<String> messages = new ArrayList<>();
+
 	public static void addMessage(String message) {
 		messages.add(message);
 	}
@@ -15,9 +15,9 @@ public class DatabaseMock {
 	public static List<String> getMessages() {
 		return Collections.unmodifiableList(messages);
 	}
-	
+
 	public static void reset() {
-		messages = new ArrayList<String>();
+		messages.clear();
 	}
 
 }

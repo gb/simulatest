@@ -40,8 +40,9 @@ public class EnvironmentTestDescriptor extends AbstractTestDescriptor
 					"Failed during run for environment '" + definition.getName() + "'", exception);
 		}
 
-		if (context.insistenceLayer() != null) {
-			context.insistenceLayer().increaseLevel();
+		InsistenceLayer insistenceLayer = context.insistenceLayer();
+		if (insistenceLayer != null) {
+			insistenceLayer.increaseLevel();
 		}
 		return context;
 	}

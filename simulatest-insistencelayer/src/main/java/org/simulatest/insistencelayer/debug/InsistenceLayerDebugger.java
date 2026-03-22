@@ -44,7 +44,6 @@ public class InsistenceLayerDebugger {
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerDebugger.class);
 
 	private InsistenceLayerDebugger() {
-		// call InsistenceLayerDebugger.debug()
 	}
 
 	public static void debug() {

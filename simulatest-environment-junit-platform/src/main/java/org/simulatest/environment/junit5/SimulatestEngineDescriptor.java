@@ -25,8 +25,9 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 
 		SimulatestSession session = SimulatestSession.open(testClasses);
 
-		if (session.insistenceLayer() != null) {
-			session.insistenceLayer().increaseLevel();
+		InsistenceLayer insistenceLayer = session.insistenceLayer();
+		if (insistenceLayer != null) {
+			insistenceLayer.increaseLevel();
 		}
 
 		return new SimulatestExecutionContext(session);

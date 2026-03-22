@@ -88,9 +88,6 @@ public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 	 * Sets the remote savepoint level to the given target by sending the
 	 * appropriate number of increase or decrease commands individually.
 	 *
-	 * <p>Overridden because the parent's {@code decreaseToLevel} calls private
-	 * methods that access the null connection and savepoints fields.</p>
-	 *
 	 * @param level the target level (must be non-negative)
 	 */
 	@Override
@@ -100,15 +97,6 @@ public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 
 		while (this.level > level) decreaseLevel();
 		while (this.level < level) increaseLevel();
-	}
-
-	/**
-	 * Decreases all savepoint levels back to zero by sending individual
-	 * decrease commands for each level.
-	 */
-	@Override
-	public void decreaseAllLevels() {
-		setLevelTo(0);
 	}
 
 	/**
