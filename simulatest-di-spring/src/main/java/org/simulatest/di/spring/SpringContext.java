@@ -80,7 +80,7 @@ public class SpringContext implements DependencyInjectionContext {
 						.filter(c -> c.isAnnotationPresent(UseEnvironment.class))
 						.map(c -> c.getAnnotation(UseEnvironment.class).value())
 		)
-				.map(c -> c.getPackage().getName())
+				.map(Class::getPackageName)
 				.distinct()
 				.toArray(String[]::new);
 	}
