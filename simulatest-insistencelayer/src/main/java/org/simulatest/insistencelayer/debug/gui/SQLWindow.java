@@ -82,6 +82,7 @@ public class SQLWindow extends JFrame {
 			window.addWindowListener(new WindowAdapter() {
 				@Override
 				public void windowClosed(WindowEvent e) {
+					window.tableModel.close();
 					latch.countDown();
 				}
 			});

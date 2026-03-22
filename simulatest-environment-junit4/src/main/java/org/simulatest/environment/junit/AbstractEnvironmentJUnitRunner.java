@@ -119,7 +119,7 @@ public abstract class AbstractEnvironmentJUnitRunner extends Runner implements F
 	}
 
 	public void resetInsistenceLevel() {
-		if (environmentRunner.insistenceLayer() != null) {
+		if (environmentRunner != null && environmentRunner.insistenceLayer() != null) {
 			environmentRunner.insistenceLayer().resetCurrentLevel();
 		}
 	}

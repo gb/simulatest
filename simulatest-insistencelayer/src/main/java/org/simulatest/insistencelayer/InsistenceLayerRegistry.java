@@ -63,7 +63,10 @@ public class InsistenceLayerRegistry {
 		}
 
 		if (!dataSources.isEmpty()) {
-			return InsistenceLayerFactory.build(dataSources.values().iterator().next().getConnectionWrapper());
+			InsistenceLayerDataSource ds = dataSources.values().iterator().next();
+			InsistenceLayer layer = InsistenceLayerFactory.build(ds.getConnectionWrapper());
+			registry.put(DEFAULT, layer);
+			return layer;
 		}
 
 		return null;

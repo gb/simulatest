@@ -89,4 +89,12 @@ class SQLTableModel extends AbstractTableModel {
 		return rows.get(row)[col];
 	}
 
+	void close() {
+		try {
+			statement.close();
+		} catch (SQLException e) {
+			logger.debug("Failed to close statement", e);
+		}
+	}
+
 }
