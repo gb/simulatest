@@ -1,5 +1,6 @@
 package org.simulatest.environment.junit5.descriptor;
 
+import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
@@ -53,7 +54,24 @@ public class EnvironmentTestDescriptor extends AbstractTestDescriptor
 		if (insistenceLayer == null) return;
 
 		insistenceLayer.decreaseLevelOrCleanup();
-		insistenceLayer.resetCurrentLevel();
+
+		if (!isLastEnvironmentSibling()) {
+			insistenceLayer.resetCurrentLevel();
+		}
+	}
+
+	private boolean isLastEnvironmentSibling() {
+		return getParent()
+				.map(parent -> {
+					EnvironmentTestDescriptor lastEnv = null;
+					for (TestDescriptor child : parent.getChildren()) {
+						if (child instanceof EnvironmentTestDescriptor env) {
+							lastEnv = env;
+						}
+					}
+					return lastEnv == this;
+				})
+				.orElse(true);
 	}
 
 }
