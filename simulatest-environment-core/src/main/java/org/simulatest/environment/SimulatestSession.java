@@ -3,9 +3,9 @@ package org.simulatest.environment;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.function.Supplier;
 
-import org.simulatest.environment.plugin.PluginDiscovery;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -32,7 +32,9 @@ public class SimulatestSession implements AutoCloseable {
 	}
 
 	public static List<SimulatestPlugin> loadPlugins() {
-		return PluginDiscovery.loadPlugins();
+		return ServiceLoader.load(SimulatestPlugin.class).stream()
+				.map(ServiceLoader.Provider::get)
+				.toList();
 	}
 
 	public static EnvironmentFactory resolveFactory(List<SimulatestPlugin> plugins) {

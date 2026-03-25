@@ -1,4 +1,4 @@
-package org.simulatest.environment;
+package org.simulatest.gui;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,6 +7,7 @@ import java.util.Set;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import org.simulatest.environment.Environment;
 
 public class EnvironmentScanner {
 

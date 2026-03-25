@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
 import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 
 /**
@@ -26,7 +25,7 @@ public class InsistenceLayerRegistry {
 	public void configure(DataSource dataSource) {
 		var wrapped = new InsistenceLayerDataSource(dataSource);
 		dataSources.put(DEFAULT, wrapped);
-		registry.put(DEFAULT, InsistenceLayerFactory.build(wrapped.getConnectionWrapper()));
+		registry.put(DEFAULT, new LocalInsistenceLayer(wrapped.getConnectionWrapper()));
 	}
 
 	public InsistenceLayerDataSource dataSource() {
@@ -64,7 +63,7 @@ public class InsistenceLayerRegistry {
 
 		if (!dataSources.isEmpty()) {
 			InsistenceLayerDataSource ds = dataSources.values().iterator().next();
-			InsistenceLayer layer = InsistenceLayerFactory.build(ds.getConnectionWrapper());
+			InsistenceLayer layer = new LocalInsistenceLayer(ds.getConnectionWrapper());
 			registry.put(DEFAULT, layer);
 			return layer;
 		}

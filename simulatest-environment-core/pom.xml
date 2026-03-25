@@ -13,10 +13,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>io.github.classgraph</groupId>
-			<artifactId>classgraph</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.simulatest</groupId>
 			<artifactId>simulatest-insistencelayer</artifactId>
 		</dependency>
