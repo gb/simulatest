@@ -1,20 +1,24 @@
 package org.simulatest.di.jee;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
+import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
-import jakarta.inject.Inject;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.InjectionTarget;
 
 import org.simulatest.environment.plugin.DependencyInjectionContext;
-import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 
 public class CdiContext implements DependencyInjectionContext {
 
 	private SeContainer container;
+	private final Map<Class<?>, InjectionTarget<Object>> injectionTargetCache = new ConcurrentHashMap<>();
 
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
@@ -23,12 +27,13 @@ public class CdiContext implements DependencyInjectionContext {
 
 	@Override
 	public void injectMembers(Object instance) {
-		for (Class<?> clazz = instance.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
-			for (Field field : clazz.getDeclaredFields()) {
-				if (field.isAnnotationPresent(Inject.class)) {
-					inject(instance, field);
-				}
-			}
+		InjectionTarget<Object> injectionTarget = injectionTargetCache.computeIfAbsent(
+			instance.getClass(), this::createInjectionTarget);
+		CreationalContext<Object> creationalContext = getContainer().getBeanManager().createCreationalContext(null);
+		try {
+			injectionTarget.inject(instance, creationalContext);
+		} finally {
+			creationalContext.release();
 		}
 	}
 
@@ -50,9 +55,17 @@ public class CdiContext implements DependencyInjectionContext {
 			try {
 				container.close();
 			} finally {
+				injectionTargetCache.clear();
 				container = null;
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private InjectionTarget<Object> createInjectionTarget(Class<?> clazz) {
+		BeanManager beanManager = getContainer().getBeanManager();
+		AnnotatedType<Object> type = (AnnotatedType<Object>) beanManager.createAnnotatedType(clazz);
+		return beanManager.getInjectionTargetFactory(type).createInjectionTarget(null);
 	}
 
 	private SeContainer getContainer() {
@@ -61,15 +74,6 @@ public class CdiContext implements DependencyInjectionContext {
 				+ "Add simulatest-di-jee to the classpath.");
 		}
 		return container;
-	}
-
-	private void inject(Object instance, Field field) {
-		field.setAccessible(true);
-		try {
-			field.set(instance, getInstance(field.getType()));
-		} catch (IllegalAccessException e) {
-			throw new EnvironmentInstantiationException("Failed to inject CDI bean into field: " + field.getName(), e);
-		}
 	}
 
 }
