@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+import java.util.Objects;
+
 import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * <p>This is the "Humble Object", it knows how to talk over a socket but
  * contains no savepoint logic. Thread-safe for sequential use (one command at a time).</p>
  */
-public class InsistenceLayerClient implements AutoCloseable {
+public final class InsistenceLayerClient implements AutoCloseable {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerClient.class);
 
@@ -37,7 +39,7 @@ public class InsistenceLayerClient implements AutoCloseable {
 	 * @param port the server port
 	 */
 	public InsistenceLayerClient(String host, int port) {
-		this.host = host;
+		this.host = Objects.requireNonNull(host, "host must not be null");
 		this.port = port;
 	}
 

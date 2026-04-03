@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
-public class InsistenceLayerDataSource implements DataSource {
+public final class InsistenceLayerDataSource implements DataSource {
 
 	private final DataSource delegate;
 	private final ConnectionWrapper connectionWrapper;

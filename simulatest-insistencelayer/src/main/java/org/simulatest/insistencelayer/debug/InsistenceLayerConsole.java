@@ -73,9 +73,6 @@ import org.slf4j.LoggerFactory;
 public class InsistenceLayerConsole {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerConsole.class);
-	private static final String DEBUG_NOTICE =
-		"This console was triggered by an InsistenceLayerDebugger.debug() call\n" +
-		"in your test. If this was unintentional, remove that line.";
 
 	public static void debug() {
 		var dataSource = InsistenceLayerFactory.dataSource();
@@ -130,7 +127,8 @@ public class InsistenceLayerConsole {
 		out.println("  schema <table>   Show column definitions for a table");
 		out.println("  resume           Continue test execution");
 		out.println();
-		out.println(DEBUG_NOTICE);
+		out.println("This console was triggered by an InsistenceLayerDebugger.debug() call");
+		out.println("in your test. If this was unintentional, remove that line.");
 		out.println();
 
 		printTables(connection, out);

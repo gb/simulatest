@@ -21,110 +21,110 @@ import org.simulatest.insistencelayer.remote.RemoteInsistenceLayer;
 public class InsistenceLayerRemoteTest {
 
 	private Connection jdbcConnection;
-	private InsistenceLayer serverManager;
+	private InsistenceLayer serverLayer;
 	private InsistenceLayerServer server;
-	private RemoteInsistenceLayer remoteManager;
+	private RemoteInsistenceLayer remoteLayer;
 
 	@Before
 	public void setup() throws SQLException, IOException {
 		jdbcConnection = DriverManager.getConnection("jdbc:h2:mem:remote_test;DB_CLOSE_DELAY=-1");
 		ConnectionWrapper wrapper = new ConnectionWrapper(jdbcConnection);
-		serverManager = InsistenceLayerFactory.build(wrapper);
+		serverLayer = InsistenceLayerFactory.build(wrapper);
 
-		server = new InsistenceLayerServer(serverManager, 0);
+		server = new InsistenceLayerServer(serverLayer, 0);
 		server.start();
 
-		remoteManager = new RemoteInsistenceLayer("localhost", server.getPort());
+		remoteLayer = new RemoteInsistenceLayer("localhost", server.getPort());
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		if (remoteManager != null) remoteManager.close();
+		if (remoteLayer != null) remoteLayer.close();
 		if (server != null) server.stop();
 		if (jdbcConnection != null) jdbcConnection.close();
 	}
 
 	@Test
 	public void increaseCommandShouldIncreaseLevelOnServer() {
-		remoteManager.increaseLevel();
+		remoteLayer.increaseLevel();
 
-		assertEquals(1, remoteManager.getCurrentLevel());
-		assertEquals(1, serverManager.getCurrentLevel());
+		assertEquals(1, remoteLayer.getCurrentLevel());
+		assertEquals(1, serverLayer.getCurrentLevel());
 	}
 
 	@Test
 	public void fullLifecycleIncreaseResetDecrease() {
-		remoteManager.increaseLevel();
-		remoteManager.increaseLevel();
-		assertEquals(2, remoteManager.getCurrentLevel());
-		assertEquals(2, serverManager.getCurrentLevel());
+		remoteLayer.increaseLevel();
+		remoteLayer.increaseLevel();
+		assertEquals(2, remoteLayer.getCurrentLevel());
+		assertEquals(2, serverLayer.getCurrentLevel());
 
-		remoteManager.resetCurrentLevel();
-		assertEquals(2, remoteManager.getCurrentLevel());
-		assertEquals(2, serverManager.getCurrentLevel());
+		remoteLayer.resetCurrentLevel();
+		assertEquals(2, remoteLayer.getCurrentLevel());
+		assertEquals(2, serverLayer.getCurrentLevel());
 
-		remoteManager.decreaseLevel();
-		assertEquals(1, remoteManager.getCurrentLevel());
-		assertEquals(1, serverManager.getCurrentLevel());
+		remoteLayer.decreaseLevel();
+		assertEquals(1, remoteLayer.getCurrentLevel());
+		assertEquals(1, serverLayer.getCurrentLevel());
 
-		remoteManager.decreaseLevel();
-		assertEquals(0, remoteManager.getCurrentLevel());
-		assertEquals(0, serverManager.getCurrentLevel());
+		remoteLayer.decreaseLevel();
+		assertEquals(0, remoteLayer.getCurrentLevel());
+		assertEquals(0, serverLayer.getCurrentLevel());
 	}
 
 	@Test
 	public void decreaseAtLevelZeroShouldPropagateError() {
-		assertEquals(0, remoteManager.getCurrentLevel());
+		assertEquals(0, remoteLayer.getCurrentLevel());
 
 		try {
-			remoteManager.decreaseLevel();
+			remoteLayer.decreaseLevel();
 			fail("should have thrown");
 		} catch (InsistenceLayerException e) {
-			assertEquals(0, remoteManager.getCurrentLevel());
+			assertEquals(0, remoteLayer.getCurrentLevel());
 		}
 	}
 
 	@Test
-	public void remoteManagerWorksAsDropInReplacement() {
-		InsistenceLayer manager = remoteManager;
+	public void remoteLayerWorksAsDropInReplacement() {
+		InsistenceLayer layer = remoteLayer;
 
-		manager.increaseLevel();
-		manager.increaseLevel();
-		manager.increaseLevel();
-		assertEquals(3, manager.getCurrentLevel());
+		layer.increaseLevel();
+		layer.increaseLevel();
+		layer.increaseLevel();
+		assertEquals(3, layer.getCurrentLevel());
 
-		manager.resetCurrentLevel();
-		assertEquals(3, manager.getCurrentLevel());
+		layer.resetCurrentLevel();
+		assertEquals(3, layer.getCurrentLevel());
 
-		manager.decreaseLevel();
-		manager.decreaseLevel();
-		manager.decreaseLevel();
-		assertEquals(0, manager.getCurrentLevel());
+		layer.decreaseLevel();
+		layer.decreaseLevel();
+		layer.decreaseLevel();
+		assertEquals(0, layer.getCurrentLevel());
 	}
 
 	@Test
 	public void setLevelToShouldWorkRemotely() {
-		remoteManager.setLevelTo(5);
-		assertEquals(5, remoteManager.getCurrentLevel());
-		assertEquals(5, serverManager.getCurrentLevel());
+		remoteLayer.setLevelTo(5);
+		assertEquals(5, remoteLayer.getCurrentLevel());
+		assertEquals(5, serverLayer.getCurrentLevel());
 
-		remoteManager.setLevelTo(2);
-		assertEquals(2, remoteManager.getCurrentLevel());
-		assertEquals(2, serverManager.getCurrentLevel());
+		remoteLayer.setLevelTo(2);
+		assertEquals(2, remoteLayer.getCurrentLevel());
+		assertEquals(2, serverLayer.getCurrentLevel());
 
-		remoteManager.setLevelTo(4);
-		assertEquals(4, remoteManager.getCurrentLevel());
-		assertEquals(4, serverManager.getCurrentLevel());
+		remoteLayer.setLevelTo(4);
+		assertEquals(4, remoteLayer.getCurrentLevel());
+		assertEquals(4, serverLayer.getCurrentLevel());
 	}
 
 	@Test
 	public void decreaseAllLevelsShouldWorkRemotely() {
-		remoteManager.setLevelTo(5);
-		assertEquals(5, remoteManager.getCurrentLevel());
+		remoteLayer.setLevelTo(5);
+		assertEquals(5, remoteLayer.getCurrentLevel());
 
-		remoteManager.decreaseAllLevels();
-		assertEquals(0, remoteManager.getCurrentLevel());
-		assertEquals(0, serverManager.getCurrentLevel());
+		remoteLayer.decreaseAllLevels();
+		assertEquals(0, remoteLayer.getCurrentLevel());
+		assertEquals(0, serverLayer.getCurrentLevel());
 	}
 
 	@Test
@@ -132,7 +132,7 @@ public class InsistenceLayerRemoteTest {
 		server.stop();
 
 		try {
-			remoteManager.increaseLevel();
+			remoteLayer.increaseLevel();
 			fail("should have thrown");
 		} catch (InsistenceLayerException e) {
 			assertEquals("Cannot connect to Insistence Layer server at localhost:" + server.getPort(), e.getMessage());

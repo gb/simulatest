@@ -67,7 +67,12 @@ public interface InsistenceLayer {
 	 * @param level the target level (must be non-negative)
 	 * @throws IllegalArgumentException if level is negative
 	 */
-	void setLevelTo(int level);
+	default void setLevelTo(int level) {
+		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
+
+		while (getCurrentLevel() > level) decreaseLevel();
+		while (getCurrentLevel() < level) increaseLevel();
+	}
 
 	/**
 	 * Attempts to {@link #decreaseLevel()}. If that fails, falls back to

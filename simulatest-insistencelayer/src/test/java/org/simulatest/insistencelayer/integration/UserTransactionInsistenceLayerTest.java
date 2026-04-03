@@ -49,6 +49,7 @@ public class UserTransactionInsistenceLayerTest {
 			insistenceLayer.decreaseLevel();
 		}
 		statement.executeUpdate("DELETE FROM LOG");
+		statement.close();
 	}
 
 	@Test

@@ -40,6 +40,7 @@ public class InsistenceLayerIntegrationTest {
 			insistenceLayer.decreaseLevel();
 		}
 		statement.executeUpdate("DELETE FROM LOG");
+		statement.close();
 	}
 
 	@Test

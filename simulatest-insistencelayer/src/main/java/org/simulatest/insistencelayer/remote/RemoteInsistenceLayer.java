@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * manager.decreaseLevel();
  * }</pre>
  */
-public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
+public final class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 
 	private static final Logger logger = LoggerFactory.getLogger(RemoteInsistenceLayer.class);
 
@@ -82,21 +82,6 @@ public class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
 	public void resetCurrentLevel() {
 		client.sendCommand(InsistenceLayerProtocol.RESET);
 		logger.info("Cleaned current level: {}", level);
-	}
-
-	/**
-	 * Sets the remote savepoint level to the given target by sending the
-	 * appropriate number of increase or decrease commands individually.
-	 *
-	 * @param level the target level (must be non-negative)
-	 */
-	@Override
-	public void setLevelTo(int level) {
-		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
-		logger.info("Setting level {} to {}", this.level, level);
-
-		while (this.level > level) decreaseLevel();
-		while (this.level < level) increaseLevel();
 	}
 
 	/**

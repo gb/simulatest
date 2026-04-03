@@ -2,6 +2,7 @@ package org.simulatest.insistencelayer;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.sql.DataSource;
 
@@ -15,7 +16,7 @@ import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
  * registry. When independent registries are needed (parallel test
  * execution, multi-datasource), create a separate instance.</p>
  */
-public class InsistenceLayerRegistry {
+public final class InsistenceLayerRegistry {
 
 	public static final String DEFAULT = "default";
 
@@ -23,6 +24,7 @@ public class InsistenceLayerRegistry {
 	private final Map<String, InsistenceLayerDataSource> dataSources = new LinkedHashMap<>();
 
 	public void configure(DataSource dataSource) {
+		Objects.requireNonNull(dataSource, "dataSource must not be null");
 		var wrapped = new InsistenceLayerDataSource(dataSource);
 		dataSources.put(DEFAULT, wrapped);
 		registry.put(DEFAULT, new LocalInsistenceLayer(wrapped.getConnectionWrapper()));
@@ -45,6 +47,8 @@ public class InsistenceLayerRegistry {
 	}
 
 	public void register(String name, InsistenceLayer layer) {
+		Objects.requireNonNull(name, "name must not be null");
+		Objects.requireNonNull(layer, "layer must not be null");
 		registry.put(name, layer);
 	}
 
@@ -56,6 +60,8 @@ public class InsistenceLayerRegistry {
 		return registry.get(name);
 	}
 
+	// Fallback chain: (1) return existing layer, (2) lazily build from configured
+	// datasource, (3) return null if nothing is configured.
 	public InsistenceLayer resolve() {
 		if (!registry.isEmpty()) {
 			return registry.values().iterator().next();

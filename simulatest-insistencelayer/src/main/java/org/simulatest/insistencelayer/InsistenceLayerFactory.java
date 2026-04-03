@@ -12,7 +12,9 @@ import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
  * registries (parallel execution, multi-datasource), create your own
  * {@link InsistenceLayerRegistry} instance.</p>
  */
-public class InsistenceLayerFactory {
+public final class InsistenceLayerFactory {
+
+	private InsistenceLayerFactory() {}
 
 	public static final String DEFAULT = InsistenceLayerRegistry.DEFAULT;
 
@@ -38,8 +40,8 @@ public class InsistenceLayerFactory {
 		return new LocalInsistenceLayer(connection);
 	}
 
-	public static void register(String name, InsistenceLayer manager) {
-		defaultRegistry.register(name, manager);
+	public static void register(String name, InsistenceLayer layer) {
+		defaultRegistry.register(name, layer);
 	}
 
 	public static void deregister(String name) {

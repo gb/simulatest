@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
  * as its checkpoint mechanism. Each level corresponds to a named savepoint
  * on the underlying connection.
  */
-public class LocalInsistenceLayer implements InsistenceLayer {
+public final class LocalInsistenceLayer implements InsistenceLayer {
 
-	private static final String PREFIX_SAVEPOINT = "LAYER";
+	private static final String SAVEPOINT_PREFIX = "LAYER";
 	private static final Logger logger = LoggerFactory.getLogger(LocalInsistenceLayer.class);
 
 	private final ConnectionWrapper connection;
@@ -48,7 +48,7 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 	}
 
 	private void createSavepoint() {
-		String savePointName = PREFIX_SAVEPOINT + (getCurrentLevel() + 1);
+		String savePointName = SAVEPOINT_PREFIX + (getCurrentLevel() + 1);
 
 		try {
 			savepoints.push(connection.setSavepoint(savePointName));
@@ -95,6 +95,8 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		while (getCurrentLevel() < level) increaseLevel();
 	}
 
+	// Optimization: intermediate levels are released (dropped) without rolling back,
+	// since their data will be undone by the final decreaseLevel's rollback anyway.
 	private void decreaseToLevel(int level) {
 		while (getCurrentLevel() - 1 > level) dropCurrentLevel();
 		if (getCurrentLevel() == level + 1) decreaseLevel();
@@ -104,7 +106,8 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		try {
 			connection.releaseSavepoint(savepoints.pop());
 		} catch (SQLException exception) {
-			throw new InsistenceLayerException("Error dropping the current level", exception);
+			throw new InsistenceLayerException(
+					"Error dropping level " + (getCurrentLevel() + 1), exception);
 		}
 	}
 
@@ -112,7 +115,8 @@ public class LocalInsistenceLayer implements InsistenceLayer {
 		try {
 			connection.rollback(savepoint);
 		} catch (SQLException exception) {
-			throw new InsistenceLayerException("Error rolling back the savepoint", exception);
+			throw new InsistenceLayerException(
+					"Error rolling back savepoint at level " + getCurrentLevel(), exception);
 		}
 	}
 

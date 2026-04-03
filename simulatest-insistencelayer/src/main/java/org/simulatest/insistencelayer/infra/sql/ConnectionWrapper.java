@@ -17,7 +17,7 @@ import javax.sql.DataSource;
 import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 
 
-public class ConnectionWrapper {
+public final class ConnectionWrapper {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConnectionWrapper.class);
 
@@ -75,7 +75,7 @@ public class ConnectionWrapper {
 		}
 	}
 
-	public boolean isConnectionFake() {
+	public boolean isActive() {
 		return active;
 	}
 
@@ -105,7 +105,8 @@ public class ConnectionWrapper {
 		public Object invoke(Object proxyObj, Method method, Object[] args) throws Throwable {
 			String methodName = method.getName();
 
-			// Always intercepted regardless of active state
+			// Always intercepted: prevent the real connection from being closed
+			// or having autocommit re-enabled by frameworks (e.g., Spring, connection pools).
 			if (METHOD_CLOSE.equals(methodName)) {
 				return null;
 			}
@@ -114,7 +115,7 @@ public class ConnectionWrapper {
 				return null;
 			}
 
-			// Intercepted only when active
+			// Intercepted only when the insistence layer is active
 			if (active) {
 				if (METHOD_COMMIT.equals(methodName)) {
 					handleCommit();
@@ -127,6 +128,7 @@ public class ConnectionWrapper {
 				if (METHOD_GET_AUTO_COMMIT.equals(methodName)) {
 					return false;
 				}
+				// Report the connection as open so pools/frameworks don't reclaim it.
 				if (METHOD_IS_CLOSED.equals(methodName)) {
 					return false;
 				}

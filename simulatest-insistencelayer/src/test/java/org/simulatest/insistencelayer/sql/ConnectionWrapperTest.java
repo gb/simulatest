@@ -39,20 +39,20 @@ public class ConnectionWrapperTest {
 
 	@Test
 	public void whenConnectionWrapperIsCreatedTheConnectionIsReal() {
-		assertFalse(connectionWrapper.isConnectionFake());
+		assertFalse(connectionWrapper.isActive());
 	}
 
 	@Test
 	public void whenInsistenceLayerIsStartedTheConnectionIsNotReal() {
 		connectionWrapper.wrap();
-		assertTrue(connectionWrapper.isConnectionFake());
+		assertTrue(connectionWrapper.isActive());
 	}
 
 	@Test
 	public void whenInsistenceLayerIsDisabledTheConnectionIsRealAgain() {
 		connectionWrapper.wrap();
 		connectionWrapper.unwrap();
-		assertFalse(connectionWrapper.isConnectionFake());
+		assertFalse(connectionWrapper.isActive());
 	}
 
 	@Test

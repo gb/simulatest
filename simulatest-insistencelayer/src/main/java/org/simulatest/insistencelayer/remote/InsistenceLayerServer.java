@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 
+import java.util.Objects;
+
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,30 +27,30 @@ import org.slf4j.LoggerFactory;
  *
  * <h3>Usage:</h3>
  * <pre>{@code
- * InsistenceLayerServer server = new InsistenceLayerServer(manager, 4242);
+ * InsistenceLayerServer server = new InsistenceLayerServer(layer, 4242);
  * server.start();
  * // ... tests run remotely ...
  * server.stop();
  * }</pre>
  */
-public class InsistenceLayerServer {
+public final class InsistenceLayerServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerServer.class);
 
-	private final InsistenceLayer manager;
+	private final InsistenceLayer layer;
 	private final int requestedPort;
 	private ServerSocket serverSocket;
 	private Thread serverThread;
 	private volatile Socket activeClient;
 
 	/**
-	 * Creates a server that will delegate commands to the given manager.
+	 * Creates a server that will delegate commands to the given layer.
 	 *
-	 * @param manager the local Insistence Layer manager (with a real DB connection)
+	 * @param layer the local Insistence Layer (with a real DB connection)
 	 * @param port    the TCP port to bind to (use 0 for OS-assigned port)
 	 */
-	public InsistenceLayerServer(InsistenceLayer manager, int port) {
-		this.manager = manager;
+	public InsistenceLayerServer(InsistenceLayer layer, int port) {
+		this.layer = Objects.requireNonNull(layer, "layer must not be null");
 		this.requestedPort = port;
 	}
 
@@ -173,16 +175,16 @@ public class InsistenceLayerServer {
 			sendOk(out);
 		} catch (Exception e) {
 			logger.error("Command 0x{} failed at level {}",
-				String.format("%02X", command), manager.getCurrentLevel(), e);
+				String.format("%02X", command), layer.getCurrentLevel(), e);
 			sendError(out, e.getMessage());
 		}
 	}
 
 	private void dispatch(byte command) {
 		switch (command) {
-			case InsistenceLayerProtocol.INCREASE -> manager.increaseLevel();
-			case InsistenceLayerProtocol.DECREASE -> manager.decreaseLevel();
-			case InsistenceLayerProtocol.RESET    -> manager.resetCurrentLevel();
+			case InsistenceLayerProtocol.INCREASE -> layer.increaseLevel();
+			case InsistenceLayerProtocol.DECREASE -> layer.decreaseLevel();
+			case InsistenceLayerProtocol.RESET    -> layer.resetCurrentLevel();
 			default -> throw new IllegalArgumentException("Unknown command: " + command);
 		}
 	}
