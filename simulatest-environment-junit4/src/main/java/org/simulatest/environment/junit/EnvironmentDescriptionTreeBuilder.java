@@ -2,19 +2,20 @@ package org.simulatest.environment.junit;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.runner.Description;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
 
-public class EnvironmentDescriptionTreeBuilder {
+public final class EnvironmentDescriptionTreeBuilder {
 
 	private final Tree<EnvironmentDefinition> environments;
 	private final Map<EnvironmentDefinition, Description> descriptions = new HashMap<>();
 
 	public EnvironmentDescriptionTreeBuilder(Tree<EnvironmentDefinition> environments) {
-		this.environments = environments;
+		this.environments = Objects.requireNonNull(environments, "environments must not be null");
 		createEnvironmentsDescriptions();
 	}
 
@@ -31,7 +32,11 @@ public class EnvironmentDescriptionTreeBuilder {
 	}
 
 	public void addTestDescription(EnvironmentDefinition environment, Description description) {
-		descriptions.get(environment).addChild(description);
+		Description parent = descriptions.get(environment);
+		if (parent == null) {
+			throw new IllegalArgumentException("Unknown environment: " + environment.getName());
+		}
+		parent.addChild(description);
 	}
 
 	public Description getDescription() {

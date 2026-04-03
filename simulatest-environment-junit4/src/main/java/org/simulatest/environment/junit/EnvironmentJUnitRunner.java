@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.junit.runner.Description;
@@ -35,7 +36,7 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 	private EnvironmentRunner environmentRunner;
 
 	public EnvironmentJUnitRunner(Set<Class<?>> testClasses) throws InitializationError {
-		this.testClasses.addAll(testClasses);
+		this.testClasses.addAll(Objects.requireNonNull(testClasses, "testClasses must not be null"));
 		this.plugins = SimulatestSession.loadPlugins();
 		setup();
 	}
@@ -45,10 +46,14 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 	}
 
 	private void setup() throws InitializationError {
+		createTestRunners();
+		rebuildEnvironmentInfrastructure();
+	}
+
+	private void rebuildEnvironmentInfrastructure() {
 		initializeEnvironmentExtractor();
 		createEnvironmentTree();
 		initializeDescriptionTreeBuilder();
-		createTestRunners();
 		populateDescriptionTreeBuilder();
 	}
 
@@ -118,7 +123,7 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 			requireRunner(testCase).run(notifier);
 	}
 
-	public void resetInsistenceLevel() {
+	void resetInsistenceLevel() {
 		if (environmentRunner != null && environmentRunner.insistenceLayer() != null) {
 			environmentRunner.insistenceLayer().resetCurrentLevel();
 		}
@@ -138,12 +143,11 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 		if (testClasses.isEmpty())
 			throw new NoTestsRemainException();
 
-		initializeEnvironmentExtractor();
-		createEnvironmentTree();
-		initializeDescriptionTreeBuilder();
-		populateDescriptionTreeBuilder();
+		rebuildEnvironmentInfrastructure();
 	}
 
+	// Force-triggers static initializers (e.g., TestSetup.configure()) before
+	// the environment tree is walked, since JUnit may load classes lazily.
 	private void initializeTestClasses() {
 		for (Class<?> testClass : testClasses) {
 			try {

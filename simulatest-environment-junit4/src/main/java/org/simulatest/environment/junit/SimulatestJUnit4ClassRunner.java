@@ -1,6 +1,7 @@
 package org.simulatest.environment.junit;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -10,15 +11,15 @@ import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 
-public class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
+public final class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 
 	private final EnvironmentJUnitRunner runner;
 	private final List<SimulatestPlugin> plugins;
 
 	public SimulatestJUnit4ClassRunner(EnvironmentJUnitRunner runner, Class<?> clazz, List<SimulatestPlugin> plugins) throws InitializationError {
 		super(clazz);
-		this.runner = runner;
-		this.plugins = plugins;
+		this.runner = Objects.requireNonNull(runner, "runner must not be null");
+		this.plugins = Objects.requireNonNull(plugins, "plugins must not be null");
 	}
 
 	@Override
@@ -36,6 +37,8 @@ public class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 		}
 	}
 
+	// Reset the Insistence Layer after each test so sibling tests start
+	// with the same database state (the environment's savepoint).
 	@Override
 	protected void runChild(FrameworkMethod method, RunNotifier notifier) {
 		try {

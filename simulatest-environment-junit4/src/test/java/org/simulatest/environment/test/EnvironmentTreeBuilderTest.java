@@ -2,6 +2,7 @@ package org.simulatest.environment.test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.simulatest.environment.EnvironmentDefinition.create;
 
@@ -110,8 +111,8 @@ public class EnvironmentTreeBuilderTest {
 			builder.add(create(ProjetoEnvironmentCiclico.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
-			String expectedMessage = "The environment \"ProjetoEnvironmentCiclico\" is cyclically referenced";
-			assertEquals(expectedMessage, exception.getMessage());
+			assertTrue(exception.getMessage().startsWith("The environment \"ProjetoEnvironmentCiclico\" is cyclically referenced"));
+			assertTrue(exception.getMessage().contains("visited:"));
 		}
 	}
 	
@@ -121,8 +122,8 @@ public class EnvironmentTreeBuilderTest {
 			builder.add(create(CyclicEnvironmentOne.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
-			String expectedMessage = "The environment \"CyclicEnvironmentOne\" is cyclically referenced";
-			assertEquals(expectedMessage, exception.getMessage());
+			assertTrue(exception.getMessage().startsWith("The environment \"CyclicEnvironmentOne\" is cyclically referenced"));
+			assertTrue(exception.getMessage().contains("visited:"));
 		}
 	}
 	
@@ -132,8 +133,8 @@ public class EnvironmentTreeBuilderTest {
 			builder.add(create(CyclicEnvironmentA.class));
 			fail("should throw an EnvironmentCyclicException");
 		} catch (EnvironmentCyclicException exception) {
-			String expectedMessage = "The environment \"CyclicEnvironmentA\" is cyclically referenced";
-			assertEquals(expectedMessage, exception.getMessage());
+			assertTrue(exception.getMessage().startsWith("The environment \"CyclicEnvironmentA\" is cyclically referenced"));
+			assertTrue(exception.getMessage().contains("visited:"));
 		}
 	}
 	

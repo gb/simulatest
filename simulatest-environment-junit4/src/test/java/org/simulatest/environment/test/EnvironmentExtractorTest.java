@@ -1,7 +1,7 @@
 package org.simulatest.environment.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -40,36 +40,36 @@ public class EnvironmentExtractorTest {
 		
 		List<Class<?>> classesWithoutEnvironment = environmentExtractor.getTests(EnvironmentDefinition.bigBang());
 		
-		assertTrue(classesWithoutEnvironment.size() == 2);
+		assertEquals(2, classesWithoutEnvironment.size());
 		assertTrue(classesWithoutEnvironment.contains(TestWithoutEnvironment1.class));
 		assertTrue(classesWithoutEnvironment.contains(TestWithoutEnvironment2.class));
-		
+
 		List<Class<?>> classWithRootEnvironment = environmentExtractor.getTests(EnvironmentDefinition.create(Root.class));
-		
-		assertTrue(classWithRootEnvironment.size() == 2);
+
+		assertEquals(2, classWithRootEnvironment.size());
 		assertTrue(classWithRootEnvironment.contains(TestWithEnvironment1.class));
 		assertTrue(classWithRootEnvironment.contains(TestWithEnvironment2.class));
-		
+
 		List<Class<?>> classesWithPessoaEnvironment = environmentExtractor.getTests(EnvironmentDefinition.create(PessoaEnvironment.class));
-		
-		assertTrue(classesWithPessoaEnvironment.size() == 2);
+
+		assertEquals(2, classesWithPessoaEnvironment.size());
 		assertTrue(classesWithPessoaEnvironment.contains(TestWithEnvironment3.class));
 		assertTrue(classesWithPessoaEnvironment.contains(TestWithEnvironment4.class));
 	}
 		
-	class TestWithoutEnvironment1 { }
-	class TestWithoutEnvironment2 { }
-	
+	static class TestWithoutEnvironment1 { }
+	static class TestWithoutEnvironment2 { }
+
 	@UseEnvironment(Root.class)
-	class TestWithEnvironment1 { }
-	
+	static class TestWithEnvironment1 { }
+
 	@UseEnvironment(Root.class)
-	class TestWithEnvironment2 { }
-	
+	static class TestWithEnvironment2 { }
+
 	@UseEnvironment(PessoaEnvironment.class)
-	class TestWithEnvironment3 { }
-	
+	static class TestWithEnvironment3 { }
+
 	@UseEnvironment(PessoaEnvironment.class)
-	class TestWithEnvironment4 { }
+	static class TestWithEnvironment4 { }
 
 }

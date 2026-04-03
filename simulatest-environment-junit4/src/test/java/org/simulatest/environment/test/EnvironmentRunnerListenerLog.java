@@ -17,26 +17,27 @@ public class EnvironmentRunnerListenerLog implements EnvironmentRunnerListener {
 
 	@Override
 	public void beforeRun(EnvironmentDefinition definition) {
-		logger.debug("beforeRun >> {}", definition);
-		logs.add(String.format("[%s] beforeRun", definition));
+		log("beforeRun", definition);
 	}
 
 	@Override
 	public void afterRun(EnvironmentDefinition definition) {
-		logger.debug("afterRun >> {}", definition);
-		logs.add(String.format("[%s] afterRun", definition));
+		log("afterRun", definition);
 	}
 
 	@Override
 	public void afterChildrenRun(EnvironmentDefinition definition) {
-		logger.debug("afterChildrenRun >> {}", definition);
-		logs.add(String.format("[%s] afterChildrenRun", definition));
+		log("afterChildrenRun", definition);
 	}
 
 	@Override
 	public void afterSiblingCleanup(EnvironmentDefinition definition) {
-		logger.debug("afterSiblingCleanup >> {}", definition);
-		logs.add(String.format("[%s] afterSiblingCleanup", definition));
+		log("afterSiblingCleanup", definition);
+	}
+
+	private void log(String phase, EnvironmentDefinition definition) {
+		logger.debug("{} >> {}", phase, definition);
+		logs.add(String.format("[%s] %s", definition, phase));
 	}
 
 	public List<String> getLogs() {

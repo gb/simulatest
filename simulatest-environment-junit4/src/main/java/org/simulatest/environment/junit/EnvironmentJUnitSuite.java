@@ -7,7 +7,7 @@ import org.junit.runners.Suite.SuiteClasses;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
 
-public class EnvironmentJUnitSuite extends EnvironmentJUnitRunner {
+public final class EnvironmentJUnitSuite extends EnvironmentJUnitRunner {
 
 	public EnvironmentJUnitSuite(Class<?> suiteClass, RunnerBuilder builder) throws InitializationError {
 		super(extractTestClasses(suiteClass));

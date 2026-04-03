@@ -101,9 +101,10 @@ public class TreeTest {
 	}
 	
 	@Test
-	public void testGetChildreWithAnUnexistParent() {
+	public void testGetChildrenWithNonexistentParent() {
 		try {
 			tree.getChildren("leonidas");
+			fail("Should throw IllegalArgumentException for nonexistent parent");
 		} catch (IllegalArgumentException e) {
 			assertEquals("The parent \"leonidas\" doesn't exist in Tree", e.getMessage());
 		}
