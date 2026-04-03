@@ -17,25 +17,29 @@ public class InsistenceIsolationTest {
 
 	@Test
 	void insertShouldBeVisibleWithinThisTest() throws SQLException {
-		Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
-		Statement stmt = connection.createStatement();
-		stmt.execute("INSERT INTO test_isolation VALUES (100, 'test-specific')");
+		try (Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
+			 Statement stmt = connection.createStatement()) {
+			stmt.execute("INSERT INTO test_isolation VALUES (100, 'test-specific')");
 
-		ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_isolation");
-		rs.next();
-		assertEquals(2, rs.getInt(1),
-				"Should see environment data plus this test's insert");
+			try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_isolation")) {
+				rs.next();
+				assertEquals(2, rs.getInt(1),
+						"Should see environment data plus this test's insert");
+			}
+		}
 	}
 
 	@Test
 	void eachTestShouldStartWithOnlyEnvironmentData() throws SQLException {
-		Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
-		Statement stmt = connection.createStatement();
+		try (Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
+			 Statement stmt = connection.createStatement()) {
 
-		ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_isolation");
-		rs.next();
-		assertEquals(1, rs.getInt(1),
-				"Previous test's insert should have been rolled back");
+			try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM test_isolation")) {
+				rs.next();
+				assertEquals(1, rs.getInt(1),
+						"Previous test's insert should have been rolled back");
+			}
+		}
 	}
 
 }

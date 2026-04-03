@@ -12,13 +12,13 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * delegates class execution to Jupiter. Guarded by a ThreadLocal — acts as a
  * no-op when running outside Simulatest.</p>
  */
-public class InsistenceAfterEachExtension implements AfterEachCallback {
+public final class InsistenceAfterEachExtension implements AfterEachCallback {
 
 	@Override
 	public void afterEach(ExtensionContext context) {
 		SimulatestExecutionContext ctx = SimulatestExecutionContext.getCurrent();
-		if (ctx != null && ctx.insistenceLayer() != null) {
-			ctx.insistenceLayer().resetCurrentLevel();
+		if (ctx != null) {
+			ctx.resetInsistenceLevel();
 		}
 	}
 

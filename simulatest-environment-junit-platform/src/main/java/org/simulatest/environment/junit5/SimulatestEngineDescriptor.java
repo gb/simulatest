@@ -4,7 +4,6 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
 import org.simulatest.environment.SimulatestSession;
-import org.simulatest.insistencelayer.InsistenceLayer;
 
 import java.util.Collection;
 
@@ -25,21 +24,15 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 
 		SimulatestSession session = SimulatestSession.open(testClasses);
 
-		InsistenceLayer insistenceLayer = session.insistenceLayer();
-		if (insistenceLayer != null) {
-			insistenceLayer.increaseLevel();
-		}
-
-		return new SimulatestExecutionContext(session);
+		SimulatestExecutionContext ctx = new SimulatestExecutionContext(session);
+		ctx.increaseInsistenceLevel();
+		return ctx;
 	}
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
 		try {
-			InsistenceLayer insistenceLayer = context.insistenceLayer();
-			if (insistenceLayer != null) {
-				insistenceLayer.decreaseLevelOrCleanup();
-			}
+			context.decreaseInsistenceLevel();
 		} finally {
 			context.close();
 		}

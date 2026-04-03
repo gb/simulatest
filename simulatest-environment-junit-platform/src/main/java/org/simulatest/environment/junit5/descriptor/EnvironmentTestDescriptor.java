@@ -4,22 +4,22 @@ import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
+import java.util.Objects;
+
 import org.simulatest.environment.EnvironmentDefinition;
-import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
-import org.simulatest.insistencelayer.InsistenceLayer;
 
 /**
  * Describes a single environment node in the test tree.
  * Runs the environment and manages Insistence Layer levels.
  */
-public class EnvironmentTestDescriptor extends AbstractTestDescriptor
+public final class EnvironmentTestDescriptor extends AbstractTestDescriptor
 		implements Node<SimulatestExecutionContext> {
 
 	private final EnvironmentDefinition definition;
 
 	public EnvironmentTestDescriptor(UniqueId uniqueId, EnvironmentDefinition definition) {
-		super(uniqueId, definition.getName());
+		super(uniqueId, Objects.requireNonNull(definition, "definition must not be null").getName());
 		this.definition = definition;
 	}
 
@@ -34,41 +34,29 @@ public class EnvironmentTestDescriptor extends AbstractTestDescriptor
 
 	@Override
 	public SimulatestExecutionContext before(SimulatestExecutionContext context) {
-		try {
-			context.factory().create(definition).run();
-		} catch (Exception exception) {
-			throw new EnvironmentExecutionException(
-					"Failed during run for environment '" + definition.getName() + "'", exception);
-		}
-
-		InsistenceLayer insistenceLayer = context.insistenceLayer();
-		if (insistenceLayer != null) {
-			insistenceLayer.increaseLevel();
-		}
+		context.runEnvironment(definition);
+		context.increaseInsistenceLevel();
 		return context;
 	}
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
-		InsistenceLayer insistenceLayer = context.insistenceLayer();
-		if (insistenceLayer == null) return;
+		context.decreaseInsistenceLevel();
 
-		insistenceLayer.decreaseLevelOrCleanup();
-
+		// Skip the redundant reset for the last sibling: the parent's decreaseLevel
+		// will roll back past this savepoint anyway, so resetting here would waste I/O.
 		if (!isLastEnvironmentSibling()) {
-			insistenceLayer.resetCurrentLevel();
+			context.resetInsistenceLevel();
 		}
 	}
 
 	private boolean isLastEnvironmentSibling() {
 		return getParent()
 				.map(parent -> {
-					EnvironmentTestDescriptor lastEnv = null;
-					for (TestDescriptor child : parent.getChildren()) {
-						if (child instanceof EnvironmentTestDescriptor env) {
-							lastEnv = env;
-						}
-					}
+					TestDescriptor lastEnv = parent.getChildren().stream()
+							.filter(EnvironmentTestDescriptor.class::isInstance)
+							.reduce((first, last) -> last)
+							.orElse(null);
 					return lastEnv == this;
 				})
 				.orElse(true);

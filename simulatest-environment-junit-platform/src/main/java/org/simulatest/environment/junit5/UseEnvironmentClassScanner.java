@@ -42,7 +42,7 @@ class UseEnvironmentClassScanner {
 					selector.getClasspathRoot(), UseEnvironmentClassScanner::isAnnotated, name -> true));
 		}
 
-		return result;
+		return Set.copyOf(result);
 	}
 
 	/**

@@ -26,7 +26,7 @@ import org.simulatest.environment.tree.Tree;
  * lifecycle notifications, and error handling. Each descriptor is a
  * {@link org.junit.platform.engine.support.hierarchical.Node Node} managing its own concerns.</p>
  */
-public class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecutionContext> {
+public final class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecutionContext> {
 
 	public static final String ENGINE_ID = "simulatest";
 

@@ -34,7 +34,7 @@ class TestResultDescriptor extends AbstractTestDescriptor implements Node<Simula
 		Throwable throwable = null;
 		if (result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
 			throwable = result.getThrowable()
-					.orElse(new AssertionError("Test " + result.getStatus().name().toLowerCase()));
+					.orElse(new AssertionError("Test '" + displayName + "' " + result.getStatus().name().toLowerCase()));
 		}
 		return new TestResultDescriptor(id, displayName, source, throwable, null);
 	}

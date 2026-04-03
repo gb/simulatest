@@ -19,7 +19,7 @@ import org.junit.platform.launcher.PostDiscoveryFilter;
  * <p>Registered automatically via
  * {@code META-INF/services/org.junit.platform.launcher.PostDiscoveryFilter}.</p>
  */
-public class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
+public final class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter {
 
 	@Override
 	public FilterResult apply(TestDescriptor descriptor) {

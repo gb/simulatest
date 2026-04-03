@@ -3,6 +3,7 @@ package org.simulatest.environment.junit5.descriptor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.TestExecutionResult;
@@ -36,12 +37,15 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * {@link org.simulatest.environment.junit5.extension.InsistenceAfterEachExtension},
  * which Jupiter auto-detects during the internal session.</p>
  */
-public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
+public final class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 		implements Node<SimulatestExecutionContext> {
 
 	private static final String JUPITER_ENGINE_ID = "junit-jupiter";
 	private static final String AUTODETECTION_KEY = "junit.jupiter.extensions.autodetection.enabled";
 
+	// Shared launcher for the inner Jupiter sessions. Auto-registration is disabled
+	// to prevent SimulatestPostDiscoveryFilter from intercepting these internal runs
+	// (which would cause infinite recursion) and to avoid duplicate listener output.
 	private static final Launcher JUPITER_LAUNCHER;
 
 	static {
@@ -55,7 +59,8 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 	private final Class<?> testClass;
 
 	public JupiterDelegatingClassDescriptor(UniqueId uniqueId, Class<?> testClass) {
-		super(uniqueId, testClass.getSimpleName(), ClassSource.from(testClass));
+		super(uniqueId, Objects.requireNonNull(testClass, "testClass must not be null").getSimpleName(),
+				ClassSource.from(testClass));
 		this.testClass = testClass;
 	}
 
@@ -94,6 +99,8 @@ public class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 		return listener.results;
 	}
 
+	// Jupiter requires the full enclosing-class chain for @Nested inner classes;
+	// for top-level classes, a simple selectClass suffices.
 	private DiscoverySelector selectTestClass() {
 		Class<?> enclosing = testClass.getEnclosingClass();
 		if (enclosing == null) {

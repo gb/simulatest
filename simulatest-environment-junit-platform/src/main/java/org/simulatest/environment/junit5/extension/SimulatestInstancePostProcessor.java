@@ -13,7 +13,7 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * {@link SimulatestSession#postProcessWithPlugins} so that DI plugins (Spring, Guice, etc.)
  * can inject dependencies. Guarded by a ThreadLocal — no-op outside Simulatest.</p>
  */
-public class SimulatestInstancePostProcessor implements TestInstancePostProcessor {
+public final class SimulatestInstancePostProcessor implements TestInstancePostProcessor {
 
 	@Override
 	public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
