@@ -5,7 +5,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class TreeDepthFirstIterator<T> implements Iterator<Node<T>> {
+public final class TreeDepthFirstIterator<T> implements Iterator<Node<T>> {
 
 	private final Deque<Node<T>> stack;
 

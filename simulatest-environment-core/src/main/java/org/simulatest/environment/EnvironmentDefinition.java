@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import org.simulatest.environment.annotation.EnvironmentParent;
 
-public class EnvironmentDefinition {
+public final class EnvironmentDefinition {
 
 	private final Class<? extends Environment> environmentClass;
 	private final Class<? extends Environment> parentClass;
@@ -32,6 +32,10 @@ public class EnvironmentDefinition {
 	
 	public Class<? extends Environment> getParentClass() {
 		return parentClass;
+	}
+
+	public EnvironmentDefinition createParentDefinition() {
+		return create(parentClass);
 	}
 
 	public String getName() {

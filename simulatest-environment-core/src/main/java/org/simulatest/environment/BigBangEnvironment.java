@@ -1,6 +1,6 @@
 package org.simulatest.environment;
 
-public class BigBangEnvironment implements Environment {
+public final class BigBangEnvironment implements Environment {
 
 	@Override public void run() {
 		// Let there be light

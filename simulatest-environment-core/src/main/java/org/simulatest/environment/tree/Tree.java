@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.stream.StreamSupport;
 
 
-public class Tree<T> implements Iterable<Node<T>> {
+public final class Tree<T> implements Iterable<Node<T>> {
 	
 	private final Map<T, Node<T>> nodesByValue;
 	private final Node<T> rootNode;
@@ -74,5 +74,10 @@ public class Tree<T> implements Iterable<Node<T>> {
 		rootNode.print(builder);
 		return builder.toString();
 	}
-	
+
+	@Override
+	public String toString() {
+		return print();
+	}
+
 }

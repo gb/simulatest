@@ -3,15 +3,16 @@ package org.simulatest.environment.tree;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
-public class Node<T> {
+public final class Node<T> {
 	
 	private final T value;
 	private Node<T> parent;
 	private final LinkedList<Node<T>> children;
 	
 	public Node(T value) {
-		this.value = value;
+		this.value = Objects.requireNonNull(value, "value must not be null");
 		this.children = new LinkedList<>();
 	}
 
@@ -38,6 +39,10 @@ public class Node<T> {
 
 	public List<Node<T>> getChildren() {
 		return Collections.unmodifiableList(children);
+	}
+
+	public boolean isLeaf() {
+		return children.isEmpty();
 	}
 	
 	public Node<T> getFirstChild() {
@@ -73,7 +78,14 @@ public class Node<T> {
 	}
 	
 	public T getParentValue() {
-		return (getParent() != null) ? getParent().getValue() : null; 
+		return (getParent() != null) ? getParent().getValue() : null;
 	}
-	
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		print(builder);
+		return builder.toString();
+	}
+
 }

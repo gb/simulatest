@@ -8,7 +8,7 @@ import java.util.Set;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 
-public class EnvironmentTreeBuilder {
+public final class EnvironmentTreeBuilder {
 	
 	private final Tree<EnvironmentDefinition> tree;
 
@@ -34,20 +34,22 @@ public class EnvironmentTreeBuilder {
 		return tree;
 	}
 	
+	// Recursively walks up the parent chain, inserting ancestors before descendants.
+	// The visited set detects cycles in the @EnvironmentParent graph.
 	private void addChild(EnvironmentDefinition definition, Set<EnvironmentDefinition> visited) {
 		if (tree.contains(definition)) return;
-		cyclicSanityTest(definition, visited);
+		throwIfCyclic(definition, visited);
 
 		visited.add(definition);
-		EnvironmentDefinition parentDefinition = EnvironmentDefinition.create(definition.getParentClass());
+		EnvironmentDefinition parent = definition.createParentDefinition();
 
-		if (!tree.contains(parentDefinition)) addChild(parentDefinition, visited);
-		tree.addChild(parentDefinition, definition);
+		if (!tree.contains(parent)) addChild(parent, visited);
+		tree.addChild(parent, definition);
 	}
 
-	private void cyclicSanityTest(EnvironmentDefinition definition, Set<EnvironmentDefinition> visited) {
+	private void throwIfCyclic(EnvironmentDefinition definition, Set<EnvironmentDefinition> visited) {
 		if (!visited.contains(definition)) return;
-		String message = String.format("The environment \"%s\" is cyclically referenced", definition.getName());
+		String message = String.format("The environment \"%s\" is cyclically referenced (visited: %s)", definition.getName(), visited);
 		throw new EnvironmentCyclicException(message);
 	}
 	

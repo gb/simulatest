@@ -8,11 +8,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.simulatest.environment.annotation.UseEnvironment;
 
-public class EnvironmentExtractor {
+public final class EnvironmentExtractor {
 
 	private final Map<EnvironmentDefinition, List<Class<?>>> testsByEnvironment;
 
@@ -21,6 +22,7 @@ public class EnvironmentExtractor {
 	}
 
 	private EnvironmentExtractor(Collection<Class<?>> tests) {
+		Objects.requireNonNull(tests, "tests must not be null");
 		testsByEnvironment = new HashMap<>();
 		for (Class<?> testCase : tests) addTestIntoEnvironmentNode(testCase);
 	}

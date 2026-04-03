@@ -1,6 +1,7 @@
 package org.simulatest.environment.plugin;
 
 import java.util.Collection;
+import java.util.Objects;
 
 import javax.sql.DataSource;
 
@@ -23,7 +24,7 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 	private final EnvironmentReflectionFactory reflectionFallback = new EnvironmentReflectionFactory();
 
 	protected DependencyInjectionPlugin(DependencyInjectionContext context) {
-		this.context = context;
+		this.context = Objects.requireNonNull(context, "context must not be null");
 	}
 
 	@Override
@@ -42,7 +43,10 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 	@Override
 	public final void initialize(Collection<Class<?>> testClasses) {
 		context.initialize(testClasses);
+		autoConfigureInsistenceLayer();
+	}
 
+	private void autoConfigureInsistenceLayer() {
 		DataSource ds = context.dataSource();
 		if (ds != null && !InsistenceLayerFactory.isConfigured()) {
 			logger.info("Auto-configuring InsistenceLayer from DI context");

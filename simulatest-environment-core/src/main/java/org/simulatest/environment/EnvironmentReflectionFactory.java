@@ -5,19 +5,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
+import java.util.Objects;
 
-public class EnvironmentReflectionFactory implements EnvironmentFactory {
+public final class EnvironmentReflectionFactory implements EnvironmentFactory {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentReflectionFactory.class);
 
 	@Override
 	public Environment create(EnvironmentDefinition definition) {
+		Objects.requireNonNull(definition, "definition must not be null");
 		try {
 			logger.trace("Instantiating environment: {}", definition.getName());
 			Constructor<? extends Environment> constructor = definition.getEnvironmentClass().getDeclaredConstructor();
 			constructor.setAccessible(true);
 			return constructor.newInstance();
-		} catch (Exception exception) {
+		} catch (ReflectiveOperationException exception) {
 			String message = "Error in instantiation of environment: " + definition.getName();
 			throw new EnvironmentInstantiationException(message, exception);
 		}

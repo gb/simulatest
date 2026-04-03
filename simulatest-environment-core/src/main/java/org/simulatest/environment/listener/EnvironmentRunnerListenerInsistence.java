@@ -1,5 +1,7 @@
 package org.simulatest.environment.listener;
 
+import java.util.Objects;
+
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.insistencelayer.InsistenceLayer;
 
@@ -8,7 +10,7 @@ public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerLis
 	private final InsistenceLayer insistenceLayer;
 
 	public EnvironmentRunnerListenerInsistence(InsistenceLayer insistenceLayer) {
-		this.insistenceLayer = insistenceLayer;
+		this.insistenceLayer = Objects.requireNonNull(insistenceLayer, "insistenceLayer must not be null");
 	}
 
 	@Override

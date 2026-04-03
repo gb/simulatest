@@ -1,6 +1,7 @@
 package org.simulatest.environment;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.ServiceLoader;
@@ -105,7 +106,7 @@ public class SimulatestSession implements AutoCloseable {
 	}
 
 	public List<SimulatestPlugin> plugins() {
-		return plugins;
+		return Collections.unmodifiableList(plugins);
 	}
 
 	public EnvironmentFactory factory() {

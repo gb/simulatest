@@ -16,7 +16,7 @@ import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EnvironmentRunner {
+public final class EnvironmentRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunner.class);
 
@@ -31,8 +31,8 @@ public class EnvironmentRunner {
 
 	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree,
 							 InsistenceLayer insistenceLayer) {
-		this.factory = factory;
-		this.tree = environmentTree;
+		this.factory = Objects.requireNonNull(factory, "factory must not be null");
+		this.tree = Objects.requireNonNull(environmentTree, "environmentTree must not be null");
 		this.listeners = new ArrayList<>();
 		this.insistenceLayer = insistenceLayer;
 		if (insistenceLayer != null) {
@@ -65,11 +65,12 @@ public class EnvironmentRunner {
 		return insistenceLayer;
 	}
 
+	// Listeners are kept sorted by phase so infrastructure listeners fire before user listeners.
 	public void addListener(EnvironmentRunnerListener listener) {
 		Objects.requireNonNull(listener, "listener must not be null");
 		int insertIndex = 0;
 		for (int i = 0; i < listeners.size(); i++) {
-			if (listeners.get(i).getPhase().ordinal() <= listener.getPhase().ordinal()) {
+			if (listeners.get(i).getPhase().compareTo(listener.getPhase()) <= 0) {
 				insertIndex = i + 1;
 			} else {
 				break;
@@ -110,16 +111,16 @@ public class EnvironmentRunner {
 	}
 
 	private void runNode(Node<EnvironmentDefinition> node) {
-		runWithSuppression(
-				() -> runEnvironment(node.getValue()),
+		executeWithCleanup(
+				() -> runEnvironmentLifecycle(node.getValue()),
 				() -> fireLeafCallbacks(node));
 	}
 
-	private void runEnvironment(EnvironmentDefinition definition) {
+	private void runEnvironmentLifecycle(EnvironmentDefinition definition) {
 		logger.info("Running environment: {}", definition.getName());
 
 		fireBeforeRun(definition);
-		runWithSuppression(
+		executeWithCleanup(
 				() -> executeEnvironment(definition),
 				() -> fireAfterRun(definition));
 	}
@@ -133,10 +134,13 @@ public class EnvironmentRunner {
 		}
 	}
 
+	// After visiting a leaf, propagate "after children" callbacks up the tree
+	// for any ancestor whose subtree is now fully visited (i.e., the leaf is
+	// the last child at each level). Non-last siblings get a reset instead.
 	private void fireLeafCallbacks(Node<EnvironmentDefinition> node) {
-		if (!node.getChildren().isEmpty()) return;
+		if (!node.isLeaf()) return;
 
-		runWithSuppression(
+		executeWithCleanup(
 				() -> fireAfterChildrenRun(node.getValue()),
 				() -> fireParentBoundaryCallbacks(node));
 	}
@@ -149,7 +153,7 @@ public class EnvironmentRunner {
 	}
 
 	private void propagateAfterChildrenRun(Node<EnvironmentDefinition> parent) {
-		runWithSuppression(
+		executeWithCleanup(
 				() -> fireAfterChildrenRun(parent.getValue()),
 				() -> fireParentBoundaryCallbacks(parent));
 	}
@@ -194,7 +198,7 @@ public class EnvironmentRunner {
 		void execute(EnvironmentRunnerListener listener, EnvironmentDefinition definition);
 	}
 
-	private static void runWithSuppression(Runnable first, Runnable second) {
+	private static void executeWithCleanup(Runnable first, Runnable second) {
 		RuntimeException failure = null;
 		try {
 			first.run();
