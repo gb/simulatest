@@ -5,21 +5,33 @@ import org.simulatest.environment.plugin.DependencyInjectionContext;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import javax.sql.DataSource;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Stream;
 
-public class SpringContext implements DependencyInjectionContext {
+/**
+ * <p><b>Thread-safety:</b> not thread-safe. Initialize and destroy from the
+ * owning test thread; the underlying Spring context is thread-safe for reads.</p>
+ */
+public final class SpringContext implements DependencyInjectionContext {
 
 	private AnnotationConfigApplicationContext context;
 
+	/**
+	 * Returns the managed Spring bean for {@code clazz} if one is registered,
+	 * otherwise creates a new autowired instance via {@code createBean}. The
+	 * fallback is non-managed: Spring will not track its lifecycle.
+	 */
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
-		return getContext().getAutowireCapableBeanFactory().createBean(clazz);
+		var factory = getContext().getAutowireCapableBeanFactory();
+		var provider = getContext().getBeanProvider(clazz);
+		T managed = provider.getIfAvailable();
+		return managed != null ? managed : factory.createBean(clazz);
 	}
 
 	@Override
@@ -32,7 +44,7 @@ public class SpringContext implements DependencyInjectionContext {
 		if (context != null) return;
 
 		context = new AnnotationConfigApplicationContext();
-		context.getBeanFactory().addBeanPostProcessor(new InsistenceLayerDataSourcePostProcessor());
+		registerInsistenceLayerSupport(context);
 
 		DependencyInjectionContext.findConfigAnnotation(testClasses, SimulatestSpringConfig.class)
 				.map(SimulatestSpringConfig::value)
@@ -43,6 +55,10 @@ public class SpringContext implements DependencyInjectionContext {
 				);
 
 		context.refresh();
+	}
+
+	private static void registerInsistenceLayerSupport(AnnotationConfigApplicationContext context) {
+		context.getBeanFactory().addBeanPostProcessor(new InsistenceLayerDataSourcePostProcessor());
 	}
 
 	@Override
@@ -57,12 +73,8 @@ public class SpringContext implements DependencyInjectionContext {
 	}
 
 	@Override
-	public DataSource dataSource() {
-		try {
-			return getContext().getBean(DataSource.class);
-		} catch (NoSuchBeanDefinitionException e) {
-			return null;
-		}
+	public Optional<DataSource> dataSource() {
+		return Optional.ofNullable(getContext().getBeanProvider(DataSource.class).getIfAvailable());
 	}
 
 	private AnnotationConfigApplicationContext getContext() {

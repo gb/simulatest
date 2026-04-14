@@ -1,6 +1,6 @@
 package org.simulatest.insistencelayer.infra.exception;
 
-public class InsistenceLayerException extends RuntimeException {
+public final class InsistenceLayerException extends RuntimeException {
 
 	private static final long serialVersionUID = 86473555661526330L;
 		

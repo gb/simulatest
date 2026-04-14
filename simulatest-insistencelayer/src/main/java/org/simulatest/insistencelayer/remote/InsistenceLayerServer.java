@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
 
 import java.util.Objects;
 
@@ -32,6 +31,10 @@ import org.slf4j.LoggerFactory;
  * // ... tests run remotely ...
  * server.stop();
  * }</pre>
+ *
+ * <p><b>Thread-safety:</b> {@link #start()} and {@link #stop()} are intended
+ * to be called from a single owning thread. Fields visible to the accept
+ * thread are {@code volatile} to guarantee publication of {@code stop()}.</p>
  */
 public final class InsistenceLayerServer {
 
@@ -39,8 +42,8 @@ public final class InsistenceLayerServer {
 
 	private final InsistenceLayer layer;
 	private final int requestedPort;
-	private ServerSocket serverSocket;
-	private Thread serverThread;
+	private volatile ServerSocket serverSocket;
+	private volatile Thread serverThread;
 	private volatile Socket activeClient;
 
 	/**
@@ -172,11 +175,11 @@ public final class InsistenceLayerServer {
 	private void executeCommand(byte command, DataOutputStream out) throws IOException {
 		try {
 			dispatch(command);
-			sendOk(out);
+			InsistenceLayerProtocol.writeOk(out);
 		} catch (Exception e) {
 			logger.error("Command 0x{} failed at level {}",
 				String.format("%02X", command), layer.getCurrentLevel(), e);
-			sendError(out, e.getMessage());
+			InsistenceLayerProtocol.writeError(out, e.getMessage());
 		}
 	}
 
@@ -187,20 +190,6 @@ public final class InsistenceLayerServer {
 			case InsistenceLayerProtocol.RESET    -> layer.resetCurrentLevel();
 			default -> throw new IllegalArgumentException("Unknown command: " + command);
 		}
-	}
-
-	private void sendOk(DataOutputStream out) throws IOException {
-		out.writeByte(InsistenceLayerProtocol.OK);
-		out.flush();
-	}
-
-	private void sendError(DataOutputStream out, String message) throws IOException {
-		out.writeByte(InsistenceLayerProtocol.ERROR);
-		String safe = message != null ? message : "Unknown error";
-		byte[] messageBytes = safe.getBytes(StandardCharsets.UTF_8);
-		out.writeShort(messageBytes.length);
-		out.write(messageBytes);
-		out.flush();
 	}
 
 }

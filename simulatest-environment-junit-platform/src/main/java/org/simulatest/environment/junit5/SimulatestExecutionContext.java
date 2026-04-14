@@ -1,6 +1,8 @@
 package org.simulatest.environment.junit5;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
@@ -11,35 +13,64 @@ import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.insistencelayer.InsistenceLayer;
 
-public class SimulatestExecutionContext implements EngineExecutionContext {
+/**
+ * Per-engine execution context bridging a {@link SimulatestSession} into
+ * JUnit Platform's {@link EngineExecutionContext}.
+ *
+ * <p><b>Thread-safety:</b> the instance itself is not thread-safe — Jupiter
+ * invokes lifecycle methods on a single executor thread per engine. The
+ * {@link #getCurrent() current-context} ThreadLocal is per-thread by design
+ * and returns empty if an extension runs on a thread that never set it.</p>
+ */
+public final class SimulatestExecutionContext implements EngineExecutionContext {
 
-	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null);
+	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null, null, null, List.of());
 
 	// Bridges the Simulatest engine context into Jupiter's internal execution so
 	// that auto-detected extensions (InsistenceAfterEachExtension, etc.) can access it.
+	// NOTE: if Jupiter's parallel execution moves @AfterEach hooks to a different
+	// thread than the one that set the context, getCurrent() returns empty.
 	private static final ThreadLocal<SimulatestExecutionContext> CURRENT = new ThreadLocal<>();
 
 	private final SimulatestSession session;
+	private final EnvironmentFactory factory;
+	private final InsistenceLayer insistenceLayer;
+	private final List<SimulatestPlugin> plugins;
 
 	public SimulatestExecutionContext(SimulatestSession session) {
+		this(
+				session,
+				session != null ? session.factory() : null,
+				session != null ? session.insistenceLayer().orElse(null) : null,
+				session != null ? session.plugins() : List.of());
+	}
+
+	public SimulatestExecutionContext(SimulatestSession session, EnvironmentFactory factory,
+			InsistenceLayer insistenceLayer, List<SimulatestPlugin> plugins) {
 		this.session = session;
+		this.factory = factory;
+		this.insistenceLayer = insistenceLayer;
+		this.plugins = plugins;
 	}
 
-	public InsistenceLayer insistenceLayer() {
-		return session != null ? session.insistenceLayer() : null;
+	public Optional<InsistenceLayer> insistenceLayer() {
+		return Optional.ofNullable(insistenceLayer);
 	}
 
-	public EnvironmentFactory factory() {
-		return session != null ? session.factory() : null;
+	public Optional<EnvironmentFactory> factory() {
+		return Optional.ofNullable(factory);
 	}
 
 	public List<SimulatestPlugin> plugins() {
-		return session != null ? session.plugins() : List.of();
+		return plugins;
 	}
 
 	public void runEnvironment(EnvironmentDefinition definition) {
+		Objects.requireNonNull(definition, "definition must not be null");
+		EnvironmentFactory envFactory = factory().orElseThrow(() -> new IllegalStateException(
+				"Cannot run environment '" + definition.getName() + "': no Simulatest session open"));
 		try {
-			factory().create(definition).run();
+			envFactory.create(definition).run();
 		} catch (Exception exception) {
 			throw new EnvironmentExecutionException(
 					"Failed during run for environment '" + definition.getName() + "'", exception);
@@ -58,9 +89,12 @@ public class SimulatestExecutionContext implements EngineExecutionContext {
 		ifInsistenceLayer(InsistenceLayer::resetCurrentLevel);
 	}
 
+	public void postProcessTestInstance(Object instance) {
+		if (session != null) session.postProcessTestInstance(instance);
+	}
+
 	private void ifInsistenceLayer(Consumer<InsistenceLayer> action) {
-		InsistenceLayer il = insistenceLayer();
-		if (il != null) action.accept(il);
+		insistenceLayer().ifPresent(action);
 	}
 
 	public void close() {
@@ -71,12 +105,18 @@ public class SimulatestExecutionContext implements EngineExecutionContext {
 		return CURRENT.get();
 	}
 
-	public static void setCurrent(SimulatestExecutionContext context) {
+	/**
+	 * Binds {@code context} to the current thread for the duration of
+	 * {@code action}, clearing the binding on return even if the action throws.
+	 * Prevents callers from forgetting to clear the ThreadLocal.
+	 */
+	public static void withCurrent(SimulatestExecutionContext context, Runnable action) {
 		CURRENT.set(context);
-	}
-
-	public static void clearCurrent() {
-		CURRENT.remove();
+		try {
+			action.run();
+		} finally {
+			CURRENT.remove();
+		}
 	}
 
 }

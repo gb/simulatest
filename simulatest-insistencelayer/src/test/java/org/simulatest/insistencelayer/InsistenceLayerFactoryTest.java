@@ -33,13 +33,13 @@ public class InsistenceLayerFactoryTest {
 	}
 
 	@Test
-	public void resolveReturnsNullWhenEmpty() {
-		assertNull(InsistenceLayerFactory.resolve());
+	public void resolveReturnsEmptyWhenEmpty() {
+		assertTrue(InsistenceLayerFactory.resolve().isEmpty());
 	}
 
 	@Test
-	public void resolveByNameReturnsNullWhenNotRegistered() {
-		assertNull(InsistenceLayerFactory.resolve("nonexistent"));
+	public void resolveByNameReturnsEmptyWhenNotRegistered() {
+		assertTrue(InsistenceLayerFactory.resolve("nonexistent").isEmpty());
 	}
 
 	@Test
@@ -47,7 +47,7 @@ public class InsistenceLayerFactoryTest {
 		InsistenceLayer manager = mock(InsistenceLayer.class);
 		InsistenceLayerFactory.register("main", manager);
 
-		assertSame(manager, InsistenceLayerFactory.resolve("main"));
+		assertSame(manager, InsistenceLayerFactory.resolve("main").orElseThrow());
 	}
 
 	@Test
@@ -57,7 +57,7 @@ public class InsistenceLayerFactoryTest {
 		InsistenceLayerFactory.register("a", first);
 		InsistenceLayerFactory.register("b", second);
 
-		assertSame(first, InsistenceLayerFactory.resolve());
+		assertSame(first, InsistenceLayerFactory.resolve().orElseThrow());
 	}
 
 	@Test
@@ -66,13 +66,13 @@ public class InsistenceLayerFactoryTest {
 		InsistenceLayerFactory.register("main", manager);
 		InsistenceLayerFactory.deregister("main");
 
-		assertNull(InsistenceLayerFactory.resolve("main"));
+		assertTrue(InsistenceLayerFactory.resolve("main").isEmpty());
 	}
 
 	@Test
 	public void deregisterNonexistentNameDoesNothing() {
 		InsistenceLayerFactory.deregister("nonexistent");
-		assertNull(InsistenceLayerFactory.resolve());
+		assertTrue(InsistenceLayerFactory.resolve().isEmpty());
 	}
 
 	@Test
@@ -83,7 +83,7 @@ public class InsistenceLayerFactoryTest {
 		InsistenceLayerFactory.register("main", first);
 		InsistenceLayerFactory.register("main", second);
 
-		assertSame(second, InsistenceLayerFactory.resolve("main"));
+		assertSame(second, InsistenceLayerFactory.resolve("main").orElseThrow());
 	}
 
 	@Test
@@ -92,9 +92,9 @@ public class InsistenceLayerFactoryTest {
 		InsistenceLayerFactory.register("b", mock(InsistenceLayer.class));
 		InsistenceLayerFactory.clear();
 
-		assertNull(InsistenceLayerFactory.resolve());
-		assertNull(InsistenceLayerFactory.resolve("a"));
-		assertNull(InsistenceLayerFactory.resolve("b"));
+		assertTrue(InsistenceLayerFactory.resolve().isEmpty());
+		assertTrue(InsistenceLayerFactory.resolve("a").isEmpty());
+		assertTrue(InsistenceLayerFactory.resolve("b").isEmpty());
 	}
 
 	@Test
@@ -102,17 +102,17 @@ public class InsistenceLayerFactoryTest {
 		InsistenceLayerFactory.configure(TestDataSources.createH2("fallback-test"));
 		InsistenceLayerFactory.deregister(InsistenceLayerFactory.DEFAULT);
 
-		assertNotNull(InsistenceLayerFactory.resolve());
+		assertTrue(InsistenceLayerFactory.resolve().isPresent());
 	}
 
 	@Test
 	public void configureOverwritesPreviousDataSource() {
 		InsistenceLayerFactory.configure(TestDataSources.createH2("first"));
-		var firstDataSource = InsistenceLayerFactory.dataSource();
+		var firstDataSource = InsistenceLayerFactory.dataSource().orElseThrow();
 
 		InsistenceLayerFactory.configure(TestDataSources.createH2("second"));
 
-		assertNotSame(firstDataSource, InsistenceLayerFactory.dataSource());
+		assertNotSame(firstDataSource, InsistenceLayerFactory.dataSource().orElseThrow());
 	}
 
 	@Test
@@ -123,8 +123,8 @@ public class InsistenceLayerFactoryTest {
 		InsistenceLayerFactory.register("orders", first);
 		InsistenceLayerFactory.register("users", second);
 
-		assertSame(first, InsistenceLayerFactory.resolve("orders"));
-		assertSame(second, InsistenceLayerFactory.resolve("users"));
+		assertSame(first, InsistenceLayerFactory.resolve("orders").orElseThrow());
+		assertSame(second, InsistenceLayerFactory.resolve("users").orElseThrow());
 	}
 
 	private static ConnectionWrapper newConnectionWrapper() {

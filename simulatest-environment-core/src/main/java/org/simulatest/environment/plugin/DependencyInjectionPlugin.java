@@ -3,8 +3,6 @@ package org.simulatest.environment.plugin;
 import java.util.Collection;
 import java.util.Objects;
 
-import javax.sql.DataSource;
-
 import org.simulatest.environment.EnvironmentFactory;
 import org.simulatest.environment.EnvironmentReflectionFactory;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -16,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * {@link DependencyInjectionContext}. DI modules subclass this with
  * a one-liner constructor — no per-module factory class needed.
  */
-public class DependencyInjectionPlugin implements SimulatestPlugin {
+public abstract class DependencyInjectionPlugin implements SimulatestPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(DependencyInjectionPlugin.class);
 
@@ -47,11 +45,11 @@ public class DependencyInjectionPlugin implements SimulatestPlugin {
 	}
 
 	private void autoConfigureInsistenceLayer() {
-		DataSource ds = context.dataSource();
-		if (ds != null && !InsistenceLayerFactory.isConfigured()) {
+		if (InsistenceLayerFactory.isConfigured()) return;
+		context.dataSource().ifPresent(ds -> {
 			logger.info("Auto-configuring InsistenceLayer from DI context");
 			InsistenceLayerFactory.configure(ds);
-		}
+		});
 	}
 
 	@Override

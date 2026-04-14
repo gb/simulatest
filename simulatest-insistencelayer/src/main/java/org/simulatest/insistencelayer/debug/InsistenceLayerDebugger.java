@@ -39,16 +39,27 @@ import org.slf4j.LoggerFactory;
  * @see SQLWindow
  * @see InsistenceLayer
  */
-public class InsistenceLayerDebugger {
+public final class InsistenceLayerDebugger {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerDebugger.class);
 
 	private InsistenceLayerDebugger() {
 	}
 
+	private static final String UI_PROPERTY = "simulatest.debug.ui";
+	private static final String UI_GUI = "gui";
+	private static final String UI_CONSOLE = "console";
+
+	/**
+	 * Pauses the test and opens an interactive debugger. The UI is chosen by:
+	 * <ol>
+	 *   <li>System property {@code -Dsimulatest.debug.ui=gui|console} (explicit override)</li>
+	 *   <li>IDE heuristic based on classpath tokens, if no override is set</li>
+	 * </ol>
+	 */
 	public static void debug() {
-		if (isRunningFromIDE()) {
-			logger.info("IDE detected, opening SQL Window");
+		if (shouldUseGui()) {
+			logger.info("Opening SQL Window");
 			SQLWindow.debug();
 		} else {
 			logger.info("Opening CLI console");
@@ -56,14 +67,21 @@ public class InsistenceLayerDebugger {
 		}
 	}
 
+	private static boolean shouldUseGui() {
+		String override = System.getProperty(UI_PROPERTY);
+		if (UI_GUI.equalsIgnoreCase(override)) return true;
+		if (UI_CONSOLE.equalsIgnoreCase(override)) return false;
+		return isRunningFromIDE();
+	}
+
 	private static boolean isRunningFromIDE() {
 		if (GraphicsEnvironment.isHeadless()) return false;
 
 		String classPath = System.getProperty("java.class.path", "");
-		return classPath.contains("idea_rt.jar")
-			|| classPath.contains("eclipse.launcher")
-			|| classPath.contains("vscode")
-			|| System.getProperty("idea.test.cyclic.buffer.size") != null;
+		return classPath.contains("idea_rt.jar")     // IntelliJ IDEA test runner
+			|| classPath.contains("eclipse.launcher") // Eclipse launcher
+			|| classPath.contains("vscode")           // VS Code Java test runner
+			|| System.getProperty("idea.test.cyclic.buffer.size") != null; // IDEA diagnostic flag
 	}
 
 }

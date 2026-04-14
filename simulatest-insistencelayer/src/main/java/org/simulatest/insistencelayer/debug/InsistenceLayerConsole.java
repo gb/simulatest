@@ -70,12 +70,14 @@ import org.slf4j.LoggerFactory;
  * @see InsistenceLayer
  * @see InsistenceLayerFactory
  */
-public class InsistenceLayerConsole {
+public final class InsistenceLayerConsole {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerConsole.class);
 
+	private InsistenceLayerConsole() {}
+
 	public static void debug() {
-		var dataSource = InsistenceLayerFactory.dataSource();
+		var dataSource = InsistenceLayerFactory.dataSource().orElse(null);
 		if (dataSource == null) {
 			logger.warn("No InsistenceLayer DataSource configured, cannot open console");
 			return;
@@ -112,8 +114,7 @@ public class InsistenceLayerConsole {
 			return;
 		}
 
-		InsistenceLayer layer = InsistenceLayerFactory.resolve();
-		int level = layer != null ? layer.getCurrentLevel() : -1;
+		int level = InsistenceLayerFactory.resolve().map(InsistenceLayer::getCurrentLevel).orElse(-1);
 
 		out.println();
 		out.println("=== Insistence Layer Debug Console ===");

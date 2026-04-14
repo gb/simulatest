@@ -22,8 +22,17 @@ import org.slf4j.LoggerFactory;
  * manager.resetCurrentLevel();
  * manager.decreaseLevel();
  * }</pre>
+ *
+ * <p><b>Thread-safety:</b> not thread-safe. The mirror counter is updated
+ * without synchronization and is intended for single-threaded (per-test)
+ * use, matching the single-connection model of the local implementation.</p>
+ *
+ * <p><b>Failure atomicity caveat:</b> the local mirror counter is updated
+ * only after a successful remote ack. If the server applies the change but
+ * the response is lost in transit, the mirror will lag by one until the
+ * next successful command.</p>
  */
-public final class RemoteInsistenceLayer implements InsistenceLayer, AutoCloseable {
+public final class RemoteInsistenceLayer implements InsistenceLayer {
 
 	private static final Logger logger = LoggerFactory.getLogger(RemoteInsistenceLayer.class);
 

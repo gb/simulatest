@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
 import java.util.Objects;
 
@@ -120,15 +119,9 @@ public final class InsistenceLayerClient implements AutoCloseable {
 	private void readResponse() throws IOException {
 		byte response = in.readByte();
 		if (response == InsistenceLayerProtocol.ERROR) {
-			throw new InsistenceLayerException("Remote Insistence Layer error: " + readErrorMessage());
+			throw new InsistenceLayerException(
+					"Remote Insistence Layer error: " + InsistenceLayerProtocol.readErrorMessage(in));
 		}
-	}
-
-	private String readErrorMessage() throws IOException {
-		int length = in.readUnsignedShort();
-		byte[] bytes = new byte[length];
-		in.readFully(bytes);
-		return new String(bytes, StandardCharsets.UTF_8);
 	}
 
 	/**

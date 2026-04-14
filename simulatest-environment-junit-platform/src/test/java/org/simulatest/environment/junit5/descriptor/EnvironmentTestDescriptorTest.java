@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.UniqueId;
@@ -159,21 +160,12 @@ class EnvironmentTestDescriptorTest {
 
 		private static SimulatestExecutionContext contextFor(Environment environment,
 				EnvironmentDefinition definition, InsistenceLayer insistenceLayer) {
-			return new SimulatestExecutionContext(null) {
-				@Override
-				public EnvironmentFactory factory() {
-					return requestedDefinition -> {
-						assertSame(definition, requestedDefinition,
-								"The descriptor should request the environment instance for its own definition");
-						return environment;
-					};
-				}
-
-				@Override
-				public InsistenceLayer insistenceLayer() {
-					return insistenceLayer;
-				}
+			EnvironmentFactory factory = requestedDefinition -> {
+				assertSame(definition, requestedDefinition,
+						"The descriptor should request the environment instance for its own definition");
+				return environment;
 			};
+			return new SimulatestExecutionContext(null, factory, insistenceLayer, List.of());
 		}
 	}
 

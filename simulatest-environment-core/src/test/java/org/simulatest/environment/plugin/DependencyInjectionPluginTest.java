@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -23,7 +24,7 @@ public class DependencyInjectionPluginTest {
 
 	@Test
 	public void shouldAutoConfigureInsistenceLayerWhenContextProvidesDataSource() {
-		var plugin = new DependencyInjectionPlugin(new StubContext(createH2DataSource()));
+		var plugin = new StubPlugin(new StubContext(createH2DataSource()));
 		plugin.initialize(List.of());
 
 		assertTrue(InsistenceLayerFactory.isConfigured());
@@ -31,7 +32,7 @@ public class DependencyInjectionPluginTest {
 
 	@Test
 	public void shouldNotConfigureWhenContextProvidesNoDataSource() {
-		var plugin = new DependencyInjectionPlugin(new StubContext(null));
+		var plugin = new StubPlugin(new StubContext(null));
 		plugin.initialize(List.of());
 
 		assertFalse(InsistenceLayerFactory.isConfigured());
@@ -40,12 +41,18 @@ public class DependencyInjectionPluginTest {
 	@Test
 	public void shouldNotOverrideManualConfiguration() {
 		InsistenceLayerFactory.configure(createH2DataSource());
-		var manualDataSource = InsistenceLayerFactory.dataSource();
+		var manualDataSource = InsistenceLayerFactory.dataSource().orElseThrow();
 
-		var plugin = new DependencyInjectionPlugin(new StubContext(createH2DataSource()));
+		var plugin = new StubPlugin(new StubContext(createH2DataSource()));
 		plugin.initialize(List.of());
 
-		assertSame(manualDataSource, InsistenceLayerFactory.dataSource());
+		assertSame(manualDataSource, InsistenceLayerFactory.dataSource().orElseThrow());
+	}
+
+	private static final class StubPlugin extends DependencyInjectionPlugin {
+		StubPlugin(DependencyInjectionContext context) {
+			super(context);
+		}
 	}
 
 	private static JdbcDataSource createH2DataSource() {
@@ -72,7 +79,7 @@ public class DependencyInjectionPluginTest {
 		@Override
 		public void destroy() { /* no-op: stub has no container to tear down */ }
 		@Override
-		public DataSource dataSource() { return dataSource; }
+		public Optional<DataSource> dataSource() { return Optional.ofNullable(dataSource); }
 	}
 
 }

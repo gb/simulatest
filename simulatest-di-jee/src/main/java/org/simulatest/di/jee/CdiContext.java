@@ -1,8 +1,9 @@
 package org.simulatest.di.jee;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -15,10 +16,14 @@ import jakarta.enterprise.inject.spi.InjectionTarget;
 
 import org.simulatest.environment.plugin.DependencyInjectionContext;
 
-public class CdiContext implements DependencyInjectionContext {
+/**
+ * <p><b>Thread-safety:</b> not thread-safe. Initialize and destroy from the
+ * owning test thread; the underlying CDI container is thread-safe for reads.</p>
+ */
+public final class CdiContext implements DependencyInjectionContext {
 
 	private SeContainer container;
-	private final Map<Class<?>, InjectionTarget<Object>> injectionTargetCache = new ConcurrentHashMap<>();
+	private final Map<Class<?>, InjectionTarget<Object>> injectionTargetCache = new HashMap<>();
 
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
@@ -44,9 +49,9 @@ public class CdiContext implements DependencyInjectionContext {
 	}
 
 	@Override
-	public DataSource dataSource() {
+	public Optional<DataSource> dataSource() {
 		var instance = getContainer().select(DataSource.class);
-		return instance.isResolvable() ? instance.get() : null;
+		return instance.isResolvable() ? Optional.of(instance.get()) : Optional.empty();
 	}
 
 	@Override

@@ -12,7 +12,7 @@ import org.simulatest.example.library.LibraryDatabase;
  * siblings whose data is automatically isolated by the Insistence Layer.
  */
 @EnvironmentParent(ReferenceDataEnvironment.class)
-public class BranchesEnvironment implements Environment {
+public final class BranchesEnvironment implements Environment {
 
 	@Override
 	public void run() {

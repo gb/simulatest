@@ -37,14 +37,14 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 
 	@Override
 	public void increaseLevel() {
-		setup();
+		wrapConnectionIfFirstLevel();
 		createSavepoint();
 
 		logger.info("Level increased to {}", getCurrentLevel());
 	}
 
-	private void setup() {
-		if (isDisabled()) connection.wrap();
+	private void wrapConnectionIfFirstLevel() {
+		if (stackIsEmpty()) connection.wrap();
 	}
 
 	private void createSavepoint() {
@@ -60,7 +60,7 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 
 	@Override
 	public void resetCurrentLevel() {
-		if (isDisabled()) return;
+		if (stackIsEmpty()) return;
 
 		rollbackSavepoint(savepoints.peek());
 		logger.info("Cleaned current level: {}", getCurrentLevel());
@@ -68,18 +68,18 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 
 	@Override
 	public void decreaseLevel() {
-		if (isDisabled()) {
+		if (stackIsEmpty()) {
 			throw new IllegalStateException("Cannot decrease level: already at level 0");
 		}
 
 		rollbackSavepoint(savepoints.pop());
-		tearDown();
+		unwrapConnectionIfStackEmptied();
 
 		logger.info("Level decreased to {}", getCurrentLevel());
 	}
 
-	private void tearDown() {
-		if (isDisabled()) connection.unwrap();
+	private void unwrapConnectionIfStackEmptied() {
+		if (stackIsEmpty()) connection.unwrap();
 	}
 
 	@Override
@@ -97,9 +97,10 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 
 	// Optimization: intermediate levels are released (dropped) without rolling back,
 	// since their data will be undone by the final decreaseLevel's rollback anyway.
-	private void decreaseToLevel(int level) {
-		while (getCurrentLevel() - 1 > level) dropCurrentLevel();
-		if (getCurrentLevel() == level + 1) decreaseLevel();
+	// Invariant on exit: current level == target.
+	private void decreaseToLevel(int target) {
+		while (getCurrentLevel() > target + 1) dropCurrentLevel();
+		if (getCurrentLevel() == target + 1) decreaseLevel();
 	}
 
 	private void dropCurrentLevel() {
@@ -120,7 +121,7 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 		}
 	}
 
-	private boolean isDisabled() {
+	private boolean stackIsEmpty() {
 		return getCurrentLevel() == 0;
 	}
 

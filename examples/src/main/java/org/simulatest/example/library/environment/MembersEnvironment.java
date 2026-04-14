@@ -11,7 +11,7 @@ import org.simulatest.example.library.LibraryDatabase;
  * Child: {@link LoansEnvironment} (loans and holds — not yet visible here).
  */
 @EnvironmentParent(CatalogEnvironment.class)
-public class MembersEnvironment implements Environment {
+public final class MembersEnvironment implements Environment {
 
 	@Override
 	public void run() {

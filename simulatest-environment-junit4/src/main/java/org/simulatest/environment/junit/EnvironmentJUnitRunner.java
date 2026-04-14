@@ -1,8 +1,8 @@
 package org.simulatest.environment.junit;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,59 +24,46 @@ import org.simulatest.environment.SimulatestSession;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.Tree;
+import org.simulatest.insistencelayer.InsistenceLayer;
 
+/**
+ * JUnit 4 {@link Runner} that walks a test's environment tree and delegates
+ * per-test execution to {@link SimulatestJUnit4ClassRunner}.
+ */
 public class EnvironmentJUnitRunner extends Runner implements Filterable {
 
-	private final Map<Class<?>, Runner> runnersByTest = new HashMap<>();
-	private final Set<Class<?>> testClasses = new HashSet<>();
+	private final Map<Class<?>, Runner> runnersByTest = new LinkedHashMap<>();
+	private final Set<Class<?>> testClasses = new LinkedHashSet<>();
 	private final List<SimulatestPlugin> plugins;
-	private Tree<EnvironmentDefinition> environmentTree;
-	private EnvironmentExtractor environmentExtractor;
-	private EnvironmentDescriptionTreeBuilder descriptionTreeBuilder;
+	private EnvironmentInfrastructure infrastructure;
 	private EnvironmentRunner environmentRunner;
 
 	public EnvironmentJUnitRunner(Set<Class<?>> testClasses) throws InitializationError {
 		this.testClasses.addAll(Objects.requireNonNull(testClasses, "testClasses must not be null"));
 		this.plugins = SimulatestSession.loadPlugins();
-		setup();
+		createTestRunners();
+		this.infrastructure = buildInfrastructure();
 	}
 
 	public EnvironmentJUnitRunner(Class<?> testClass) throws InitializationError {
-		this(Set.of(testClass));
+		this(Set.of(Objects.requireNonNull(testClass, "testClass must not be null")));
 	}
 
-	private void setup() throws InitializationError {
-		createTestRunners();
-		rebuildEnvironmentInfrastructure();
-	}
-
-	private void rebuildEnvironmentInfrastructure() {
-		initializeEnvironmentExtractor();
-		createEnvironmentTree();
-		initializeDescriptionTreeBuilder();
-		populateDescriptionTreeBuilder();
-	}
-
-	private void initializeEnvironmentExtractor() {
-		environmentExtractor = EnvironmentExtractor.extract(Collections.unmodifiableCollection(testClasses));
-	}
-
-	private void createEnvironmentTree() {
-		EnvironmentTreeBuilder treeBuilder = new EnvironmentTreeBuilder(environmentExtractor.getEnvironments());
-		environmentTree = treeBuilder.getTree();
-	}
-
-	private void initializeDescriptionTreeBuilder() {
-		descriptionTreeBuilder = new EnvironmentDescriptionTreeBuilder(environmentTree);
+	private EnvironmentInfrastructure buildInfrastructure() {
+		EnvironmentExtractor extractor = EnvironmentExtractor.extract(Collections.unmodifiableCollection(testClasses));
+		Tree<EnvironmentDefinition> tree = new EnvironmentTreeBuilder(extractor.getEnvironments()).getTree();
+		EnvironmentDescriptionTreeBuilder descriptions = new EnvironmentDescriptionTreeBuilder(tree);
+		for (EnvironmentDefinition environment : extractor.getEnvironments()) {
+			for (Class<?> testCase : extractor.getTests(environment)) {
+				descriptions.addTestDescription(environment, requireRunner(testCase).getDescription());
+			}
+		}
+		return new EnvironmentInfrastructure(extractor, tree, descriptions);
 	}
 
 	private void createTestRunners() throws InitializationError {
 		for (Class<?> testCase : testClasses)
-			runnersByTest.put(testCase, createTestRunner(testCase));
-	}
-
-	protected Runner createTestRunner(Class<?> test) throws InitializationError {
-		return new SimulatestJUnit4ClassRunner(this, test, plugins);
+			runnersByTest.put(testCase, new SimulatestJUnit4ClassRunner(this, testCase, plugins));
 	}
 
 	private Runner requireRunner(Class<?> testCase) {
@@ -85,17 +72,9 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 		return runner;
 	}
 
-	private void populateDescriptionTreeBuilder() {
-		for (EnvironmentDefinition environment : environmentExtractor.getEnvironments()) {
-			for (Class<?> testCase : environmentExtractor.getTests(environment)) {
-				descriptionTreeBuilder.addTestDescription(environment, requireRunner(testCase).getDescription());
-			}
-		}
-	}
-
 	@Override
 	public Description getDescription() {
-		return descriptionTreeBuilder.getDescription();
+		return infrastructure.descriptions().getDescription();
 	}
 
 	@Override
@@ -103,7 +82,8 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 		initializeTestClasses();
 
 		try (SimulatestSession session = SimulatestSession.open(plugins, Collections.unmodifiableCollection(testClasses))) {
-			environmentRunner = new EnvironmentRunner(session.factory(), environmentTree, session.insistenceLayer());
+			environmentRunner = new EnvironmentRunner(session.factory(), infrastructure.tree(),
+					session.insistenceLayer().orElse(null));
 
 			environmentRunner.addListener(new EnvironmentRunnerListener() {
 				@Override
@@ -112,21 +92,20 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 				}
 			});
 
-			environmentRunner.run();
+			session.run(environmentRunner::run);
 		}
 	}
 
 	private void runTestOfEnvironment(RunNotifier notifier, EnvironmentDefinition environment) {
-		if (!environmentExtractor.hasEnvironment(environment)) return;
+		if (!infrastructure.extractor().hasEnvironment(environment)) return;
 
-		for (Class<?> testCase : environmentExtractor.getTests(environment))
+		for (Class<?> testCase : infrastructure.extractor().getTests(environment))
 			requireRunner(testCase).run(notifier);
 	}
 
 	void resetInsistenceLevel() {
-		if (environmentRunner != null && environmentRunner.insistenceLayer() != null) {
-			environmentRunner.insistenceLayer().resetCurrentLevel();
-		}
+		if (environmentRunner == null) return;
+		environmentRunner.insistenceLayer().ifPresent(InsistenceLayer::resetCurrentLevel);
 	}
 
 	@Override
@@ -143,11 +122,9 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 		if (testClasses.isEmpty())
 			throw new NoTestsRemainException();
 
-		rebuildEnvironmentInfrastructure();
+		infrastructure = buildInfrastructure();
 	}
 
-	// Force-triggers static initializers (e.g., TestSetup.configure()) before
-	// the environment tree is walked, since JUnit may load classes lazily.
 	private void initializeTestClasses() {
 		for (Class<?> testClass : testClasses) {
 			try {
@@ -158,5 +135,10 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 			}
 		}
 	}
+
+	private record EnvironmentInfrastructure(
+			EnvironmentExtractor extractor,
+			Tree<EnvironmentDefinition> tree,
+			EnvironmentDescriptionTreeBuilder descriptions) { }
 
 }

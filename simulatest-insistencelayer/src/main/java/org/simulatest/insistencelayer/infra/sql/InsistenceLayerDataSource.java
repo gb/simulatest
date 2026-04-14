@@ -31,7 +31,9 @@ public final class InsistenceLayerDataSource implements DataSource {
 
 	@Override
 	public Connection getConnection(String username, String password) throws SQLException {
-		return getConnection();
+		throw new SQLFeatureNotSupportedException(
+				"Per-call credentials are not supported: the Insistence Layer reuses a single connection "
+				+ "configured on the wrapped DataSource. Configure credentials on the underlying DataSource.");
 	}
 
 	@Override

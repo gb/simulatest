@@ -1,9 +1,11 @@
 package org.simulatest.di.guice;
 
+import java.util.List;
+
 import com.google.inject.Module;
 
 public interface GuiceModuleProvider {
 
-	Module[] modules();
+	List<Module> modules();
 
 }

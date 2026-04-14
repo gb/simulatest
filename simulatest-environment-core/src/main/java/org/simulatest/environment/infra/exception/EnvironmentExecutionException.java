@@ -1,6 +1,6 @@
 package org.simulatest.environment.infra.exception;
 
-public class EnvironmentExecutionException extends EnvironmentGeneralException {
+public final class EnvironmentExecutionException extends EnvironmentGeneralException {
 
 	private static final long serialVersionUID = -3846577248077471189L;
 

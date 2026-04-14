@@ -23,7 +23,7 @@ public interface DependencyInjectionContext {
 
 	void destroy();
 
-	DataSource dataSource();
+	Optional<DataSource> dataSource();
 
 	static <A extends Annotation> Optional<A> findConfigAnnotation(Collection<Class<?>> testClasses, Class<A> annotationType) {
 		return testClasses.stream()

@@ -13,7 +13,7 @@ import org.simulatest.example.library.LibraryDatabase;
  * See {@code StaffTest} for assertions that prove this sibling isolation.
  */
 @EnvironmentParent(BranchesEnvironment.class)
-public class StaffEnvironment implements Environment {
+public final class StaffEnvironment implements Environment {
 
 	@Override
 	public void run() {

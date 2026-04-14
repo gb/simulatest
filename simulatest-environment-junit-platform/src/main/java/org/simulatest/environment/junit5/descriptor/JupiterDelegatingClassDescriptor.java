@@ -77,13 +77,10 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 	@Override
 	public SimulatestExecutionContext execute(SimulatestExecutionContext context,
 			DynamicTestExecutor dynamicTestExecutor) {
-		SimulatestExecutionContext.setCurrent(context);
-		try {
+		SimulatestExecutionContext.withCurrent(context, () -> {
 			List<CapturedResult> results = runJupiter();
 			registerDynamicTests(results, dynamicTestExecutor);
-		} finally {
-			SimulatestExecutionContext.clearCurrent();
-		}
+		});
 		return context;
 	}
 

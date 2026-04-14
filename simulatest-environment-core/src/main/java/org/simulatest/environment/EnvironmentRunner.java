@@ -1,10 +1,14 @@
 package org.simulatest.environment;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.function.BiConsumer;
 
+import org.simulatest.environment.infra.ExceptionAggregator;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
@@ -16,6 +20,14 @@ import org.simulatest.insistencelayer.InsistenceLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Walks an {@link EnvironmentDefinition} tree, instantiating and running
+ * each environment and firing listener callbacks at phase boundaries.
+ *
+ * <p><b>Thread-safety:</b> not thread-safe. A runner is intended to be built
+ * and invoked by the owning test runner on a single thread for the duration
+ * of a suite run.</p>
+ */
 public final class EnvironmentRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunner.class);
@@ -61,49 +73,19 @@ public final class EnvironmentRunner {
 						"META-INF/services environmentFactory was not found!"));
 	}
 
-	public InsistenceLayer insistenceLayer() {
-		return insistenceLayer;
+	public Optional<InsistenceLayer> insistenceLayer() {
+		return Optional.ofNullable(insistenceLayer);
 	}
 
 	// Listeners are kept sorted by phase so infrastructure listeners fire before user listeners.
 	public void addListener(EnvironmentRunnerListener listener) {
 		Objects.requireNonNull(listener, "listener must not be null");
-		int insertIndex = 0;
-		for (int i = 0; i < listeners.size(); i++) {
-			if (listeners.get(i).getPhase().compareTo(listener.getPhase()) <= 0) {
-				insertIndex = i + 1;
-			} else {
-				break;
-			}
-		}
-		listeners.add(insertIndex, listener);
+		listeners.add(listener);
+		listeners.sort(Comparator.comparing(EnvironmentRunnerListener::getPhase));
 	}
 
 	public void run() {
-		if (insistenceLayer != null) {
-			runWithInsistence();
-		} else {
-			runTree();
-		}
-	}
-
-	// Manages the outermost insistence level (suite scope).
-	// Per-environment level changes are handled by EnvironmentRunnerListenerInsistence.
-	private void runWithInsistence() {
-		insistenceLayer.increaseLevel();
-
-		try {
-			runTree();
-			insistenceLayer.decreaseLevel();
-		} catch (RuntimeException exception) {
-			try {
-				insistenceLayer.decreaseAllLevels();
-			} catch (RuntimeException cleanupException) {
-				logger.error("Checkpoint cleanup failed after environment failure", cleanupException);
-				exception.addSuppressed(cleanupException);
-			}
-			throw exception;
-		}
+		runTree();
 	}
 
 	private void runTree() {
@@ -174,44 +156,28 @@ public final class EnvironmentRunner {
 		fireEvent(definition, "afterSiblingCleanup", EnvironmentRunnerListener::afterSiblingCleanup);
 	}
 
-	private void fireEvent(EnvironmentDefinition definition, String eventName, ListenerAction action) {
-		RuntimeException firstException = null;
+	private void fireEvent(EnvironmentDefinition definition, String eventName,
+						   BiConsumer<EnvironmentRunnerListener, EnvironmentDefinition> action) {
+		ExceptionAggregator failures = new ExceptionAggregator();
 		for (EnvironmentRunnerListener listener : listeners) {
 			try {
-				action.execute(listener, definition);
+				action.accept(listener, definition);
 			} catch (RuntimeException exception) {
 				logger.error("Listener {} failed during {} for environment '{}'",
 						listener.getClass().getSimpleName(), eventName, definition.getName(), exception);
-				if (firstException == null) firstException = exception;
-				else firstException.addSuppressed(exception);
+				failures.add(exception);
 			}
 		}
-		if (firstException != null) {
-			throw new EnvironmentExecutionException(
-					"Failed during " + eventName + " for environment '" + definition.getName() + "'",
-					firstException);
-		}
+		failures.throwIfAny(cause -> new EnvironmentExecutionException(
+				"Failed during " + eventName + " for environment '" + definition.getName() + "'",
+				cause));
 	}
 
-	@FunctionalInterface
-	private interface ListenerAction {
-		void execute(EnvironmentRunnerListener listener, EnvironmentDefinition definition);
-	}
-
-	private static void executeWithCleanup(Runnable first, Runnable second) {
-		RuntimeException failure = null;
-		try {
-			first.run();
-		} catch (RuntimeException e) {
-			failure = e;
-		}
-		try {
-			second.run();
-		} catch (RuntimeException e) {
-			if (failure != null) failure.addSuppressed(e);
-			else failure = e;
-		}
-		if (failure != null) throw failure;
+	private static void executeWithCleanup(Runnable body, Runnable cleanup) {
+		ExceptionAggregator failures = new ExceptionAggregator();
+		failures.capture(body);
+		failures.capture(cleanup);
+		failures.throwIfAny();
 	}
 
 }

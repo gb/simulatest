@@ -3,6 +3,7 @@ package org.simulatest.insistencelayer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -15,69 +16,72 @@ import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
  * {@link InsistenceLayerFactory}, which delegate to a shared default
  * registry. When independent registries are needed (parallel test
  * execution, multi-datasource), create a separate instance.</p>
+ *
+ * <p><b>Thread-safety:</b> unconditionally thread-safe. All reads and
+ * writes are serialized on the instance monitor. Insertion order is
+ * preserved across concurrent modifications.</p>
  */
 public final class InsistenceLayerRegistry {
 
-	public static final String DEFAULT = "default";
+	private static final String DEFAULT_KEY = InsistenceLayerFactory.DEFAULT;
 
 	private final Map<String, InsistenceLayer> registry = new LinkedHashMap<>();
 	private final Map<String, InsistenceLayerDataSource> dataSources = new LinkedHashMap<>();
 
-	public void configure(DataSource dataSource) {
+	public synchronized void configure(DataSource dataSource) {
 		Objects.requireNonNull(dataSource, "dataSource must not be null");
 		var wrapped = new InsistenceLayerDataSource(dataSource);
-		dataSources.put(DEFAULT, wrapped);
-		registry.put(DEFAULT, new LocalInsistenceLayer(wrapped.getConnectionWrapper()));
+		dataSources.put(DEFAULT_KEY, wrapped);
+		registry.put(DEFAULT_KEY, new LocalInsistenceLayer(wrapped.getConnectionWrapper()));
 	}
 
-	public InsistenceLayerDataSource dataSource() {
-		return dataSources.isEmpty() ? null : dataSources.values().iterator().next();
+	public synchronized Optional<InsistenceLayerDataSource> dataSource() {
+		return dataSources.isEmpty()
+				? Optional.empty()
+				: Optional.of(dataSources.values().iterator().next());
 	}
 
-	public InsistenceLayerDataSource requireDataSource() {
-		InsistenceLayerDataSource ds = dataSource();
-		if (ds == null) {
-			throw new IllegalStateException("InsistenceLayer not configured - call InsistenceLayerFactory.configure(dataSource) first");
-		}
-		return ds;
+	public synchronized InsistenceLayerDataSource requireDataSource() {
+		return dataSource().orElseThrow(() -> new IllegalStateException(
+				"InsistenceLayer not configured - call InsistenceLayerFactory.configure(dataSource) first"));
 	}
 
-	public boolean isConfigured() {
+	public synchronized boolean isConfigured() {
 		return !registry.isEmpty();
 	}
 
-	public void register(String name, InsistenceLayer layer) {
+	public synchronized void register(String name, InsistenceLayer layer) {
 		Objects.requireNonNull(name, "name must not be null");
 		Objects.requireNonNull(layer, "layer must not be null");
 		registry.put(name, layer);
 	}
 
-	public void deregister(String name) {
+	public synchronized void deregister(String name) {
 		registry.remove(name);
 	}
 
-	public InsistenceLayer resolve(String name) {
-		return registry.get(name);
+	public synchronized Optional<InsistenceLayer> resolve(String name) {
+		return Optional.ofNullable(registry.get(name));
 	}
 
 	// Fallback chain: (1) return existing layer, (2) lazily build from configured
-	// datasource, (3) return null if nothing is configured.
-	public InsistenceLayer resolve() {
+	// datasource, (3) empty if nothing is configured.
+	public synchronized Optional<InsistenceLayer> resolve() {
 		if (!registry.isEmpty()) {
-			return registry.values().iterator().next();
+			return Optional.of(registry.values().iterator().next());
 		}
 
 		if (!dataSources.isEmpty()) {
 			InsistenceLayerDataSource ds = dataSources.values().iterator().next();
 			InsistenceLayer layer = new LocalInsistenceLayer(ds.getConnectionWrapper());
-			registry.put(DEFAULT, layer);
-			return layer;
+			registry.put(DEFAULT_KEY, layer);
+			return Optional.of(layer);
 		}
 
-		return null;
+		return Optional.empty();
 	}
 
-	public void clear() {
+	public synchronized void clear() {
 		registry.clear();
 		dataSources.clear();
 	}

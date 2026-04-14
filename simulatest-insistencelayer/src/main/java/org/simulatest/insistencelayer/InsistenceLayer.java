@@ -23,7 +23,7 @@ package org.simulatest.insistencelayer;
  *
  * @see LocalInsistenceLayer
  */
-public interface InsistenceLayer {
+public interface InsistenceLayer extends AutoCloseable {
 
 	/**
 	 * Returns the current depth of the checkpoint stack.
@@ -72,6 +72,35 @@ public interface InsistenceLayer {
 
 		while (getCurrentLevel() > level) decreaseLevel();
 		while (getCurrentLevel() < level) increaseLevel();
+	}
+
+	/**
+	 * Releases any resources held by this layer. Default is a no-op for
+	 * in-process layers; remote implementations override to tear down
+	 * their transport.
+	 */
+	@Override
+	default void close() { }
+
+	/**
+	 * Runs the given action inside a level boundary: {@link #increaseLevel()}
+	 * beforehand, {@link #decreaseLevel()} on normal completion, and
+	 * {@link #decreaseAllLevels()} as emergency cleanup if the action throws.
+	 * A secondary cleanup failure is attached as suppressed to the original.
+	 */
+	default void runIsolated(Runnable action) {
+		increaseLevel();
+		try {
+			action.run();
+			decreaseLevel();
+		} catch (RuntimeException primary) {
+			try {
+				decreaseAllLevels();
+			} catch (RuntimeException cleanup) {
+				primary.addSuppressed(cleanup);
+			}
+			throw primary;
+		}
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package org.simulatest.insistencelayer;
 
+import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
@@ -11,12 +13,15 @@ import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
  * <p>All static methods delegate to a default registry. For independent
  * registries (parallel execution, multi-datasource), create your own
  * {@link InsistenceLayerRegistry} instance.</p>
+ *
+ * <p><b>Thread-safety:</b> unconditionally thread-safe. The underlying
+ * registry serializes access on its own monitor.</p>
  */
 public final class InsistenceLayerFactory {
 
 	private InsistenceLayerFactory() {}
 
-	public static final String DEFAULT = InsistenceLayerRegistry.DEFAULT;
+	public static final String DEFAULT = "default";
 
 	private static final InsistenceLayerRegistry defaultRegistry = new InsistenceLayerRegistry();
 
@@ -24,7 +29,7 @@ public final class InsistenceLayerFactory {
 		defaultRegistry.configure(dataSource);
 	}
 
-	public static InsistenceLayerDataSource dataSource() {
+	public static Optional<InsistenceLayerDataSource> dataSource() {
 		return defaultRegistry.dataSource();
 	}
 
@@ -48,11 +53,11 @@ public final class InsistenceLayerFactory {
 		defaultRegistry.deregister(name);
 	}
 
-	public static InsistenceLayer resolve(String name) {
+	public static Optional<InsistenceLayer> resolve(String name) {
 		return defaultRegistry.resolve(name);
 	}
 
-	public static InsistenceLayer resolve() {
+	public static Optional<InsistenceLayer> resolve() {
 		return defaultRegistry.resolve();
 	}
 

@@ -2,7 +2,7 @@ package org.simulatest.di.guice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -30,11 +30,11 @@ class GuiceContextTest {
 	}
 
 	@Test
-	void dataSourceShouldReturnNullWhenAbsent() {
+	void dataSourceShouldReturnEmptyWhenAbsent() {
 		GuiceContext context = new GuiceContext();
 		context.initialize(List.of(TestWithoutDataSource.class));
 
-		assertNull(context.dataSource());
+		assertTrue(context.dataSource().isEmpty());
 
 		context.destroy();
 	}
@@ -105,8 +105,8 @@ class GuiceContextTest {
 
 	public static class GreetingModuleProvider implements GuiceModuleProvider {
 		@Override
-		public Module[] modules() {
-			return new Module[] { new ParameterizedModule("hello") };
+		public List<Module> modules() {
+			return List.of(new ParameterizedModule("hello"));
 		}
 	}
 

@@ -18,7 +18,7 @@ public class App implements Startable {
 
 	public static void main(String[] args) throws SQLException {
 		InsistenceLayer insistenceLayer =
-				InsistenceLayerFactory.resolve();
+				InsistenceLayerFactory.resolve().orElse(null);
 		
 		DefaultPicoContainer container = new DefaultPicoContainer(new Caching());	
 		

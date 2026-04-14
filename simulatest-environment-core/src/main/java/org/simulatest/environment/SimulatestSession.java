@@ -4,9 +4,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import org.simulatest.environment.infra.ExceptionAggregator;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -19,11 +22,12 @@ import org.simulatest.insistencelayer.InsistenceLayerFactory;
  * of a suite run and close it when the suite completes. This keeps the
  * orchestration logic in one place instead of duplicated across runners.</p>
  */
-public class SimulatestSession implements AutoCloseable {
+public final class SimulatestSession implements AutoCloseable {
 
 	private final List<SimulatestPlugin> plugins;
 	private final EnvironmentFactory factory;
 	private final InsistenceLayer insistenceLayer;
+	private final AtomicBoolean closed = new AtomicBoolean(false);
 
 	private SimulatestSession(List<SimulatestPlugin> plugins, EnvironmentFactory factory,
 							  InsistenceLayer insistenceLayer) {
@@ -51,21 +55,9 @@ public class SimulatestSession implements AutoCloseable {
 	}
 
 	public static void destroyPlugins(List<SimulatestPlugin> plugins) {
-		RuntimeException firstException = null;
-
-		for (SimulatestPlugin plugin : plugins) {
-			try {
-				plugin.destroy();
-			} catch (RuntimeException e) {
-				if (firstException == null) {
-					firstException = e;
-				} else {
-					firstException.addSuppressed(e);
-				}
-			}
-		}
-
-		if (firstException != null) throw firstException;
+		ExceptionAggregator failures = new ExceptionAggregator();
+		for (SimulatestPlugin plugin : plugins) failures.capture(plugin::destroy);
+		failures.throwIfAny();
 	}
 
 	public static Object createTestInstanceOrElse(List<SimulatestPlugin> plugins, Class<?> testClass,
@@ -98,11 +90,12 @@ public class SimulatestSession implements AutoCloseable {
 	 */
 	public static SimulatestSession open(List<SimulatestPlugin> plugins,
 										 Collection<Class<?>> testClasses) {
+		Objects.requireNonNull(plugins, "plugins must not be null");
 		initializePlugins(plugins, testClasses);
 		return new SimulatestSession(
-				plugins,
+				List.copyOf(plugins),
 				resolveFactory(plugins),
-				InsistenceLayerFactory.resolve());
+				InsistenceLayerFactory.resolve().orElse(null));
 	}
 
 	public List<SimulatestPlugin> plugins() {
@@ -113,12 +106,47 @@ public class SimulatestSession implements AutoCloseable {
 		return factory;
 	}
 
-	public InsistenceLayer insistenceLayer() {
-		return insistenceLayer;
+	public Optional<InsistenceLayer> insistenceLayer() {
+		return Optional.ofNullable(insistenceLayer);
+	}
+
+	/**
+	 * Asks each plugin in order to create a test instance, falling back to
+	 * {@code fallback} when no plugin produces one.
+	 */
+	public Object createTestInstance(Class<?> testClass, Supplier<Object> fallback) {
+		return createTestInstanceOrElse(plugins, testClass, fallback);
+	}
+
+	/**
+	 * Notifies every plugin to post-process a test instance (e.g., inject dependencies).
+	 */
+	public void postProcessTestInstance(Object instance) {
+		postProcessWithPlugins(plugins, instance);
+	}
+
+	/**
+	 * Runs {@code action} inside an outer Insistence Layer bracket if a layer
+	 * is configured; otherwise just runs the action. Aggregates cleanup errors
+	 * as suppressed on the original exception.
+	 */
+	public void run(Runnable action) {
+		if (insistenceLayer != null) insistenceLayer.runIsolated(action);
+		else action.run();
+	}
+
+	/**
+	 * Resets the current Insistence Layer level — the standard between-tests
+	 * hook so sibling tests start from the same database state.
+	 * No-op when no Insistence Layer is configured.
+	 */
+	public void afterTest() {
+		if (insistenceLayer != null) insistenceLayer.resetCurrentLevel();
 	}
 
 	@Override
 	public void close() {
+		if (!closed.compareAndSet(false, true)) return;
 		destroyPlugins(plugins);
 	}
 

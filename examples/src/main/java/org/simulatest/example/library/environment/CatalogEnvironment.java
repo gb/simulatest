@@ -12,7 +12,7 @@ import org.simulatest.example.library.LibraryDatabase;
  * because the Insistence Layer rolls back each sibling subtree automatically.
  */
 @EnvironmentParent(BranchesEnvironment.class)
-public class CatalogEnvironment implements Environment {
+public final class CatalogEnvironment implements Environment {
 
 	@Override
 	public void run() {

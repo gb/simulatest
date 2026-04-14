@@ -2,9 +2,9 @@ package org.simulatest.di.guice;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -15,7 +15,11 @@ import com.google.inject.Module;
 
 import org.simulatest.environment.plugin.DependencyInjectionContext;
 
-public class GuiceContext implements DependencyInjectionContext {
+/**
+ * <p><b>Thread-safety:</b> not thread-safe. Initialize and destroy from the
+ * owning test thread; the Guice injector itself is thread-safe for reads.</p>
+ */
+public final class GuiceContext implements DependencyInjectionContext {
 
 	private Injector injector;
 
@@ -40,22 +44,21 @@ public class GuiceContext implements DependencyInjectionContext {
 
 		List<Module> modules = new ArrayList<>();
 
-		Arrays.stream(config.value())
-				.map(GuiceContext::instantiate)
-				.forEach(modules::add);
+		for (Class<? extends Module> moduleClass : config.value()) {
+			modules.add(instantiate(moduleClass, Module.class));
+		}
 
 		for (Class<? extends GuiceModuleProvider> providerClass : config.providers()) {
-			GuiceModuleProvider provider = instantiateProvider(providerClass);
-			modules.addAll(Arrays.asList(provider.modules()));
+			modules.addAll(instantiate(providerClass, GuiceModuleProvider.class).modules());
 		}
 
 		injector = Guice.createInjector(modules);
 	}
 
 	@Override
-	public DataSource dataSource() {
+	public Optional<DataSource> dataSource() {
 		var binding = getInjector().getExistingBinding(Key.get(DataSource.class));
-		return binding != null ? binding.getProvider().get() : null;
+		return binding != null ? Optional.of(binding.getProvider().get()) : Optional.empty();
 	}
 
 	@Override
@@ -71,25 +74,18 @@ public class GuiceContext implements DependencyInjectionContext {
 		return injector;
 	}
 
-	private static Module instantiate(Class<? extends Module> moduleClass) {
+	private static <T> T instantiate(Class<? extends T> clazz, Class<T> kind) {
 		try {
-			var constructor = moduleClass.getDeclaredConstructor();
+			var constructor = clazz.getDeclaredConstructor();
 			constructor.setAccessible(true);
 			return constructor.newInstance();
-		} catch (InstantiationException | IllegalAccessException |
-				 InvocationTargetException | NoSuchMethodException e) {
-			throw new IllegalStateException("Failed to instantiate Guice module: " + moduleClass.getName(), e);
-		}
-	}
-
-	private static GuiceModuleProvider instantiateProvider(Class<? extends GuiceModuleProvider> providerClass) {
-		try {
-			var constructor = providerClass.getDeclaredConstructor();
-			constructor.setAccessible(true);
-			return constructor.newInstance();
-		} catch (InstantiationException | IllegalAccessException |
-				 InvocationTargetException | NoSuchMethodException e) {
-			throw new IllegalStateException("Failed to instantiate Guice module provider: " + providerClass.getName(), e);
+		} catch (InvocationTargetException e) {
+			throw new IllegalStateException(
+					"Failed to instantiate " + kind.getSimpleName() + ": " + clazz.getName(),
+					e.getCause() != null ? e.getCause() : e);
+		} catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+			throw new IllegalStateException(
+					"Failed to instantiate " + kind.getSimpleName() + ": " + clazz.getName(), e);
 		}
 	}
 

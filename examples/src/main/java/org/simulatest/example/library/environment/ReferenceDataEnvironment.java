@@ -22,7 +22,7 @@ import org.simulatest.example.library.LibraryDatabase;
  * <p>Schema is created by {@link LibraryDatabase#createSchema()} BEFORE the
  * tree runs, because DDL causes implicit commits that invalidate savepoints.
  */
-public class ReferenceDataEnvironment implements Environment {
+public final class ReferenceDataEnvironment implements Environment {
 
 	@Override
 	public void run() {

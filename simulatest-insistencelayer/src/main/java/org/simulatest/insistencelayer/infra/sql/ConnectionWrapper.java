@@ -17,6 +17,16 @@ import javax.sql.DataSource;
 import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 
 
+/**
+ * JDBC {@link Connection} wrapper that intercepts commit/rollback to stage
+ * changes behind savepoints managed by the Insistence Layer.
+ *
+ * <p><b>Thread-safety:</b> not thread-safe. JDBC connections are not
+ * thread-safe by design, so this wrapper assumes exclusive use by one
+ * thread at a time. {@link #isActive()} is {@code volatile} as the single
+ * exception: external observers (e.g., cleanup hooks) may read it from
+ * another thread. All other fields are owning-thread-only.</p>
+ */
 public final class ConnectionWrapper {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConnectionWrapper.class);
@@ -31,7 +41,7 @@ public final class ConnectionWrapper {
 
 	private final Connection realConnection;
 	private final Connection proxy;
-	private boolean active;
+	private volatile boolean active;
 	private Savepoint lastCommitSavepoint;
 
 	public ConnectionWrapper(DataSource source) {
@@ -105,33 +115,23 @@ public final class ConnectionWrapper {
 		public Object invoke(Object proxyObj, Method method, Object[] args) throws Throwable {
 			String methodName = method.getName();
 
-			// Always intercepted: prevent the real connection from being closed
-			// or having autocommit re-enabled by frameworks (e.g., Spring, connection pools).
-			if (METHOD_CLOSE.equals(methodName)) {
-				return null;
-			}
+			// Always intercepted: prevent frameworks (Spring, connection pools)
+			// from closing the real connection or re-enabling autocommit.
+			if (METHOD_CLOSE.equals(methodName)) return null;
 			if (METHOD_SET_AUTO_COMMIT.equals(methodName)) {
 				if (!active) realConnection.setAutoCommit(false);
 				return null;
 			}
 
-			// Intercepted only when the insistence layer is active
 			if (active) {
-				if (METHOD_COMMIT.equals(methodName)) {
-					handleCommit();
-					return null;
-				}
+				if (METHOD_COMMIT.equals(methodName)) { handleCommit(); return null; }
 				if (METHOD_ROLLBACK.equals(methodName) && (args == null || args.length == 0)) {
 					handleRollback();
 					return null;
 				}
-				if (METHOD_GET_AUTO_COMMIT.equals(methodName)) {
-					return false;
-				}
+				if (METHOD_GET_AUTO_COMMIT.equals(methodName)) return false;
 				// Report the connection as open so pools/frameworks don't reclaim it.
-				if (METHOD_IS_CLOSED.equals(methodName)) {
-					return false;
-				}
+				if (METHOD_IS_CLOSED.equals(methodName)) return false;
 			}
 
 			try {

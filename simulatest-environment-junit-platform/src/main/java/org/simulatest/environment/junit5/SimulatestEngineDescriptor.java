@@ -6,19 +6,21 @@ import org.junit.platform.engine.support.hierarchical.Node;
 import org.simulatest.environment.SimulatestSession;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 class SimulatestEngineDescriptor extends EngineDescriptor implements Node<SimulatestExecutionContext> {
 
 	private final Collection<Class<?>> testClasses;
 
 	SimulatestEngineDescriptor(UniqueId uniqueId, Collection<Class<?>> testClasses) {
-		super(uniqueId, "Simulatest");
-		this.testClasses = testClasses;
+		super(Objects.requireNonNull(uniqueId, "uniqueId must not be null"), "Simulatest");
+		this.testClasses = List.copyOf(Objects.requireNonNull(testClasses, "testClasses must not be null"));
 	}
 
 	@Override
 	public SimulatestExecutionContext before(SimulatestExecutionContext context) {
-		if (testClasses == null || testClasses.isEmpty()) {
+		if (testClasses.isEmpty()) {
 			return SimulatestExecutionContext.EMPTY;
 		}
 

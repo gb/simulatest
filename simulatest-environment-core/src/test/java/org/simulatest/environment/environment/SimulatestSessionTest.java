@@ -2,7 +2,6 @@ package org.simulatest.environment.environment;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -215,9 +214,9 @@ public class SimulatestSessionTest {
 	}
 
 	@Test
-	public void insistenceLayerShouldBeNullWhenNotConfigured() {
+	public void insistenceLayerShouldBeEmptyWhenNotConfigured() {
 		try (SimulatestSession session = SimulatestSession.open(List.of(), Set.of())) {
-			assertNull(session.insistenceLayer());
+			assertTrue(session.insistenceLayer().isEmpty());
 		}
 	}
 

@@ -13,7 +13,7 @@ import org.simulatest.example.library.LibraryDatabase;
  * an overdue loan, and active holds.
  */
 @EnvironmentParent(MembersEnvironment.class)
-public class LoansEnvironment implements Environment {
+public final class LoansEnvironment implements Environment {
 
 	@Override
 	public void run() {
