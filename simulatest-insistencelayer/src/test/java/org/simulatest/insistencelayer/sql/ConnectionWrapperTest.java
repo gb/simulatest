@@ -5,13 +5,19 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
@@ -25,6 +31,11 @@ public class ConnectionWrapperTest {
 	public void setup() throws SQLException {
 		realConnection = DriverManager.getConnection("jdbc:h2:mem:connectionwrappertest", "sa", "");
 		connectionWrapper = new ConnectionWrapper(realConnection);
+	}
+
+	@After
+	public void closeConnection() throws SQLException {
+		if (realConnection != null) realConnection.close();
 	}
 
 	@Test
@@ -153,6 +164,33 @@ public class ConnectionWrapperTest {
 		wrapper.getConnection().nativeSQL("SELECT 1");
 
 		verify(mockConnection).nativeSQL("SELECT 1");
+	}
+
+	@Test
+	public void commitShouldPropagateReleaseSavepointFailureAndLeaveWrapperUsable() throws SQLException {
+		Connection mockConnection = mock(Connection.class);
+		Savepoint first = mock(Savepoint.class);
+		Savepoint second = mock(Savepoint.class);
+		when(mockConnection.setSavepoint("USER_COMMIT"))
+				.thenReturn(first)
+				.thenReturn(second);
+		SQLException underlying = new SQLException("release refused");
+		doThrow(underlying).when(mockConnection).releaseSavepoint(first);
+
+		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
+		wrapper.wrap();
+		wrapper.getConnection().commit();
+
+		try {
+			wrapper.getConnection().commit();
+			fail("commit should propagate the releaseSavepoint SQLException");
+		} catch (SQLException thrown) {
+			assertEquals("underlying SQLException identity preserved",
+					underlying.getMessage(), thrown.getMessage());
+		}
+
+		wrapper.getConnection().rollback();
+		verify(mockConnection, never()).rollback();
 	}
 
 }

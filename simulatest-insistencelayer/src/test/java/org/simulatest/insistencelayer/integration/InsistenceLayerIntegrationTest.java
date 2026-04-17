@@ -41,38 +41,39 @@ public class InsistenceLayerIntegrationTest {
 		}
 		statement.executeUpdate("DELETE FROM LOG");
 		statement.close();
+		connection.close();
 	}
 
 	@Test
-	public void integrationTest() throws SQLException {
+	public void decreaseShouldUnwindEachLevelInReverseOrder() throws SQLException {
 		insistenceLayer.increaseLevel();
 		statement.executeUpdate("INSERT INTO LOG VALUES ('1')");
-		assertEquals(1, countFromTableLog());
+		assertEquals("after insert at level 1", 1, countFromTableLog());
 
 		insistenceLayer.increaseLevel();
 		statement.executeUpdate("DELETE FROM LOG");
-		assertEquals(0, countFromTableLog());
+		assertEquals("after delete at level 2", 0, countFromTableLog());
 
 		insistenceLayer.increaseLevel();
 		statement.executeUpdate("INSERT INTO LOG values ('1')");
 		statement.executeUpdate("INSERT INTO LOG values ('2')");
 		statement.executeUpdate("INSERT INTO LOG values ('3')");
-		assertEquals(3, countFromTableLog());
+		assertEquals("after three inserts at level 3", 3, countFromTableLog());
 
 		insistenceLayer.increaseLevel();
-		assertEquals(3, countFromTableLog());
+		assertEquals("level 4 adds no data", 3, countFromTableLog());
 
 		insistenceLayer.decreaseLevel();
-		assertEquals(3, countFromTableLog());
+		assertEquals("decrease from 4: no state change", 3, countFromTableLog());
 
 		insistenceLayer.decreaseLevel();
-		assertEquals(0, countFromTableLog());
+		assertEquals("decrease from 3: rollback three inserts", 0, countFromTableLog());
 
 		insistenceLayer.decreaseLevel();
-		assertEquals(1, countFromTableLog());
+		assertEquals("decrease from 2: restore the single row", 1, countFromTableLog());
 
 		insistenceLayer.decreaseLevel();
-		assertEquals(0, countFromTableLog());
+		assertEquals("decrease from 1: back to empty baseline", 0, countFromTableLog());
 	}
 
 	@Test

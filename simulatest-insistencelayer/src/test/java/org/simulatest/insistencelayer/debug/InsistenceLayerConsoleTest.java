@@ -55,11 +55,16 @@ public class InsistenceLayerConsoleTest {
 		InsistenceLayerConsole.run(connection, reader, out);
 
 		String output = outputBuffer.toString();
-		assertTrue(output.contains("savepoint level: 1"));
-		assertTrue(output.contains("isolated to this connection"));
-		assertTrue(output.contains("USERS"));
-		assertTrue(output.contains("resume"));
-		assertTrue(output.contains("schema <table>"));
+		assertTrue("banner should show current savepoint level. Output: " + output,
+				output.contains("savepoint level: 1"));
+		assertTrue("banner should explain connection isolation. Output: " + output,
+				output.contains("isolated to this connection"));
+		assertTrue("banner should list the USERS table. Output: " + output,
+				output.contains("USERS"));
+		assertTrue("banner should mention the resume command. Output: " + output,
+				output.contains("resume"));
+		assertTrue("banner should mention the schema command. Output: " + output,
+				output.contains("schema <table>"));
 	}
 
 	@Test
@@ -110,8 +115,6 @@ public class InsistenceLayerConsoleTest {
 
 		String output = outputBuffer.toString();
 		assertTrue(output.contains("savepoint level: 2"));
-
-		insistenceLayer.decreaseLevel();
 	}
 
 	@Test

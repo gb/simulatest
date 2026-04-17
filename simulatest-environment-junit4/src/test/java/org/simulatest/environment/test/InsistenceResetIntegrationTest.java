@@ -39,7 +39,8 @@ public class InsistenceResetIntegrationTest {
 	private void createIsolationTable() throws Exception {
 		try (Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
 			 Statement stmt = connection.createStatement()) {
-			stmt.execute("CREATE TABLE IF NOT EXISTS test_isolation (id INT PRIMARY KEY, name VARCHAR(100))");
+			stmt.execute("DROP TABLE IF EXISTS test_isolation");
+			stmt.execute("CREATE TABLE test_isolation (id INT PRIMARY KEY, name VARCHAR(100))");
 		}
 	}
 

@@ -9,6 +9,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.h2.jdbcx.JdbcDataSource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.simulatest.di.guice.GuiceContext;
 import org.simulatest.di.guice.GuiceModuleProvider;
@@ -19,24 +20,27 @@ import com.google.inject.Module;
 
 class GuiceContextTest {
 
+	private GuiceContext context;
+
+	@AfterEach
+	void destroyContext() {
+		if (context != null) context.destroy();
+	}
+
 	@Test
 	void dataSourceShouldReturnBindingWhenPresent() {
-		GuiceContext context = new GuiceContext();
+		context = new GuiceContext();
 		context.initialize(List.of(TestWithDataSource.class));
 
 		assertNotNull(context.dataSource());
-
-		context.destroy();
 	}
 
 	@Test
 	void dataSourceShouldReturnEmptyWhenAbsent() {
-		GuiceContext context = new GuiceContext();
+		context = new GuiceContext();
 		context.initialize(List.of(TestWithoutDataSource.class));
 
 		assertTrue(context.dataSource().isEmpty());
-
-		context.destroy();
 	}
 
 	@SimulatestGuiceConfig(DataSourceModule.class)
@@ -62,24 +66,20 @@ class GuiceContextTest {
 
 	@Test
 	void moduleProviderShouldSupplyParameterizedModules() {
-		GuiceContext context = new GuiceContext();
+		context = new GuiceContext();
 		context.initialize(List.of(TestWithProvider.class));
 
 		assertNotNull(context.getInstance(Greeting.class));
 		assertEquals("hello", context.getInstance(Greeting.class).value());
-
-		context.destroy();
 	}
 
 	@Test
 	void valueAndProvidersShouldCombine() {
-		GuiceContext context = new GuiceContext();
+		context = new GuiceContext();
 		context.initialize(List.of(TestWithValueAndProvider.class));
 
 		assertNotNull(context.dataSource());
 		assertEquals("hello", context.getInstance(Greeting.class).value());
-
-		context.destroy();
 	}
 
 	@SimulatestGuiceConfig(providers = GreetingModuleProvider.class)

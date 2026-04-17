@@ -3,6 +3,7 @@ package org.simulatest.environment.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -140,6 +141,8 @@ public class EnvironmentJUnitRunnerTest {
 		RunNotifier notifier = new RunNotifier();
 		suite.run(notifier);
 
+		assertTrue("Kept environment's lifecycle should run; EnvironmentFirstLevel did not execute",
+				DatabaseMock.getMessages().contains("first"));
 		assertFalse("Filtered-out environment's lifecycle should not run, but EnvironmentSecondLevel executed",
 				DatabaseMock.getMessages().contains("second"));
 	}

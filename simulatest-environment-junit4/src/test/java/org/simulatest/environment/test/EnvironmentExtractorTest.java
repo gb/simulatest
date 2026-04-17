@@ -35,24 +35,22 @@ public class EnvironmentExtractorTest {
 	}
 	
 	@Test
-	public void testEnvironmentMap() {
-		assertEquals(3, environmentExtractor.size());
-		
+	public void extractorShouldGroupTestsByDeclaredEnvironment() {
+		assertEquals("three distinct environments: BigBang, Root, Pessoa",
+				3, environmentExtractor.size());
+
 		List<Class<?>> classesWithoutEnvironment = environmentExtractor.getTests(EnvironmentDefinition.bigBang());
-		
-		assertEquals(2, classesWithoutEnvironment.size());
+		assertEquals("unannotated tests grouped under BigBang", 2, classesWithoutEnvironment.size());
 		assertTrue(classesWithoutEnvironment.contains(TestWithoutEnvironment1.class));
 		assertTrue(classesWithoutEnvironment.contains(TestWithoutEnvironment2.class));
 
 		List<Class<?>> classWithRootEnvironment = environmentExtractor.getTests(EnvironmentDefinition.create(Root.class));
-
-		assertEquals(2, classWithRootEnvironment.size());
+		assertEquals("@UseEnvironment(Root) tests grouped under Root", 2, classWithRootEnvironment.size());
 		assertTrue(classWithRootEnvironment.contains(TestWithEnvironment1.class));
 		assertTrue(classWithRootEnvironment.contains(TestWithEnvironment2.class));
 
 		List<Class<?>> classesWithPessoaEnvironment = environmentExtractor.getTests(EnvironmentDefinition.create(PessoaEnvironment.class));
-
-		assertEquals(2, classesWithPessoaEnvironment.size());
+		assertEquals("@UseEnvironment(Pessoa) tests grouped under Pessoa", 2, classesWithPessoaEnvironment.size());
 		assertTrue(classesWithPessoaEnvironment.contains(TestWithEnvironment3.class));
 		assertTrue(classesWithPessoaEnvironment.contains(TestWithEnvironment4.class));
 	}

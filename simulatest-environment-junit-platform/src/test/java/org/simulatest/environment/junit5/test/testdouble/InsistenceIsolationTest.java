@@ -7,16 +7,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.simulatest.environment.annotation.UseEnvironment;
 import org.simulatest.environment.junit5.test.testdouble.environment.InsistenceTestEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
+// Paired isolation scenario: the second test's precondition is that the first
+// test's insert has been rolled back. Name-based ordering keeps that pairing
+// stable across JUnit 5 configuration and filter orderings.
 @UseEnvironment(InsistenceTestEnvironment.class)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class InsistenceIsolationTest {
 
 	@Test
-	void insertShouldBeVisibleWithinThisTest() throws SQLException {
+	void aInsertShouldBeVisibleWithinThisTest() throws SQLException {
 		try (Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
 			 Statement stmt = connection.createStatement()) {
 			stmt.execute("INSERT INTO test_isolation VALUES (100, 'test-specific')");
@@ -30,7 +36,7 @@ public class InsistenceIsolationTest {
 	}
 
 	@Test
-	void eachTestShouldStartWithOnlyEnvironmentData() throws SQLException {
+	void bNextTestShouldStartWithOnlyEnvironmentData() throws SQLException {
 		try (Connection connection = InsistenceLayerFactory.requireDataSource().getConnection();
 			 Statement stmt = connection.createStatement()) {
 

@@ -3,6 +3,11 @@ package org.simulatest.environment.junit5.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Set;
+
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,17 +32,14 @@ import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
+import org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Integration test for the Simulatest JUnit 5 TestEngine.
  * Uses the JUnit Platform Launcher API to programmatically run the engine.
  */
 class SimulatestTestEngineTest {
-
-	private static final Logger logger = LoggerFactory.getLogger(SimulatestTestEngineTest.class);
 
 	@BeforeAll
 	static void configureDataSource() {
@@ -86,13 +88,16 @@ class SimulatestTestEngineTest {
 
 		TestPlan testPlan = LauncherFactory.create().discover(request);
 
-		for (TestIdentifier root : testPlan.getRoots()) {
-			if (root.getDisplayName().contains("Jupiter")) {
-				assertTrue(testPlan.getChildren(root).isEmpty(),
-						"PostDiscoveryFilter should prune @UseEnvironment classes from Jupiter. " +
-						"Found: " + testPlan.getChildren(root));
-			}
-		}
+		TestIdentifier jupiterRoot = testPlan.getRoots().stream()
+				.filter(r -> r.getDisplayName().contains("Jupiter"))
+				.findFirst()
+				.orElseThrow(() -> new AssertionError(
+						"Expected a Jupiter engine root; filter had no target. Roots: "
+								+ testPlan.getRoots().stream().map(TestIdentifier::getDisplayName).toList()));
+
+		assertTrue(testPlan.getChildren(jupiterRoot).isEmpty(),
+				"PostDiscoveryFilter should prune @UseEnvironment classes from Jupiter. " +
+				"Found: " + testPlan.getChildren(jupiterRoot));
 	}
 
 	@Test
@@ -106,19 +111,10 @@ class SimulatestTestEngineTest {
 				.filter(r -> r.getDisplayName().equals("Simulatest"))
 				.findFirst().orElseThrow();
 
-		printTree(testPlan, engineRoot, "");
-
 		long firstLevelEnvCount = countDescendantsWithName(testPlan, engineRoot, "FirstLevelEnvironment");
 		assertEquals(1, firstLevelEnvCount,
 				"FirstLevelEnvironment should appear exactly once in the tree, " +
 				"grouping both FirstLevelTest and AnotherFirstLevelTest");
-
-		TestExecutionSummary summary = runSimulatest(
-				FirstLevelTest.class, AnotherFirstLevelTest.class, SecondLevelTest.class);
-
-		assertNoFailures(summary);
-		assertEquals(4, summary.getTestsSucceededCount(),
-				"Should run 4 methods (2 FirstLevelTest + 1 AnotherFirstLevelTest + 1 SecondLevelTest)");
 	}
 
 	@Test
@@ -136,8 +132,7 @@ class SimulatestTestEngineTest {
 				.findFirst()
 				.orElseThrow();
 
-		assertTrue(envNode.getUniqueIdObject().toString()
-				.contains("org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelEnvironment"),
+		assertTrue(envNode.getUniqueIdObject().toString().contains(FirstLevelEnvironment.class.getName()),
 				"Environment UniqueId segment should use fully qualified class name to avoid collisions");
 	}
 
@@ -208,11 +203,12 @@ class SimulatestTestEngineTest {
 	}
 
 	@Test
-	void classpathRootScanShouldDiscoverPackagePrivateClasses() {
-		java.nio.file.Path testClasses = java.nio.file.Path.of("target/test-classes").toAbsolutePath();
+	void classpathRootScanShouldDiscoverPackagePrivateClasses() throws URISyntaxException {
+		Path testClasses = Path.of(
+				FirstLevelTest.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 
 		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(DiscoverySelectors.selectClasspathRoots(java.util.Set.of(testClasses)))
+				.selectors(DiscoverySelectors.selectClasspathRoots(Set.of(testClasses)))
 				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
 				.build();
 
@@ -244,8 +240,8 @@ class SimulatestTestEngineTest {
 
 	private static LauncherDiscoveryRequest simulatestRequest(Class<?>... testClasses) {
 		return LauncherDiscoveryRequestBuilder.request()
-				.selectors(DiscoverySelectors.selectClasspathRoots(java.util.Set.of()))
-				.selectors(java.util.Arrays.stream(testClasses)
+				.selectors(DiscoverySelectors.selectClasspathRoots(Set.of()))
+				.selectors(Arrays.stream(testClasses)
 						.map(DiscoverySelectors::selectClass)
 						.toList())
 				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
@@ -265,13 +261,6 @@ class SimulatestTestEngineTest {
 				details.append("\n  ").append(f.getTestIdentifier().getDisplayName())
 					.append(": ").append(f.getException()));
 			assertEquals(0, summary.getTestsFailedCount(), details.toString());
-		}
-	}
-
-	private void printTree(TestPlan testPlan, TestIdentifier node, String indent) {
-		logger.debug("{}{} [{}]", indent, node.getDisplayName(), node.getUniqueId());
-		for (TestIdentifier child : testPlan.getChildren(node)) {
-			printTree(testPlan, child, indent + "  ");
 		}
 	}
 

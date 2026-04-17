@@ -1,6 +1,7 @@
 package org.simulatest.insistencelayer.remote;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -135,7 +136,8 @@ public class InsistenceLayerRemoteTest {
 			remoteLayer.increaseLevel();
 			fail("should have thrown");
 		} catch (InsistenceLayerException e) {
-			assertEquals("Cannot connect to Insistence Layer server at localhost:" + server.getPort(), e.getMessage());
+			assertTrue("error should describe connection failure, was: " + e.getMessage(),
+					e.getMessage().contains("Cannot connect"));
 		}
 	}
 

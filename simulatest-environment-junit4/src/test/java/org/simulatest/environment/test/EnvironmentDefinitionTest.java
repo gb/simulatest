@@ -17,12 +17,12 @@ public class EnvironmentDefinitionTest {
 	
 	@Test
 	public void shouldReturnTheEnvironmentSimpleClassNameWhenCallGetName() {
-		assertEquals("PessoaEnvironment", definition.getName());
+		assertEquals(PessoaEnvironment.class.getSimpleName(), definition.getName());
 	}
-	
+
 	@Test
 	public void shouldReturnTheEnvironmentDefinitionNameWhenCallToString() {
-		assertEquals("PessoaEnvironment", definition.toString());
+		assertEquals(PessoaEnvironment.class.getSimpleName(), definition.toString());
 	}
 	
 }

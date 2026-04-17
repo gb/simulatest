@@ -1,6 +1,8 @@
 package org.simulatest.insistencelayer.sql;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
 
@@ -23,11 +25,13 @@ public class InsistenceLayerDataSourceTest {
 	@Test
 	public void shouldGetANonNullableConnection() throws SQLException {
 		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(TestDataSources.createH2("datasourcetest"));
-		assertNotNull(ds.getConnection());
+		try (var connection = ds.getConnection()) {
+			assertNotNull(connection);
+		}
 	}
 
 	@Test
-	public void shouldReturnConnectionWrapperAfterConfigure() throws SQLException {
+	public void shouldReturnConnectionWrapperAfterConfigure() {
 		InsistenceLayerDataSource ds = new InsistenceLayerDataSource(TestDataSources.createH2("datasourcetest"));
 		assertNotNull(ds.getConnectionWrapper());
 	}

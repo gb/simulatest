@@ -50,6 +50,7 @@ public class UserTransactionInsistenceLayerTest {
 		}
 		statement.executeUpdate("DELETE FROM LOG");
 		statement.close();
+		connection.close();
 	}
 
 	@Test
@@ -84,6 +85,13 @@ public class UserTransactionInsistenceLayerTest {
 		insistenceLayer.decreaseLevel();
 		assertEquals(2, insistenceLayer.getCurrentLevel());
 		assertTrue(valuesFromTableLog().isEmpty());
+	}
+
+	@Test
+	public void commitAndRollbackShouldWorkAfterDecreaseLevel() throws SQLException {
+		statement.executeUpdate("INSERT INTO LOG VALUES ('at-level-3')");
+		connection.commit();
+		insistenceLayer.decreaseLevel();
 
 		statement.executeUpdate("INSERT INTO LOG VALUES ('at-level-2')");
 		connection.commit();

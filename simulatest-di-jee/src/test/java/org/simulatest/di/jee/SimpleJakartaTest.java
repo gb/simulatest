@@ -8,6 +8,7 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.h2.jdbcx.JdbcDataSource;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.simulatest.environment.Environment;
@@ -22,7 +23,8 @@ import static org.junit.Assert.assertEquals;
 @UseEnvironment(SimpleJakartaTest.ChildEnv.class)
 public class SimpleJakartaTest {
 
-	static {
+	@BeforeClass
+	public static void configureInsistenceLayer() {
 		JdbcDataSource h2 = new JdbcDataSource();
 		h2.setURL("jdbc:h2:mem:jeetest;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
