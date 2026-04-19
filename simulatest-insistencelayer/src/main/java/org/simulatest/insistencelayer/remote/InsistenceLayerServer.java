@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * <p>Embed this in the application process (e.g. during test startup) so that a remote
  * test driver can control the savepoint stack via {@link RemoteInsistenceLayer}.</p>
  *
- * <h3>Usage:</h3>
+ * <h2>Usage</h2>
  * <pre>{@code
  * InsistenceLayerServer server = new InsistenceLayerServer(layer, 4242);
  * server.start();
@@ -40,20 +41,39 @@ public final class InsistenceLayerServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerServer.class);
 
+	private static final int ACCEPT_BACKLOG = 50;
+
 	private final InsistenceLayer layer;
 	private final int requestedPort;
+	private final InetAddress bindAddress;
 	private volatile ServerSocket serverSocket;
 	private volatile Thread serverThread;
 	private volatile Socket activeClient;
 
 	/**
-	 * Creates a server that will delegate commands to the given layer.
+	 * Creates a server bound to the loopback interface. The server will only
+	 * accept connections from the same host. This is the safe default for
+	 * development and CI use.
 	 *
 	 * @param layer the local Insistence Layer (with a real DB connection)
-	 * @param port    the TCP port to bind to (use 0 for OS-assigned port)
+	 * @param port  the TCP port to bind to (use 0 for OS-assigned port)
 	 */
 	public InsistenceLayerServer(InsistenceLayer layer, int port) {
+		this(layer, port, InetAddress.getLoopbackAddress());
+	}
+
+	/**
+	 * Creates a server bound to a specific address. Pass a non-loopback
+	 * address only if you intentionally want remote hosts to control the
+	 * Insistence Layer; the protocol has no authentication.
+	 *
+	 * @param layer       the local Insistence Layer (with a real DB connection)
+	 * @param port        the TCP port to bind to (use 0 for OS-assigned port)
+	 * @param bindAddress the local address to bind to
+	 */
+	public InsistenceLayerServer(InsistenceLayer layer, int port, InetAddress bindAddress) {
 		this.layer = Objects.requireNonNull(layer, "layer must not be null");
+		this.bindAddress = Objects.requireNonNull(bindAddress, "bindAddress must not be null");
 		this.requestedPort = port;
 	}
 
@@ -63,8 +83,8 @@ public final class InsistenceLayerServer {
 	 * @throws IOException if the port cannot be bound
 	 */
 	public void start() throws IOException {
-		serverSocket = new ServerSocket(requestedPort);
-		logger.info("Server started on port {}", serverSocket.getLocalPort());
+		serverSocket = new ServerSocket(requestedPort, ACCEPT_BACKLOG, bindAddress);
+		logger.info("Server started on {}:{}", bindAddress.getHostAddress(), serverSocket.getLocalPort());
 
 		serverThread = new Thread(this::acceptLoop, "insistence-layer-server");
 		serverThread.setDaemon(true);
