@@ -9,7 +9,7 @@ name: Release to Maven Central
 # (autoPublish is off in pom.xml — flip it to true once the process is
 # trusted.)
 #
-# Required secrets (set once via setup-release-secrets.sh):
+# Required secrets (set once via scripts/setup-release-secrets.sh):
 #   GPG_PRIVATE_KEY        - ASCII-armored secret key
 #   MAVEN_GPG_PASSPHRASE   - passphrase for the key above
 #   CENTRAL_USERNAME       - Central Portal user-token username
