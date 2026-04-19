@@ -34,8 +34,10 @@
 		<h2.version>2.4.240</h2.version>
 		<!-- Provided/test versions: pin to the lowest known-good API floor so
 		     downstream users can stay on older toolchains. The engines below
-		     stay aligned with the API line. -->
-		<junit.version>4.12</junit.version>
+		     stay aligned with the API line. JUnit 4 stays at 4.13.2 because
+		     4.7-4.13 (inclusive) carry CVE-2020-15250 (TemporaryFolder
+		     world-readable on Unix); the fix landed in 4.13.1. -->
+		<junit.version>4.13.2</junit.version>
 		<junit-platform.version>1.10.5</junit-platform.version>
 		<junit-jupiter.version>5.10.5</junit-jupiter.version>
 		<mockito.version>5.23.0</mockito.version>
@@ -269,7 +271,7 @@
 					<plugin>
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
-						<version>0.9.0</version>
+						<version>0.10.0</version>
 						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>central</publishingServerId>
