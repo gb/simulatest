@@ -13,8 +13,9 @@ import org.simulatest.insistencelayer.InsistenceLayer;
  * <ul>
  *   <li>{@code afterRun}: push a new savepoint level (parent state is now visible,
  *       and any data the environment writes lives above it).</li>
- *   <li>{@code afterChildrenRun}: pop the level (or roll back its contents when
- *       it cannot be released), undoing everything written under this subtree.</li>
+ *   <li>{@code afterChildrenRun}: pop the level, undoing everything written
+ *       under this subtree. If the pop fails, fall back to unwinding the
+ *       full stack so the connection is left in a clean state.</li>
  *   <li>{@code afterSiblingCleanup}: roll the current level back to its starting
  *       state so the next sibling test/environment sees the same parent data
  *       without leaks from the previous one.</li>

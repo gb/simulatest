@@ -30,10 +30,11 @@ permissions:
   attestations: write
 
 # Two tag pushes in close succession would otherwise race for the same
-# Central staging slot. Don't cancel an in-flight deploy: a half-finished
-# upload is worse than a queued one.
+# Central staging slot. The group key is constant (not per-tag) so all
+# release runs serialize. Don't cancel an in-flight deploy: a half-
+# finished upload is worse than a queued one.
 concurrency:
-  group: release-${{ github.ref }}
+  group: maven-central-release
   cancel-in-progress: false
 
 jobs:
