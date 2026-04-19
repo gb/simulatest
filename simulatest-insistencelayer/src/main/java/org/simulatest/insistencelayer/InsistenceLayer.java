@@ -11,7 +11,7 @@ package org.simulatest.insistencelayer;
  *
  * <p>"Insist, insist, insist ... but never persist."</p>
  *
- * <h3>Typical lifecycle</h3>
+ * <h2>Typical lifecycle</h2>
  * <pre>
  *   increaseLevel()          // capture state before environment subtree
  *     increaseLevel()        // capture state before deeper environment

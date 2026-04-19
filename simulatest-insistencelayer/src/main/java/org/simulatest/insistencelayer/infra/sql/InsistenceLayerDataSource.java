@@ -9,6 +9,16 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
+/**
+ * {@link DataSource} adapter that routes every {@link Connection} through a
+ * single shared {@link ConnectionWrapper}, so callers participate in the
+ * Insistence Layer's savepoint stack.
+ *
+ * <p>Per-call credentials are not supported (configure them on the wrapped
+ * DataSource); calling {@link #getConnection(String, String)} throws
+ * {@link SQLFeatureNotSupportedException}. Like {@link ConnectionWrapper}, the
+ * underlying single connection is not thread-safe.</p>
+ */
 public final class InsistenceLayerDataSource implements DataSource {
 
 	private final DataSource delegate;
@@ -20,6 +30,13 @@ public final class InsistenceLayerDataSource implements DataSource {
 		this.connectionWrapper = new ConnectionWrapper(delegate);
 	}
 
+	/**
+	 * Exposes the {@link ConnectionWrapper} backing this data source, so callers
+	 * (typically an {@link org.simulatest.insistencelayer.InsistenceLayer}) can
+	 * drive savepoints on the same connection that test code uses.
+	 *
+	 * @return the shared connection wrapper
+	 */
 	public ConnectionWrapper getConnectionWrapper() {
 		return connectionWrapper;
 	}

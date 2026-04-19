@@ -5,6 +5,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A node in a {@link Tree}: holds a non-null value, an optional parent, and
+ * an ordered list of children. Children retain insertion order so callers can
+ * rely on first/last positions ({@link #getFirstChild()}, {@link #getLastChild()},
+ * {@link #isLastChild()}).
+ *
+ * @param <T> the value type
+ */
 public final class Node<T> {
 	
 	private final T value;
