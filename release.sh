@@ -54,7 +54,11 @@ mvn -B -q versions:set \
   -DprocessAllModules=true
 
 echo "==> Bumping reproducible build timestamp to ${TODAY}"
-sed -i "s|<project.build.outputTimestamp>.*</project.build.outputTimestamp>|<project.build.outputTimestamp>${TODAY}</project.build.outputTimestamp>|" pom.xml
+# Portable in-place edit (GNU sed -i and BSD sed -i differ on the suffix
+# argument). Write to a temp file, then atomically replace.
+TIMESTAMP_TMP=$(mktemp)
+sed "s|<project.build.outputTimestamp>.*</project.build.outputTimestamp>|<project.build.outputTimestamp>${TODAY}</project.build.outputTimestamp>|" pom.xml > "$TIMESTAMP_TMP"
+mv "$TIMESTAMP_TMP" pom.xml
 
 echo "==> Verifying full reactor (excluding gui)"
 mvn -B verify -pl '!simulatest-gui'

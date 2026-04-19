@@ -31,7 +31,15 @@ if [[ $# -ne 1 ]]; then
 fi
 
 VERSION="$1"
+
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$ ]]; then
+  echo "Version '$VERSION' is not a valid semver (e.g. 0.1.0 or 1.0.0-RC1)." >&2
+  exit 1
+fi
+
 TAG="v${VERSION}"
+# Escaped for use inside an ERE pattern (so 1.2.3 doesn't also match 1x2x3).
+VERSION_RE="${VERSION//./\\.}"
 
 # --- 1. local tag ---------------------------------------------------------
 if git rev-parse -q --verify "refs/tags/${TAG}" > /dev/null; then
@@ -61,30 +69,32 @@ the Central Portal API. Open this URL and drop any deployment for
 
     https://central.sonatype.com/publishing/deployments
 
-Statuses worth dropping: PENDING, VALIDATING, VALIDATED, FAILED.
-PUBLISHED is past the point of no return.
+Droppable statuses: VALIDATED, FAILED.
+PENDING and VALIDATING must finish processing before they can be dropped.
+PUBLISHING and PUBLISHED are past the point of no return.
 
 EOF
   exit 0
 fi
 
-TOKEN=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
+# `base64 -w0` is GNU-only; pipe through tr for portability with BSD/macOS.
+TOKEN=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 | tr -d '\n')
 API="https://central.sonatype.com/api/v1/publisher"
 
-# List all deployments and pick the ones matching our version.
-RESPONSE=$(curl -fsS -X POST -H "Authorization: Bearer ${TOKEN}" \
-  "${API}/deployments?pageNum=0&pageSize=50" 2>/dev/null || echo "")
-
-if [[ -z "$RESPONSE" ]]; then
-  echo "(Could not reach Central Portal API; check credentials.)"
-  exit 0
+# List all deployments. Propagate API failures explicitly: a curl error
+# must not look like an empty result, otherwise callers (CI) treat
+# transient failures as "nothing to drop" and silently move on.
+if ! RESPONSE=$(curl -fsS -X POST -H "Authorization: Bearer ${TOKEN}" \
+  "${API}/deployments?pageNum=0&pageSize=50"); then
+  echo "Could not reach Central Portal API; check credentials/network." >&2
+  exit 1
 fi
 
 # Parse without jq (not always installed). Pull deployment IDs whose name
 # contains the version string.
 MATCHES=$(echo "$RESPONSE" | grep -oE "\"deploymentId\":\"[^\"]+\"|\"deploymentName\":\"[^\"]+\"|\"deploymentState\":\"[^\"]+\"" \
   | paste -d, - - - \
-  | grep -E "[:-]${VERSION}([\",-]|$)" || true)
+  | grep -E "[:-]${VERSION_RE}([\",-]|$)" || true)
 
 if [[ -z "$MATCHES" ]]; then
   echo "No Central staging deployment matched version ${VERSION}."
@@ -102,11 +112,24 @@ if ! $DROP; then
   exit 0
 fi
 
-echo "$MATCHES" | grep -oE '"deploymentId":"[^"]+"' | sed 's/.*"\([^"]*\)"$/\1/' | while read -r ID; do
+# Only VALIDATED and FAILED are droppable per the Central Portal API.
+DROPPABLE=$(echo "$MATCHES" | grep -E '"deploymentState":"(VALIDATED|FAILED)"' || true)
+if [[ -z "$DROPPABLE" ]]; then
+  echo "No matched deployments are currently in a droppable state " >&2
+  echo "(VALIDATED or FAILED). PENDING/VALIDATING must finish first." >&2
+  exit 1
+fi
+
+while read -r ID; do
   echo "==> Dropping deployment ${ID}"
-  curl -fsS -X DELETE -H "Authorization: Bearer ${TOKEN}" \
-    "${API}/deployment/${ID}" && echo "    dropped"
-done
+  if curl -fsS -X DELETE -H "Authorization: Bearer ${TOKEN}" \
+    "${API}/deployment/${ID}"; then
+    echo "    dropped"
+  else
+    echo "    failed to drop ${ID}" >&2
+    exit 1
+  fi
+done < <(echo "$DROPPABLE" | grep -oE '"deploymentId":"[^"]+"' | sed 's/.*"\([^"]*\)"$/\1/')
 
 echo
 echo "Done. The 'release: ${VERSION}' commit on master is untouched —"

@@ -30,6 +30,18 @@ gpg --list-secret-keys --keyid-format=long
 echo
 read -rp "GPG key ID to use (long form, e.g. 2C51144F74D9EC68): " GPG_KEY_ID
 
+# Empty input would make `gpg --export-secret-keys` export EVERY key in
+# the local keyring, which then ships to GitHub as one repo secret.
+# Validate the ID is non-empty AND actually present.
+if [[ -z "${GPG_KEY_ID// }" ]]; then
+  echo "GPG key ID is required." >&2
+  exit 1
+fi
+if ! gpg --list-secret-keys "$GPG_KEY_ID" > /dev/null 2>&1; then
+  echo "No secret key found for ID: $GPG_KEY_ID" >&2
+  exit 1
+fi
+
 echo "==> Exporting secret key and uploading as GPG_PRIVATE_KEY"
 gpg --armor --export-secret-keys "$GPG_KEY_ID" | gh secret set GPG_PRIVATE_KEY
 
