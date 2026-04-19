@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * This console runs on that same connection, so it sees exactly what the
  * test sees.</p>
  *
- * <h3>When to use</h3>
+ * <h2>When to use</h2>
  * <ul>
  *   <li>A test fails and you need to inspect what data exists at a specific point</li>
  *   <li>You want to understand what state an environment sets up</li>
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  *   <li>You are an AI agent debugging a test failure and need to see the database</li>
  * </ul>
  *
- * <h3>Usage</h3>
+ * <h2>Usage</h2>
  * <p>Add {@code InsistenceLayerConsole.debug()} at the point in the test where
  * you want to pause and inspect:</p>
  * <pre>

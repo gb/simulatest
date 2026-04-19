@@ -10,6 +10,7 @@
 
 	<artifactId>simulatest-insistencelayer</artifactId>
 	<name>Simulatest - Insistence Layer</name>
+	<description>Standalone JDBC savepoint stack for transactional test isolation.</description>
 
 	<dependencies>
 		<dependency>

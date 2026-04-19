@@ -13,6 +13,14 @@ import java.util.Set;
 
 import org.simulatest.environment.annotation.UseEnvironment;
 
+/**
+ * Groups test classes by the {@link Environment} they declare via
+ * {@link UseEnvironment}. Tests without the annotation are bucketed under
+ * {@link BigBangEnvironment}.
+ *
+ * <p>Used by the runners to figure out which tests belong to which environment
+ * node when walking the tree.</p>
+ */
 public final class EnvironmentExtractor {
 
 	private final Map<EnvironmentDefinition, List<Class<?>>> testsByEnvironment;

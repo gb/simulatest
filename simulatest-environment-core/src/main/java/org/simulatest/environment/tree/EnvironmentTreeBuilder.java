@@ -8,6 +8,16 @@ import java.util.Set;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
 
+/**
+ * Builds a {@link Tree} of {@link EnvironmentDefinition}s rooted at
+ * {@link org.simulatest.environment.BigBangEnvironment}, walking each
+ * definition's parent chain and inserting ancestors before descendants.
+ *
+ * <p>Cycles in the {@link org.simulatest.environment.annotation.EnvironmentParent}
+ * graph are detected during insertion and raise
+ * {@link EnvironmentCyclicException}. Adding the same definition twice is a
+ * no-op.</p>
+ */
 public final class EnvironmentTreeBuilder {
 	
 	private final Tree<EnvironmentDefinition> tree;

@@ -10,9 +10,10 @@
 
 	<artifactId>simulatest-di-guice</artifactId>
 	<name>Simulatest - DI Guice Plugin</name>
+	<description>Guice integration: load Simulatest environments from a Guice Injector.</description>
 
 	<properties>
-		<guice.version>7.0.0</guice.version>
+		<guice.version>6.0.0</guice.version>
 	</properties>
 
 	<dependencies>
@@ -24,6 +25,7 @@
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>${guice.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>

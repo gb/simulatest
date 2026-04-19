@@ -7,6 +7,7 @@ import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.PostDiscoveryFilter;
+import org.simulatest.environment.annotation.UseEnvironment;
 
 /**
  * Prunes {@link UseEnvironment @UseEnvironment} classes from non-Simulatest engines
@@ -41,12 +42,11 @@ public final class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter 
 	}
 
 	private static Optional<Class<?>> resolveTestClass(TestDescriptor descriptor) {
-		return descriptor.getSource()
-				.map(source -> switch (source) {
-					case ClassSource s -> s.getJavaClass();
-					case MethodSource s -> s.getJavaClass();
-					default -> null;
-				});
+		return descriptor.getSource().map(source -> {
+			if (source instanceof ClassSource s) return s.getJavaClass();
+			if (source instanceof MethodSource s) return s.getJavaClass();
+			return null;
+		});
 	}
 
 	private static boolean isExternalEngine(TestDescriptor descriptor) {

@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * <p>Use this in the test process when the application under test runs in a separate
  * JVM (e.g. Spring Boot in Docker, a Selenium target, or any remote service).</p>
  *
- * <h3>Usage:</h3>
+ * <h2>Usage</h2>
  * <pre>{@code
  * InsistenceLayer manager = new RemoteInsistenceLayer("localhost", 4242);
  * manager.increaseLevel();   // sent over TCP to the app process

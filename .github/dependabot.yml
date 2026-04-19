@@ -4,6 +4,23 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Provided-scope APIs are pinned to the lowest known-good floor so
+    # downstream users on older toolchains can still adopt Simulatest.
+    # Bumping them defeats the point; ignore them here.
+    # The JUnit families share their version property with test-scope
+    # engines, so the wildcards cover both.
+    ignore:
+      - dependency-name: "junit:junit"
+      - dependency-name: "org.junit.platform:*"
+      - dependency-name: "org.junit.jupiter:*"
+      - dependency-name: "org.springframework:spring-context"
+      - dependency-name: "com.google.inject:guice"
+      - dependency-name: "jakarta.enterprise:jakarta.enterprise.cdi-api"
+      - dependency-name: "jakarta.inject:jakarta.inject-api"
+      # slf4j-api is the only third-party jar shipped at compile scope.
+      # Pinned to 1.7.x for cross-version classpath safety; do not bump.
+      - dependency-name: "org.slf4j:slf4j-api"
+      - dependency-name: "org.slf4j:slf4j-simple"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

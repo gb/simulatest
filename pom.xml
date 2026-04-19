@@ -8,17 +8,45 @@
 	<version>0.0.2</version>
 	<packaging>pom</packaging>
 	<name>Simulatest - Integration Test Harness Framework</name>
+	<description>A JVM toolkit for database-heavy test isolation.</description>
+	<url>https://simulatest.org</url>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<scm>
+		<connection>scm:git:https://github.com/gb/simulatest.git</connection>
+		<developerConnection>scm:git:git@github.com:gb/simulatest.git</developerConnection>
+		<url>https://github.com/gb/simulatest</url>
+	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<classgraph.version>4.8.184</classgraph.version>
+		<!-- Reproducible builds: same source bytes in, same jar bytes out.
+		     Bump this to the release date on every release. -->
+		<project.build.outputTimestamp>2026-04-19T00:00:00Z</project.build.outputTimestamp>
 		<h2.version>2.4.240</h2.version>
+		<!-- Provided/test versions: pin to the lowest known-good API floor so
+		     downstream users can stay on older toolchains. The engines below
+		     stay aligned with the API line. JUnit 4 stays at 4.13.2 because
+		     4.7-4.13 (inclusive) carry CVE-2020-15250 (TemporaryFolder
+		     world-readable on Unix); the fix landed in 4.13.1. -->
 		<junit.version>4.13.2</junit.version>
-		<junit-platform.version>6.0.3</junit-platform.version>
-		<junit-jupiter.version>6.0.3</junit-jupiter.version>
+		<junit-platform.version>1.10.5</junit-platform.version>
+		<junit-jupiter.version>5.10.5</junit-jupiter.version>
 		<mockito.version>5.23.0</mockito.version>
-		<slf4j.version>2.0.17</slf4j.version>
+		<!-- slf4j-api is the only third-party jar pushed onto downstream
+		     classpaths (compile scope). Pin to the last 1.7.x so Maven's
+		     nearest-wins doesn't yank older Spring Boot 2.x users off
+		     their 1.7-compatible logback. SLF4J's Logger/LoggerFactory
+		     surface is wire-compatible across 1.7 and 2.x. -->
+		<slf4j.version>1.7.36</slf4j.version>
 		<surefire.version>3.5.5</surefire.version>
 	</properties>
 
@@ -82,12 +110,6 @@
 				<artifactId>slf4j-simple</artifactId>
 				<version>${slf4j.version}</version>
 			</dependency>
-			<!-- Third-party -->
-			<dependency>
-				<groupId>io.github.classgraph</groupId>
-				<artifactId>classgraph</artifactId>
-				<version>${classgraph.version}</version>
-			</dependency>
 			<!-- Testing -->
 			<dependency>
 				<groupId>junit</groupId>
@@ -144,7 +166,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.15.0</version>
 				<configuration>
-					<release>21</release>
+					<release>17</release>
 					<encoding>UTF-8</encoding>
 					<proc>none</proc>
 				</configuration>
@@ -157,7 +179,108 @@
 					<argLine>-XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
 				</configuration>
 			</plugin>
+			<!-- Sources JAR: attached to every build so `mvn install` produces a
+			     complete artifact set and Maven Central gets *-sources.jar. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.3.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Javadoc JAR + lint: attached to every build so Maven Central gets
+			     *-javadoc.jar. doclint catches HTML/reference/syntax/accessibility
+			     issues but not missing comments — we document intent, not every getter. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.11.2</version>
+				<configuration>
+					<doclint>all,-missing</doclint>
+					<quiet>true</quiet>
+					<failOnWarnings>true</failOnWarnings>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- CycloneDX SBOM: emits a bom.xml + bom.json next to every jar so
+			     downstream supply-chain scanners can enumerate dependencies
+			     without re-resolving from Central. -->
+			<plugin>
+				<groupId>org.cyclonedx</groupId>
+				<artifactId>cyclonedx-maven-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>build-sbom</id>
+						<phase>package</phase>
+						<goals>
+							<goal>makeBom</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Release-only concerns: GPG signing and Maven Central publishing.
+		     Source and javadoc JARs are produced by the default build. -->
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.2.7</version>
+						<configuration>
+							<!-- Loopback pinentry: read the passphrase from the
+							     MAVEN_GPG_PASSPHRASE env var (or -Dgpg.passphrase)
+							     instead of opening a GUI prompt. Works the same
+							     locally and in CI. -->
+							<gpgArguments>
+								<arg>--pinentry-mode</arg>
+								<arg>loopback</arg>
+							</gpgArguments>
+						</configuration>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.10.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>false</autoPublish>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

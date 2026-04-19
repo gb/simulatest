@@ -8,6 +8,17 @@ import java.util.Objects;
 import java.util.stream.StreamSupport;
 
 
+/**
+ * Generic rooted tree iterated depth-first.
+ *
+ * <p>The root is fixed at construction. Values must be non-null and unique:
+ * inserting a duplicate or attaching a child to an unknown parent throws
+ * {@link IllegalArgumentException}. Used by the environment runner to
+ * represent the {@link org.simulatest.environment.EnvironmentDefinition}
+ * hierarchy.</p>
+ *
+ * @param <T> the value type stored in each node
+ */
 public final class Tree<T> implements Iterable<Node<T>> {
 	
 	private final Map<T, Node<T>> nodesByValue;

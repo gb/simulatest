@@ -1,5 +1,7 @@
 package org.simulatest.environment;
 
+import org.simulatest.environment.annotation.EnvironmentParent;
+
 /**
  * A test fixture that sets up database state for a group of tests.
  *

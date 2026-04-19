@@ -11,6 +11,7 @@
 
 	<artifactId>simulatest-environment-junit-platform</artifactId>
 	<name>Simulatest - Environment JUnit Platform TestEngine</name>
+	<description>JUnit Platform TestEngine that runs Simulatest environments alongside Jupiter tests.</description>
 
 	<dependencies>
 		<dependency>
@@ -20,15 +21,17 @@
 		<dependency>
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-engine</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-launcher</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<optional>true</optional>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>

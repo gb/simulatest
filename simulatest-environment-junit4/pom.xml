@@ -10,6 +10,7 @@
 
 	<artifactId>simulatest-environment-junit4</artifactId>
 	<name>Simulatest - Environment JUnit 4</name>
+	<description>JUnit 4 runner that drives Simulatest environments.</description>
 
 	<dependencies>
 		<dependency>
@@ -19,6 +20,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>

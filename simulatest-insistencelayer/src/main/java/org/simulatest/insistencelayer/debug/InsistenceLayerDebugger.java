@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  *       via {@link SQLWindow}</li>
  * </ul>
  *
- * <h3>Usage</h3>
+ * <h2>Usage</h2>
  * <pre>
  * {@literal @}Test
  * public void myTest() throws Exception {
