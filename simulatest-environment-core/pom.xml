@@ -10,6 +10,7 @@
 
 	<artifactId>simulatest-environment-core</artifactId>
 	<name>Simulatest - Environment Core</name>
+	<description>Composable test fixture tree and runner shared across Simulatest test suites.</description>
 
 	<dependencies>
 		<dependency>

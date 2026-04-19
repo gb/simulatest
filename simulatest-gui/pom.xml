@@ -12,9 +12,12 @@
 	<name>Simulatest - GUI</name>
 
 	<properties>
+		<maven.deploy.skip>true</maven.deploy.skip>
+		<gpg.skip>true</gpg.skip>
 		<fest-swing.version>1.2.1</fest-swing.version>
 		<miglayout.version>3.7.4</miglayout.version>
 		<picocontainer.version>2.15.2</picocontainer.version>
+		<classgraph.version>4.8.184</classgraph.version>
 	</properties>
 
 	<dependencies>
@@ -45,6 +48,7 @@
 		<dependency>
 			<groupId>io.github.classgraph</groupId>
 			<artifactId>classgraph</artifactId>
+			<version>${classgraph.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.picocontainer</groupId>

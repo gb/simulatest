@@ -16,6 +16,11 @@
 		Didactic examples showcasing Simulatest's environment tree and Insistence Layer.
 	</description>
 
+	<properties>
+		<maven.deploy.skip>true</maven.deploy.skip>
+		<gpg.skip>true</gpg.skip>
+	</properties>
+
 	<dependencies>
 		<!-- Simulatest core: Environment interface, @EnvironmentParent, @UseEnvironment -->
 		<dependency>

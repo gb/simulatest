@@ -10,9 +10,13 @@
 
 	<artifactId>simulatest-di-spring</artifactId>
 	<name>Simulatest - DI Spring Plugin</name>
+	<description>Spring integration: load Simulatest environments from a Spring ApplicationContext.</description>
 
 	<properties>
-		<spring.version>7.0.6</spring.version>
+		<!-- Spring 5.3.31 (Nov 2023) is the earliest 5.3.x release with ASM
+		     able to read Java 21 bytecode; older 5.3 versions trip on the
+		     class-file major version. -->
+		<spring.version>5.3.31</spring.version>
 	</properties>
 
 	<dependencies>
@@ -24,6 +28,7 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 			<version>${spring.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>

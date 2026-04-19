@@ -1,0 +1,77 @@
+name: Release to Maven Central
+
+# Triggered by pushing a tag like v0.1.0. Signs every artifact with the
+# committer's GPG key, uploads to a Central Portal staging deployment,
+# and publishes a Sigstore-signed build provenance attestation.
+#
+# The Central staging deployment must be released manually at:
+#   https://central.sonatype.com/publishing
+# (autoPublish is off in pom.xml — flip it to true once the process is
+# trusted.)
+#
+# Required secrets (set once via setup-release-secrets.sh):
+#   GPG_PRIVATE_KEY        - ASCII-armored secret key
+#   MAVEN_GPG_PASSPHRASE   - passphrase for the key above
+#   CENTRAL_USERNAME       - Central Portal user-token username
+#   CENTRAL_PASSWORD       - Central Portal user-token password
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Workflow needs only read access to the repo. Provenance attestation
+# additionally needs id-token:write (to mint an OIDC token Sigstore can
+# verify) and attestations:write (to record the attestation against the
+# repo). No contents:write — we never push back.
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+# Two tag pushes in close succession would otherwise race for the same
+# Central staging slot. Don't cancel an in-flight deploy: a half-finished
+# upload is worse than a queued one.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up JDK 21 + GPG + Central credentials
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Verify build
+        run: mvn -B verify -pl '!simulatest-gui'
+
+      - name: Deploy signed artifacts to Central staging
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: mvn -B -P release deploy -DskipTests -pl '!simulatest-gui'
+
+      - name: Attest build provenance for released artifacts
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-path: |
+            simulatest-insistencelayer/target/simulatest-insistencelayer-*.jar
+            simulatest-environment-core/target/simulatest-environment-core-*.jar
+            simulatest-environment-junit4/target/simulatest-environment-junit4-*.jar
+            simulatest-environment-junit-platform/target/simulatest-environment-junit-platform-*.jar
+            simulatest-di-spring/target/simulatest-di-spring-*.jar
+            simulatest-di-guice/target/simulatest-di-guice-*.jar
+            simulatest-di-jee/target/simulatest-di-jee-*.jar
