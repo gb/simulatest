@@ -63,7 +63,11 @@ jobs:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-        run: mvn -B -P release deploy -DskipTests -pl '!simulatest-gui'
+        # Exclude gui (needs display server) and examples (unsigned,
+        # not meant for Central). central-publishing-maven-plugin
+        # ignores maven.deploy.skip and gpg.skip, so reactor exclusion
+        # is the only reliable way to keep examples out of staging.
+        run: mvn -B -P release deploy -DskipTests -pl '!simulatest-gui,!examples,!examples-spring-boot-kotlin'
 
       - name: Attest build provenance for released artifacts
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
