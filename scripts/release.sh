@@ -17,6 +17,8 @@
 
 set -euo pipefail
 
+cd "$(dirname "$0")/.."
+
 if [[ $# -ne 1 ]]; then
   echo "usage: $0 <new-version>   e.g. $0 0.1.0" >&2
   exit 1
