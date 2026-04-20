@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.simulatest</groupId>
 	<artifactId>simulatest</artifactId>
-	<version>0.0.2</version>
+	<version>0.1.0</version>
 	<packaging>pom</packaging>
 	<name>Simulatest - Integration Test Harness Framework</name>
 	<description>A JVM toolkit for database-heavy test isolation.</description>
@@ -30,7 +30,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<!-- Reproducible builds: same source bytes in, same jar bytes out.
 		     Bump this to the release date on every release. -->
-		<project.build.outputTimestamp>2026-04-19T00:00:00Z</project.build.outputTimestamp>
+		<project.build.outputTimestamp>2026-04-20T00:00:00Z</project.build.outputTimestamp>
 		<h2.version>2.4.240</h2.version>
 		<!-- Provided/test versions: pin to the lowest known-good API floor so
 		     downstream users can stay on older toolchains. The engines below
