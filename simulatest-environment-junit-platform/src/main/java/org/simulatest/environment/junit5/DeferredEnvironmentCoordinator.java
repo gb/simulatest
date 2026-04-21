@@ -91,14 +91,10 @@ public final class DeferredEnvironmentCoordinator {
 		runEnvironments.clear();
 	}
 
-	// Walks @Nested enclosing chain so an inner class inherits the outer
-	// class's @UseEnvironment rather than coming back empty.
 	private static UseEnvironment resolveUseEnvironment(Class<?> testClass) {
-		for (Class<?> current = testClass; current != null; current = current.getEnclosingClass()) {
-			UseEnvironment use = current.getAnnotation(UseEnvironment.class);
-			if (use != null) return use;
-		}
-		return null;
+		return UseEnvironmentClassScanner.resolveUseEnvironmentClass(testClass)
+				.map(c -> c.getAnnotation(UseEnvironment.class))
+				.orElse(null);
 	}
 
 	private static Class<? extends Environment> parentOf(Class<? extends Environment> env) {

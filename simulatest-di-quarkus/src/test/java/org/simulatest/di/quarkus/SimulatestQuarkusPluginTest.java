@@ -131,6 +131,17 @@ class SimulatestQuarkusPluginTest {
 			+ "JVM would skip environments that look like they already ran");
 	}
 
+	@Test
+	void initializeAlsoClearsCoordinatorSoADirtyPriorSessionDoesNotLeak() {
+		DeferredEnvironmentCoordinator.claimNotYetRun(FakeEnv.class);
+
+		new SimulatestQuarkusPlugin().initialize(List.of());
+
+		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(FakeEnv.class),
+			"initialize() must clear coordinator state so a session that exited abruptly "
+			+ "doesn't taint the next one");
+	}
+
 	static class FakeEnv implements Environment {
 		@Override public void run() {}
 	}

@@ -17,7 +17,7 @@ public class EagerEnvironmentLifecycleTest {
 		RecordingExecution execution = new RecordingExecution();
 		EnvironmentDefinition definition = EnvironmentDefinition.create(Fake.class);
 
-		new EagerEnvironmentLifecycle().onEnter(definition, execution);
+		EagerEnvironmentLifecycle.INSTANCE.onEnter(definition, execution);
 
 		// Eager lifecycle must run env BEFORE pushing the level so test savepoints
 		// only roll back test mutations, not the env's seed writes.
@@ -29,7 +29,7 @@ public class EagerEnvironmentLifecycleTest {
 		RecordingExecution execution = new RecordingExecution();
 		EnvironmentDefinition definition = EnvironmentDefinition.create(Fake.class);
 
-		new EagerEnvironmentLifecycle().onExit(definition, execution);
+		EagerEnvironmentLifecycle.INSTANCE.onExit(definition, execution);
 
 		assertEquals(Arrays.asList("pop"), execution.events);
 	}

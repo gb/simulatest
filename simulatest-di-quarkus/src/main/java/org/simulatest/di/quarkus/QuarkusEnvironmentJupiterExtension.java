@@ -37,11 +37,18 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 
 	private static final Logger logger = LoggerFactory.getLogger(QuarkusEnvironmentJupiterExtension.class);
 
-	// Identity of the Arc container we saw on the previous beforeAll. Different
-	// instance means Quarkus restarted (e.g., @TestProfile switch), and every
-	// previously-claimed environment is now against a runtime that no longer
-	// exists — reset the coordinator so ancestors re-run against the new one.
+	// Different instance on the next beforeAll means Quarkus restarted
+	// (e.g. @TestProfile switch); we reset the coordinator in that case.
 	private static ArcContainer lastKnownContainer;
+
+	/**
+	 * Clears the cached Arc container reference. Called from
+	 * {@link SimulatestQuarkusPlugin#destroy()} so a long-lived JVM running
+	 * multiple sessions doesn't retain the final container of each session.
+	 */
+	static synchronized void forgetLastKnownContainer() {
+		lastKnownContainer = null;
+	}
 
 	@Override
 	public void beforeAll(ExtensionContext context) {

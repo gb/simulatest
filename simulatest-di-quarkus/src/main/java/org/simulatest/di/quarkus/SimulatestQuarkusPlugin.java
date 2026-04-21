@@ -190,6 +190,7 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 	public void destroy() {
 		InsistenceLayerFactory.clear();
 		DeferredEnvironmentCoordinator.reset();
+		QuarkusEnvironmentJupiterExtension.forgetLastKnownContainer();
 	}
 
 }

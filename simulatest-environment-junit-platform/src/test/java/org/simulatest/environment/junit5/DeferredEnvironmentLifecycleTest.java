@@ -24,7 +24,7 @@ class DeferredEnvironmentLifecycleTest {
 		RecordingExecution execution = new RecordingExecution();
 		EnvironmentDefinition definition = EnvironmentDefinition.create(Fake.class);
 
-		new DeferredEnvironmentLifecycle().onEnter(definition, execution);
+		DeferredEnvironmentLifecycle.INSTANCE.onEnter(definition, execution);
 
 		assertTrue(execution.events.isEmpty(),
 			"deferred entry must not run the env nor push a level; that work is done later "
@@ -37,7 +37,7 @@ class DeferredEnvironmentLifecycleTest {
 		RecordingExecution execution = new RecordingExecution();
 		EnvironmentDefinition definition = EnvironmentDefinition.create(Fake.class);
 
-		new DeferredEnvironmentLifecycle().onExit(definition, execution);
+		DeferredEnvironmentLifecycle.INSTANCE.onExit(definition, execution);
 
 		assertEquals(List.of("pop"), execution.events);
 		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(Fake.class),

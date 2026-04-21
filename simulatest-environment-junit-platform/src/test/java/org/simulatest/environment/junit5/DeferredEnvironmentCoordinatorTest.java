@@ -45,6 +45,15 @@ class DeferredEnvironmentCoordinatorTest {
 			"root-first ordering lets callers push savepoints outermost-to-innermost");
 	}
 
+	@Test
+	void nestedInnerClassInheritsOuterUseEnvironment() {
+		List<Class<? extends Environment>> ancestry =
+			DeferredEnvironmentCoordinator.ancestryOf(UsesLeaf.NestedInner.class);
+
+		assertEquals(List.of(Root.class, Middle.class, Leaf.class), ancestry,
+			"@Nested inner classes must pick up the outer class's environment");
+	}
+
 	// =========================================================================
 	// Claim / forget / reset semantics
 	// =========================================================================
@@ -102,6 +111,8 @@ class DeferredEnvironmentCoordinatorTest {
 	static class UsesRoot { }
 
 	@UseEnvironment(Leaf.class)
-	static class UsesLeaf { }
+	static class UsesLeaf {
+		static class NestedInner { }
+	}
 
 }
