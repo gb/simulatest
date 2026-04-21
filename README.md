@@ -1,50 +1,70 @@
 # Simulatest
 
-If you work on a project with a database, you know the pain: tests that corrupt each other's data, `@Before`/`@After` cleanup boilerplate everywhere, brittle `DELETE FROM` or `TRUNCATE` statements between tests, and integration suites that slow to a crawl because they recreate the schema for every test class.
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/java-17%2B-blue.svg)](#quick-start)
+[![Simulatest](https://img.shields.io/maven-central/v/org.simulatest/simulatest-insistencelayer?label=simulatest)](https://central.sonatype.com/artifact/org.simulatest/simulatest-insistencelayer)
 
-Simulatest eliminates all of that. It is a JVM toolkit made of two independent, composable tools:
+If you work on a database-backed system, you've felt this:
 
-1. **Insistence Layer**: a transactional sandbox for your database
-2. **Environments**: composable, OOP test fixtures organized as a tree
+- Tests interfering with each other
+- Setup and cleanup boilerplate everywhere (`@Before`, `@After`, `DELETE FROM`, `TRUNCATE`)
+- Tests rebuilding the same data over and over
+
+Simulatest removes all of that. It replaces the traditional setup/cleanup model with something simpler: reversible state and structured fixtures.
+
+It is a JVM toolkit built on two ideas:
+
+1. Reversible database state
+2. A better way to write test fixtures
+
+See it in action: [simulatest-examples](https://github.com/gb/simulatest-examples).
 
 ---
 
 ## The Insistence Layer
 
-*Insist, insist, insist... but never persist.*
+> What if your database had an *undo button*?
 
-What if your database had an undo button? You set up data, run your code, and then undo everything. The database returns to exactly the state it was in before, as if nothing happened.
+You set up data, run your test, and then undo everything, instantly. The database returns to exactly the previous state, as if nothing happened.
 
-That's what the Insistence Layer does. It wraps your database connection and manages a **level stack**. Increase the level before you make changes, decrease it when you're done, and everything is undone. The data is real while it exists: queryable, joinable, subject to constraints. But it never persists beyond its level.
+No cleanup. No side effects. No cross-test contamination.
 
-Levels nest arbitrarily deep. Each `decreaseLevel()` undoes exactly one level.
+The Insistence Layer turns your database into a transactional sandbox. You work normally:
 
+- `INSERT`, `UPDATE`, `DELETE`
+- Data is real, queryable, and constrained
+
+But nothing persists beyond its scope.
+
+```java
+increaseLevel();
+
+// do work: INSERTs, UPDATEs, DELETEs
+
+decreaseLevel(); // everything undone
 ```
-increaseLevel()
-    do work: INSERTs, UPDATEs, DELETEs. All real, all queryable.
-decreaseLevel()
-    everything undone, no trace.
-```
 
-Under the hood, the level stack is built on JDBC savepoints, a standard database feature. Any database that supports savepoints works with the Insistence Layer.
+Internally, this is powered by JDBC savepoints, a standard database feature.
 
-Three main use cases:
+It has these properties:
 
-| Use Case | How |
-|----------|-----|
-| **Test isolation** | The framework increases/decreases levels around environments and tests automatically |
-| **Dev seeding** | Increase a level, run environments to populate an empty local DB, explore the app, decrease when done |
-| **Production safety net** | Increase a level, run a risky migration, inspect results, decrease to undo if wrong |
-
-The Insistence Layer is not just a test tool. It works anywhere.
+- Levels can nest arbitrarily
+- Each level is fully isolated
+- Undo is instant, regardless of how much data was written
 
 ---
 
 ## Environments
 
-In database-heavy projects, test setup code tends to be duplicated across test classes. Or worse, every test builds the world from scratch. Environments solve this by letting you define setup logic once and compose it into a hierarchy.
+A better way to write test fixtures:
 
-An Environment is a Java class that sets up data. It declares a parent via `@EnvironmentParent`, the same way a class extends a superclass: it trusts that the parent's data already exists.
+Environments are composable system states, not setup scripts.
+
+Most test suites treat fixtures as setup code: duplicated across tests, rebuilt per test, tightly coupled to execution order.
+
+Simulatest treats fixtures as composable system states. This is not a convenience feature. It is a different way to model test data.
+
+An Environment represents a cohesive state of the system. Instead of splitting by entity, you group by what the system needs together.
 
 ```
 CompanyEnvironment               → creates a company
@@ -54,106 +74,162 @@ CompanyEnvironment               → creates a company
 └── ProductEnvironment           → creates products (trusts company exists)
 ```
 
-Each environment runs once. Tests declare which environment they need via `@UseEnvironment`. Simulatest builds the tree, resolves the ordering, and executes everything.
+- Each level defines a complete, reusable baseline
+- Child environments extend that baseline
+- Tests pick the level of the world they need
 
-When combined with the Insistence Layer, the magic happens: after each environment runs, the level is increased. After its subtree completes, the level is decreased and everything that subtree did is undone. This means sibling environments never see each other's data. `PayrollEnvironment` and `PermissionsEnvironment` each start from the same `EmployeeEnvironment` state, completely unaffected by each other. Tests at the same level are isolated too, via `resetCurrentLevel()`. And the entire suite is undone at the end.
+> If your environments look like your database tables, you're probably doing it wrong.
 
-No `@After`, no `DELETE FROM`, no `TRUNCATE`, no `@DirtiesContext`. No cleanup code at all.
+`UserEnvironment` + `OrderEnvironment` + `ProductEnvironment` forces every test to reassemble the world. `CheckoutEnvironment` hands you a complete, working domain state.
 
----
-
-## JUnit Integration
-
-Works with both JUnit 4 (custom runner) and JUnit 5 (custom TestEngine). DI plugins for Spring, Guice, and Jakarta CDI are auto-discovered via ServiceLoader.
+Tests don't build data. They declare the world they want to run in:
 
 ```java
 @UseEnvironment(PayrollEnvironment.class)
-public class PayrollTest {
+class PayrollTest {
 
     @Test
-    void shouldCalculateEmployeeSalary() {
-        // Company, Employee, and Payroll data already exist.
-        // The entire ancestor chain ran automatically.
-        // After this test, the level resets. Clean slate.
+    void shouldCalculateSalary() {
+        // Base + Payroll data already exist
     }
 }
 ```
 
----
-
-## Performance: The Advantage Nobody Talks About
-
-There's a side effect of this architecture that deserves its own section: **it's dramatically faster**.
-
-Think about what a traditional integration test suite does. Say you have 500 tests and they all need the same 200 rows of reference data: countries, roles, categories, configurations. The standard approach:
-
-```
-For EACH of the 500 integration tests:
-  TRUNCATE everything
-  INSERT 200 rows of reference data   ← the same 200 rows, again
-  INSERT test-specific data
-  Run the test
-```
-
-That's **100,000 redundant INSERTs**. The same reference data, inserted and destroyed 500 times. Plus TRUNCATE calls, foreign key cascades, and index rebuilds. Every single integration test pays the full cost of building the world from scratch.
-
-With the Insistence Layer, the math changes completely:
-
-```
-INSERT 200 rows of reference data       ← once, just once
-  increaseLevel()
-  ├─ INSERT test-specific data → run Test A → decreaseLevel()   ← instant undo
-  increaseLevel()
-  ├─ INSERT test-specific data → run Test B → decreaseLevel()   ← instant undo
-  ...498 more tests, each with instant undo...
-```
-
-**200 INSERTs instead of 100,000.** The reference data is inserted once and stays there. Undoing a level is nearly free, the database just discards uncommitted changes. No row-by-row deletion, no index rebuilding, no cascade checks. It doesn't matter if the test inserted 5 rows or 5 million; the cost of decreasing a level is the same.
-
-And this compounds through the environment tree:
-
-```
-ReferenceData (countries, roles)             ← inserted ONCE
-  increaseLevel()  → level 1
-  │
-  ├─ Members (users, profiles)               ← inserted ONCE for all member tests
-  │   increaseLevel()  → level 2
-  │   ├─ Test: member login         → resetCurrentLevel() (instant, members still there)
-  │   ├─ Test: profile update       → resetCurrentLevel() (instant, members still there)
-  │   └─ Test: member deletion      → resetCurrentLevel() (instant, members still there)
-  │   decreaseLevel()  → back to level 1 (members gone, ref data still there)
-  │
-  ├─ Catalog (books, categories)             ← inserted ONCE for all catalog tests
-  │   increaseLevel()  → level 2
-  │   ├─ Test: search by author     → resetCurrentLevel()
-  │   ├─ Test: add duplicate book   → resetCurrentLevel()
-  │   ...
-```
-
-Every level of the tree multiplies the savings. The deeper the tree, the bigger the gap between Simulatest and the traditional approach. You're not looking at a 2x improvement; you're looking at **orders of magnitude fewer database operations**.
-
-| Approach | Setup Operations | Cleanup Operations |
-|---|---|---|
-| Traditional | N × R INSERTs | N TRUNCATEs |
-| Simulatest | R INSERTs (once) | N level resets (near-zero cost) |
-
-*(N = number of integration tests, R = shared reference rows)*
-
-The best part? You don't optimize for this. You don't write caching logic or parallel setup code. You just organize your environments into a tree that reflects how your data depends on other data, the natural, readable structure, and the performance comes for free.
-
-**The honest caveat:** designing good environments is not trivial. You need to think carefully about what data belongs at each level, what depends on what, and how to draw the boundaries. It takes a thoughtful process to get the tree right. But once you do, once it clicks... it's like seeing the Matrix. You'll look at integration test suites full of duplicated setup and teardown and wonder how you ever tolerated it. You won't go back.
+The framework resolves dependencies, builds the environment tree, and executes each environment exactly once.
 
 ---
 
-## Two Tools, One Toolkit
+## How It Works Together
 
-The Insistence Layer and Environments are independent. Use the Insistence Layer alone for level-based isolation in any context. Use Environments alone for composable test fixtures. Together, they eliminate the two biggest time sinks in database-heavy projects: setting up test data and cleaning it up.
+Simulatest walks the environment tree depth-first. Tests sharing an environment run consecutively under that environment's level. After each environment runs, a new level is created. After its subtree completes, that level is undone.
 
-Environments define *what* data to create. The Insistence Layer ensures *none of it persists*.
+Result:
+
+- The environment is built once and reused across every test that needs it
+- Sibling environments never see each other's data
+- Tests at the same level start from an identical state
+
+You stop thinking about cleaning up data. You stop thinking about rebuilding data. You just define the world once, and move through it.
 
 ---
 
-*Inspired by a production-ready Smalltalk implementation from Objective Solutions.*
+## Quick Start
+
+Add the JUnit 5 integration (Maven):
+
+```xml
+<dependency>
+    <groupId>org.simulatest</groupId>
+    <artifactId>simulatest-environment-junit-platform</artifactId>
+    <version>0.1.0</version>
+    <scope>test</scope>
+</dependency>
+```
+
+Define an Environment. It inserts shared setup once; the framework replays it for every test that needs it:
+
+```java
+public class CompanyEnvironment implements Environment {
+
+    @Override
+    public void run() {
+        // insert shared setup: companies, reference data, config rows.
+        // use JdbcTemplate, a JPA repository, or raw JDBC.
+        companyRepository.save(new Company("Acme"));
+    }
+}
+```
+
+Write a test that uses it:
+
+```java
+@UseEnvironment(CompanyEnvironment.class)
+class CompanyTest {
+
+    @Test
+    void acmeIsAvailable() {
+        // CompanyEnvironment has already run.
+        assertTrue(companyRepository.existsByName("Acme"));
+    }
+
+    @Test
+    void changesDoNotBleed() {
+        companyRepository.save(new Company("Temp"));
+        // after this test finishes, 'Temp' is gone.
+        // 'Acme' stays, because the environment owns it.
+    }
+}
+```
+
+Nest environments with `@EnvironmentParent` to build richer state on top of a base:
+
+```java
+@EnvironmentParent(CompanyEnvironment.class)
+public class EmployeeEnvironment implements Environment {
+
+    @Override
+    public void run() {
+        // 'Acme' is already present here.
+        Company acme = companyRepository.findByName("Acme");
+        employeeRepository.save(new Employee("Ana", acme));
+    }
+}
+```
+
+Environments and tests are regular classes; inject collaborators via your DI framework of choice (Spring, Guice, and Jakarta CDI plugins are auto-discovered). For full setup with Spring Boot, JPA, and H2, see the [examples repo](https://github.com/gb/simulatest-examples).
+
+---
+
+## What You Don't Need Anymore
+
+- `@Before` / `@After` setup and cleanup
+- `DELETE FROM` or `TRUNCATE` scripts
+- Recreating schemas between tests
+- Rebuilding the same reference data repeatedly
+- Fighting test ordering or hidden dependencies
+
+---
+
+## Performance
+
+Shared environments are built once and reused across every test that needs them. Level resets between tests are instant: no deletes, no truncates, just discarded uncommitted changes. The result is orders of magnitude fewer database operations than a traditional integration suite. No configuration needed; the order comes from the tree.
+
+---
+
+## Why This Feels Different
+
+Traditional integration testing treats the database as something fragile: you constantly rebuild it, clean it, and try to keep tests from interfering with each other.
+
+Simulatest treats it as something reversible and structured.
+
+That shift removes most of the incidental complexity around integration tests.
+
+---
+
+## Known Limitations
+
+Savepoint-based isolation is powerful but has real tradeoffs. Know these before adopting:
+
+- **Single connection.** Simulatest drives one underlying connection for the whole suite, even when callers request multiple connections. Code under test must go through the `InsistenceLayerDataSource` to participate in the sandbox. Code that opens a second DataSource or talks to the database outside the wrapper won't see environment data and its writes won't roll back.
+- **No true `REQUIRES_NEW`.** Because every connection the pool hands out resolves to the same underlying session, Spring's `REQUIRES_NEW` transactions are not actually isolated from the outer transaction the way they would be in production. If your code relies on inner-transaction isolation (for example, writing an audit row that must survive a parent rollback), that semantic breaks here.
+- **DDL is not rolled back.** `CREATE TABLE`, `ALTER`, and similar statements commit implicitly on most databases. Run schema migrations (Flyway, Liquibase, `ddl-auto`) before the suite starts, not inside an Environment.
+- **Single-threaded within a JVM.** The connection model is not thread-safe. Don't enable JUnit 5 parallel execution inside a test JVM; levels will interleave and corrupt each other. You can still parallelize across JVMs with Maven Surefire's `forkCount` (each fork runs an independent Insistence Layer). If the forks share a real database, give each one its own schema or instance so they don't see each other's writes through the DB.
+- **Database-specific rollback quirks.** Savepoints don't cover everything: PostgreSQL sequences keep advancing, MySQL leaves gaps in auto-increment, Oracle sequence caches don't rewind. Tests that assert on generated IDs can flake across runs.
+
+If any of these are dealbreakers for your suite, Testcontainers with per-test TRUNCATE or Spring's `@Transactional` rollback may be a better fit.
+
+---
+
+## Integrations
+
+- **JVM languages**: any JVM language (Java, Kotlin, and Scala are shown in the [examples repo](https://github.com/gb/simulatest-examples))
+- **Test frameworks**: JUnit 4 (custom runner), JUnit 5 and JUnit 6 (custom TestEngine on the JUnit Platform)
+- **Dependency injection**: Spring, Guice, and Jakarta CDI plugins, auto-discovered via ServiceLoader
+- **Databases**: any JDBC driver with savepoint support (H2, PostgreSQL, MySQL, Oracle, SQL Server all qualify)
+
+---
+
+*Inspired by a Smalltalk implementation from Objective Solutions.*
 
 ## License
 
