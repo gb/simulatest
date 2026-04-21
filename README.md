@@ -67,11 +67,11 @@ Simulatest treats fixtures as composable system states. This is not a convenienc
 An Environment represents a cohesive state of the system. Instead of splitting by entity, you group by what the system needs together.
 
 ```
-CompanyEnvironment               → creates a company
-├── EmployeeEnvironment          → creates employees (trusts company exists)
-│   ├── PayrollEnvironment       → creates payroll records (trusts employees exist)
-│   └── PermissionsEnvironment   → creates access roles (trusts employees exist)
-└── ProductEnvironment           → creates products (trusts company exists)
+StockedStoreEnvironment              → catalog listed, prices set, shipping configured
+├── StockedCartEnvironment           → customer with items in cart (trusts store)
+│   ├── GiftCheckoutEnvironment      → cart with gift cards applied (trusts cart)
+│   └── ExpressCheckoutEnvironment   → cart with saved payment method (trusts cart)
+└── OpenOrdersEnvironment            → store with past orders and shipments (trusts store)
 ```
 
 - Each level defines a complete, reusable baseline
@@ -85,12 +85,13 @@ CompanyEnvironment               → creates a company
 Tests don't build data. They declare the world they want to run in:
 
 ```java
-@UseEnvironment(PayrollEnvironment.class)
-class PayrollTest {
+@UseEnvironment(StockedCartEnvironment.class)
+class CheckoutTest {
 
     @Test
-    void shouldCalculateSalary() {
-        // Base + Payroll data already exist
+    void shouldCompleteCheckout() {
+        // store is stocked, customer has items in cart.
+        // start from a working scenario, not a pile of entities.
     }
 }
 ```
@@ -129,13 +130,14 @@ Add the JUnit 5 integration (Maven):
 Define an Environment. It inserts shared setup once; the framework replays it for every test that needs it:
 
 ```java
-public class CompanyEnvironment implements Environment {
+public class StockedStoreEnvironment implements Environment {
 
     @Override
     public void run() {
-        // insert shared setup: companies, reference data, config rows.
+        // a running store: catalog listed, prices set, shipping ready.
         // use JdbcTemplate, a JPA repository, or raw JDBC.
-        companyRepository.save(new Company("Acme"));
+        catalogRepository.save(new Product("Widget", 19.99));
+        shippingConfigRepository.save(new ShippingConfig("standard"));
     }
 }
 ```
@@ -143,20 +145,20 @@ public class CompanyEnvironment implements Environment {
 Write a test that uses it:
 
 ```java
-@UseEnvironment(CompanyEnvironment.class)
-class CompanyTest {
+@UseEnvironment(StockedStoreEnvironment.class)
+class StorefrontTest {
 
     @Test
-    void acmeIsAvailable() {
-        // CompanyEnvironment has already run.
-        assertTrue(companyRepository.existsByName("Acme"));
+    void widgetIsListed() {
+        // StockedStoreEnvironment has already run.
+        assertTrue(catalogRepository.existsByName("Widget"));
     }
 
     @Test
     void changesDoNotBleed() {
-        companyRepository.save(new Company("Temp"));
-        // after this test finishes, 'Temp' is gone.
-        // 'Acme' stays, because the environment owns it.
+        catalogRepository.save(new Product("TempItem", 1.00));
+        // after this test finishes, 'TempItem' is gone.
+        // 'Widget' stays, because the environment owns it.
     }
 }
 ```
@@ -164,14 +166,14 @@ class CompanyTest {
 Nest environments with `@EnvironmentParent` to build richer state on top of a base:
 
 ```java
-@EnvironmentParent(CompanyEnvironment.class)
-public class EmployeeEnvironment implements Environment {
+@EnvironmentParent(StockedStoreEnvironment.class)
+public class StockedCartEnvironment implements Environment {
 
     @Override
     public void run() {
-        // 'Acme' is already present here.
-        Company acme = companyRepository.findByName("Acme");
-        employeeRepository.save(new Employee("Ana", acme));
+        // store is already stocked here.
+        Customer ana = customerRepository.save(new Customer("Ana"));
+        cartRepository.save(new Cart(ana).add("Widget"));
     }
 }
 ```
