@@ -8,8 +8,11 @@ import org.simulatest.environment.Environment;
 import org.simulatest.environment.annotation.EnvironmentParent;
 import org.simulatest.environment.annotation.UseEnvironment;
 
+import org.simulatest.environment.junit5.testdouble.CyclicEnvironmentFixtures;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DeferredEnvironmentCoordinatorTest {
@@ -43,6 +46,15 @@ class DeferredEnvironmentCoordinatorTest {
 
 		assertEquals(List.of(Root.class, Middle.class, Leaf.class), ancestry,
 			"root-first ordering lets callers push savepoints outermost-to-innermost");
+	}
+
+	@Test
+	void cyclicParentChainThrowsRatherThanLooping() {
+		IllegalStateException error = assertThrows(IllegalStateException.class,
+			() -> DeferredEnvironmentCoordinator.walkParentChain(CyclicEnvironmentFixtures.NodeA.class));
+
+		assertTrue(error.getMessage().contains("Cyclic @EnvironmentParent"),
+			"error should name the cycle condition: " + error.getMessage());
 	}
 
 	@Test
@@ -85,6 +97,33 @@ class DeferredEnvironmentCoordinatorTest {
 		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(Root.class));
 		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(Middle.class));
 		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(Leaf.class));
+	}
+
+	@Test
+	void wasPushedIsFalseUntilRecorded() {
+		DeferredEnvironmentCoordinator.claimNotYetRun(Root.class);
+
+		assertFalse(DeferredEnvironmentCoordinator.wasPushed(Root.class),
+			"a bare claim without a recorded push must not signal wasPushed");
+	}
+
+	@Test
+	void wasPushedFlipsToTrueAfterRecord() {
+		DeferredEnvironmentCoordinator.claimNotYetRun(Root.class);
+		DeferredEnvironmentCoordinator.recordPush(Root.class);
+
+		assertTrue(DeferredEnvironmentCoordinator.wasPushed(Root.class));
+	}
+
+	@Test
+	void forgetClearsBothClaimAndPush() {
+		DeferredEnvironmentCoordinator.claimNotYetRun(Root.class);
+		DeferredEnvironmentCoordinator.recordPush(Root.class);
+
+		DeferredEnvironmentCoordinator.forget(Root.class);
+
+		assertFalse(DeferredEnvironmentCoordinator.wasPushed(Root.class));
+		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(Root.class));
 	}
 
 	// =========================================================================

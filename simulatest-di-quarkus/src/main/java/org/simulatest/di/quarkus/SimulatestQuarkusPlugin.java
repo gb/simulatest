@@ -142,8 +142,17 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 		// Schema application runs BEFORE any environment, and therefore before
 		// ConnectionWrapper.wrap() sets autoCommit=false. DDL at this point is
 		// safe: no savepoint stack exists yet to invalidate.
+		//
+		// If schema application fails, unwind the Insistence Layer registration
+		// so a subsequent initialize() can retry cleanly instead of being
+		// short-circuited by the isConfigured() guard at the top.
 		DataSource wrapped = InsistenceLayerFactory.requireDataSource();
-		configurer.applySchema(wrapped);
+		try {
+			configurer.applySchema(wrapped);
+		} catch (RuntimeException fault) {
+			InsistenceLayerFactory.clear();
+			throw fault;
+		}
 
 		logger.info("Simulatest Quarkus plugin initialized via {}", configurer.getClass().getName());
 	}

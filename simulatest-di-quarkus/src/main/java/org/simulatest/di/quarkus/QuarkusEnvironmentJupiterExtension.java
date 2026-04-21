@@ -32,6 +32,10 @@ import org.slf4j.LoggerFactory;
  * {@code @Inject} fields are populated), invokes {@code run()}, and pushes
  * an Insistence Layer level. A sibling test class entering later sees the
  * already-claimed ancestors and only runs its own leaf environment.
+ *
+ * <p>When a new Arc container is observed (typically a {@code @TestProfile}
+ * switch), any savepoints pushed under the old container are unwound and
+ * the coordinator is reset, so the new runtime starts from a clean stack.
  */
 public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallback {
 
@@ -52,7 +56,7 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 
 	@Override
 	public void beforeAll(ExtensionContext context) {
-		resetCoordinatorIfQuarkusRestarted();
+		unwindStateIfQuarkusRestarted();
 
 		Class<?> testClass = context.getRequiredTestClass();
 		List<Class<? extends Environment>> ancestry = DeferredEnvironmentCoordinator.ancestryOf(testClass);
@@ -68,11 +72,18 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 		}
 	}
 
-	private static synchronized void resetCoordinatorIfQuarkusRestarted() {
+	// Detects a new Arc container and unwinds both the logical (coordinator)
+	// and physical (savepoint stack) state belonging to the previous one.
+	// Without the physical unwind, levels pushed under the old Arc would remain
+	// on the connection; the coordinator would then claim ancestors freshly and
+	// push again on top, corrupting rollback boundaries for the rest of the
+	// suite.
+	private static synchronized void unwindStateIfQuarkusRestarted() {
 		ArcContainer current = currentArcContainer();
 		if (current == null || current == lastKnownContainer) return;
 		if (lastKnownContainer != null) {
-			logger.info("Arc container changed identity (likely @TestProfile switch); clearing deferred-environment tracking");
+			logger.info("Arc container changed identity (likely @TestProfile switch); unwinding deferred-environment state");
+			InsistenceLayerFactory.resolve().ifPresent(layer -> layer.setLevelTo(0));
 			DeferredEnvironmentCoordinator.reset();
 		}
 		lastKnownContainer = current;
@@ -88,47 +99,54 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 
 	// If the env's run() or the savepoint push fails, release the claim so
 	// subsequent test classes can retry rather than silently skip on a stale
-	// record. Propagate the original throwable so Jupiter fails this class
-	// with the real cause.
+	// record. The coordinator's push record is only set AFTER increaseLevel
+	// returns, so the matching onExit skips popping when a failure prevented
+	// the push from ever happening.
 	private static void runAndPushOrRollbackClaim(Class<? extends Environment> environmentClass, InsistenceLayer layer) {
 		try {
 			runEnvironment(environmentClass);
 			layer.increaseLevel();
+			DeferredEnvironmentCoordinator.recordPush(environmentClass);
 		} catch (Throwable propagate) {
 			DeferredEnvironmentCoordinator.forget(environmentClass);
 			throw propagate;
 		}
 	}
 
+	// Threads the Arc InstanceHandle through so @Dependent-scoped environments
+	// are properly destroyed after run() completes. For @ApplicationScoped and
+	// @Singleton beans close() is a no-op; for @Dependent it triggers the
+	// disposal chain that would otherwise leak the instance.
 	private static void runEnvironment(Class<? extends Environment> environmentClass) {
-		Environment environment = resolveFromArc(environmentClass);
-		if (environment == null) {
-			logger.warn(
-				"{} is not a discovered Arc bean; falling back to reflection. Add @Dependent or "
-				+ "@ApplicationScoped if the environment uses @Inject fields, otherwise they will be null.",
-				environmentClass.getName());
-			environment = reflectivelyInstantiate(environmentClass);
+		InstanceHandle<? extends Environment> arcHandle = resolveFromArc(environmentClass);
+		try {
+			Environment environment = arcHandle != null
+					? arcHandle.get()
+					: warnThenReflect(environmentClass);
+			environment.run();
+		} finally {
+			if (arcHandle != null) arcHandle.close();
 		}
-		environment.run();
 	}
 
-	// Arc returns null when the class isn't a discovered bean. That's a valid
-	// case for environments the user chose to leave un-annotated — we fall back
-	// to reflection, matching the behavior the other DI plugins' environment
-	// factories already expose.
-	private static Environment resolveFromArc(Class<? extends Environment> environmentClass) {
-		ArcContainer container;
-		try {
-			container = Arc.container();
-		} catch (RuntimeException absent) {
-			// Container can be null or throw while Arc is in an in-between
-			// state. Treat both uniformly: drop to reflection.
-			return null;
-		}
+	private static Environment warnThenReflect(Class<? extends Environment> environmentClass) {
+		logger.warn(
+			"{} is not a discovered Arc bean; falling back to reflection. Add @Dependent or "
+			+ "@ApplicationScoped if the environment uses @Inject fields, otherwise they will be null.",
+			environmentClass.getName());
+		return reflectivelyInstantiate(environmentClass);
+	}
+
+	private static InstanceHandle<? extends Environment> resolveFromArc(Class<? extends Environment> environmentClass) {
+		ArcContainer container = currentArcContainer();
 		if (container == null) return null;
 
 		InstanceHandle<? extends Environment> handle = container.instance(environmentClass);
-		return handle.isAvailable() ? handle.get() : null;
+		if (!handle.isAvailable()) {
+			handle.close();
+			return null;
+		}
+		return handle;
 	}
 
 	private static Environment reflectivelyInstantiate(Class<? extends Environment> environmentClass) {

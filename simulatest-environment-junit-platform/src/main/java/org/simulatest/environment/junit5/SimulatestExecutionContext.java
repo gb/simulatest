@@ -96,6 +96,9 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 	 * lifecycles and other plugin-side collaborators. Hides engine-only state
 	 * (session, plugins list, classloader helpers) that a lifecycle has no
 	 * business seeing.
+	 *
+	 * <p>The returned instance is stable for the lifetime of this context, so
+	 * callers can safely cache the reference.
 	 */
 	public EnvironmentExecution asExecution() {
 		return execution;

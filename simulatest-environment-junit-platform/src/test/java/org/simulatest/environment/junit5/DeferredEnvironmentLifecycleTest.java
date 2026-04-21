@@ -32,8 +32,9 @@ class DeferredEnvironmentLifecycleTest {
 	}
 
 	@Test
-	void onExitPopsLevelAndForgetsCoordinatorRecord() {
+	void onExitPopsLevelAndForgetsCoordinatorRecordWhenPushWasRecorded() {
 		DeferredEnvironmentCoordinator.claimNotYetRun(Fake.class);
+		DeferredEnvironmentCoordinator.recordPush(Fake.class);
 		RecordingExecution execution = new RecordingExecution();
 		EnvironmentDefinition definition = EnvironmentDefinition.create(Fake.class);
 
@@ -42,6 +43,18 @@ class DeferredEnvironmentLifecycleTest {
 		assertEquals(List.of("pop"), execution.events);
 		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(Fake.class),
 			"after exit, the coordinator must allow a fresh claim on the same env");
+	}
+
+	@Test
+	void onExitSkipsPopWhenNoPushWasRecorded() {
+		DeferredEnvironmentCoordinator.claimNotYetRun(Fake.class);
+		RecordingExecution execution = new RecordingExecution();
+		EnvironmentDefinition definition = EnvironmentDefinition.create(Fake.class);
+
+		DeferredEnvironmentLifecycle.INSTANCE.onExit(definition, execution);
+
+		assertTrue(execution.events.isEmpty(),
+			"onExit must not pop a savepoint that was never successfully pushed");
 	}
 
 	static class Fake implements Environment {

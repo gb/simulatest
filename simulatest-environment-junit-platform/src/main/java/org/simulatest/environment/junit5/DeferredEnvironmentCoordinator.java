@@ -22,13 +22,21 @@ import org.simulatest.environment.annotation.UseEnvironment;
  * classes, shared state is needed so each environment runs exactly once and
  * later test classes don't re-seed state their ancestors already produced.
  *
+ * <p>Tracks two independent sets: environments that have been <i>claimed</i>
+ * (first-time-seen gate) and environments whose savepoint push <i>succeeded</i>.
+ * The lifecycle's {@code onExit} reads the second set so it pops only when a
+ * push was actually recorded; a claim that never led to a push (environment
+ * threw, push threw, a Quarkus restart wiped state, etc.) does not trigger a
+ * spurious pop.
+ *
  * <p>Suite-wide static state is acceptable here because Simulatest is
  * single-threaded: the Insistence Layer's single shared connection already
  * enforces that constraint upstream.
  */
 public final class DeferredEnvironmentCoordinator {
 
-	private static final Set<Class<? extends Environment>> runEnvironments = new LinkedHashSet<>();
+	private static final Set<Class<? extends Environment>> claimed = new LinkedHashSet<>();
+	private static final Set<Class<? extends Environment>> pushed = new LinkedHashSet<>();
 
 	private DeferredEnvironmentCoordinator() {
 	}
@@ -46,13 +54,25 @@ public final class DeferredEnvironmentCoordinator {
 	public static List<Class<? extends Environment>> ancestryOf(Class<?> testClass) {
 		UseEnvironment use = resolveUseEnvironment(testClass);
 		if (use == null) return List.of();
+		return walkParentChain(use.value());
+	}
 
+	/**
+	 * Walks the {@code @EnvironmentParent} chain starting at {@code leaf},
+	 * returning the chain root-first. Throws {@link IllegalStateException} if
+	 * the chain is cyclic.
+	 *
+	 * <p>Package-private so tests can exercise cycle detection directly
+	 * without needing a {@code @UseEnvironment}-annotated fixture, which the
+	 * engine's classpath scanner would otherwise try to include in its tree.
+	 */
+	static List<Class<? extends Environment>> walkParentChain(Class<? extends Environment> leaf) {
 		List<Class<? extends Environment>> leafFirst = new ArrayList<>();
 		Set<Class<? extends Environment>> visited = new LinkedHashSet<>();
-		for (Class<? extends Environment> current = use.value(); current != null; current = parentOf(current)) {
+		for (Class<? extends Environment> current = leaf; current != null; current = parentOf(current)) {
 			if (!visited.add(current)) {
 				throw new IllegalStateException(
-					"Cyclic @EnvironmentParent chain detected starting at " + use.value().getName()
+					"Cyclic @EnvironmentParent chain detected starting at " + leaf.getName()
 					+ ": " + visited);
 			}
 			leafFirst.add(current);
@@ -62,23 +82,42 @@ public final class DeferredEnvironmentCoordinator {
 	}
 
 	/**
-	 * Marks {@code env} as already run in the current suite, so subsequent
-	 * callers receive {@code false} from {@link #claimNotYetRun(Class)}.
+	 * Marks {@code env} as already claimed in the current suite, so subsequent
+	 * callers receive {@code false}.
 	 *
 	 * @return {@code true} if this call registered the environment; {@code false}
 	 *         if another caller already did.
 	 */
 	public static synchronized boolean claimNotYetRun(Class<? extends Environment> env) {
-		return runEnvironments.add(env);
+		return claimed.add(env);
 	}
 
 	/**
-	 * Clears tracking for {@code env}. Called by the engine when the tree walk
-	 * exits the environment's subtree — at that point the savepoint has been
-	 * popped and the environment will need to run again if somehow re-entered.
+	 * Records that {@code env} successfully had its Insistence Layer level
+	 * pushed, so the matching {@code onExit} knows it's safe to pop.
+	 */
+	public static synchronized void recordPush(Class<? extends Environment> env) {
+		pushed.add(env);
+	}
+
+	/**
+	 * Returns whether {@code env}'s level was recorded as pushed. The lifecycle
+	 * uses this to decide whether to pop on exit; a claim without a recorded
+	 * push means the push never happened (failure, restart, etc.) and no pop
+	 * should occur.
+	 */
+	public static synchronized boolean wasPushed(Class<? extends Environment> env) {
+		return pushed.contains(env);
+	}
+
+	/**
+	 * Clears tracking for {@code env}. Called by the lifecycle when the tree
+	 * walk exits the environment's subtree: the savepoint has been popped and
+	 * the environment will need to run again if somehow re-entered.
 	 */
 	public static synchronized void forget(Class<? extends Environment> env) {
-		runEnvironments.remove(env);
+		claimed.remove(env);
+		pushed.remove(env);
 	}
 
 	/**
@@ -88,7 +127,8 @@ public final class DeferredEnvironmentCoordinator {
 	 * database.
 	 */
 	public static synchronized void reset() {
-		runEnvironments.clear();
+		claimed.clear();
+		pushed.clear();
 	}
 
 	private static UseEnvironment resolveUseEnvironment(Class<?> testClass) {

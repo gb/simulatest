@@ -156,15 +156,19 @@ class SimulatestQuarkusPluginTest {
 	}
 
 	@Test
-	void validationRejectsMultipleConfigurers() {
+	void validationRejectsMultipleConfigurersAndNamesBoth() {
 		QuarkusSimulatestConfigurer a = new TestConfigurer();
 		QuarkusSimulatestConfigurer b = new TestConfigurer();
 
 		IllegalStateException e = assertThrows(IllegalStateException.class,
 			() -> SimulatestQuarkusPlugin.requireExactlyOneConfigurer(List.of(a, b)));
 
-		assertTrue(e.getMessage().contains("Multiple"),
-			"error message should name both implementations: " + e.getMessage());
+		String msg = e.getMessage();
+		assertTrue(msg.contains("Multiple"), "error should flag the plurality: " + msg);
+		assertTrue(msg.contains(a.getClass().getName()),
+			"error should name the first implementation: " + msg);
+		assertTrue(msg.contains(b.getClass().getName()),
+			"error should name the second implementation: " + msg);
 	}
 
 	@Test

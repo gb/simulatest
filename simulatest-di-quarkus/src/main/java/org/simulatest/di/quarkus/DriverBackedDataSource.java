@@ -56,12 +56,13 @@ final class DriverBackedDataSource implements DataSource {
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		throw new SQLException("DriverBackedDataSource does not wrap anything");
+		if (iface.isInstance(this)) return iface.cast(this);
+		throw new SQLException(getClass().getName() + " is not a wrapper for " + iface.getName());
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) {
-		return false;
+		return iface.isInstance(this);
 	}
 
 }

@@ -36,7 +36,6 @@
 		<dependency>
 			<groupId>org.simulatest</groupId>
 			<artifactId>simulatest-environment-junit-platform</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 
 		<!-- Quarkus Arc and JUnit Jupiter are compile-visible APIs; downstream

@@ -1,5 +1,6 @@
 package org.simulatest.environment.junit5;
 
+import org.simulatest.environment.Environment;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.plugin.EnvironmentExecution;
 import org.simulatest.environment.plugin.EnvironmentLifecycle;
@@ -11,9 +12,11 @@ import org.simulatest.environment.plugin.EnvironmentLifecycle;
  * plugin runs the environment and pushes the savepoint after its DI
  * container is ready.
  *
- * <p>Exit pops the savepoint the extension pushed and clears the coordinator's
- * record for this environment, so a sibling or re-entry triggers a fresh run
- * rather than reusing now-rolled-back state.
+ * <p>Exit pops the savepoint only when the coordinator confirms one was
+ * actually pushed for this environment. A claim that never led to a push
+ * (the extension failed before pushing, a Quarkus restart wiped state, etc.)
+ * leaves the stack alone, which prevents popping a savepoint that doesn't
+ * exist.
  */
 public final class DeferredEnvironmentLifecycle implements EnvironmentLifecycle {
 
@@ -27,8 +30,11 @@ public final class DeferredEnvironmentLifecycle implements EnvironmentLifecycle 
 
 	@Override
 	public void onExit(EnvironmentDefinition definition, EnvironmentExecution execution) {
-		execution.decreaseInsistenceLevel();
-		DeferredEnvironmentCoordinator.forget(definition.getEnvironmentClass());
+		Class<? extends Environment> environmentClass = definition.getEnvironmentClass();
+		if (DeferredEnvironmentCoordinator.wasPushed(environmentClass)) {
+			execution.decreaseInsistenceLevel();
+		}
+		DeferredEnvironmentCoordinator.forget(environmentClass);
 	}
 
 }

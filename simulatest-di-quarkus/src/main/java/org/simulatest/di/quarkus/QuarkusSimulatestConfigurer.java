@@ -11,7 +11,10 @@ import javax.sql.DataSource;
  * One per test classpath is the expected case.
  *
  * <p>Typical implementation seeds an H2 in-memory database and runs CREATE
- * TABLE statements:
+ * TABLE statements. The example below needs the following imports:
+ * {@code javax.sql.DataSource}, {@code java.sql.Connection},
+ * {@code java.sql.Statement}, {@code java.sql.SQLException},
+ * {@code org.h2.jdbcx.JdbcDataSource}.
  *
  * <pre>
  * public final class MyConfigurer implements QuarkusSimulatestConfigurer {
