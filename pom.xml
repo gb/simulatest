@@ -59,6 +59,7 @@
 		<module>simulatest-gui</module>
 		<module>simulatest-di-jee</module>
 		<module>simulatest-di-guice</module>
+		<module>simulatest-di-quarkus</module>
 	</modules>
 
 	<developers>
