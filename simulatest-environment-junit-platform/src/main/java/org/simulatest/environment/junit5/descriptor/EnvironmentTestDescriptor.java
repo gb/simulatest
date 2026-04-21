@@ -34,13 +34,13 @@ public final class EnvironmentTestDescriptor extends AbstractTestDescriptor
 
 	@Override
 	public SimulatestExecutionContext before(SimulatestExecutionContext context) {
-		context.lifecycle().onEnter(definition, context);
+		context.lifecycle().onEnter(definition, context.asExecution());
 		return context;
 	}
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
-		context.lifecycle().onExit(definition, context);
+		context.lifecycle().onExit(definition, context.asExecution());
 
 		// Skip the redundant reset for the last sibling: the parent's decreaseLevel
 		// will roll back past this savepoint anyway, so resetting here would waste I/O.

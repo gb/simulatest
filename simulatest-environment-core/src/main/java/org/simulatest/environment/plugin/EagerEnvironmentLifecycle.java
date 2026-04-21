@@ -10,6 +10,9 @@ import org.simulatest.environment.EnvironmentDefinition;
  */
 public final class EagerEnvironmentLifecycle implements EnvironmentLifecycle {
 
+	/** Stateless singleton; callers should prefer this over {@code new}. */
+	public static final EagerEnvironmentLifecycle INSTANCE = new EagerEnvironmentLifecycle();
+
 	@Override
 	public void onEnter(EnvironmentDefinition definition, EnvironmentExecution execution) {
 		execution.runEnvironment(definition);

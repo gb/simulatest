@@ -62,9 +62,14 @@ import org.slf4j.LoggerFactory;
  * quarkus.datasource.jdbc.max-size=1
  * quarkus.datasource.jdbc.initial-size=1
  *
- * # Classloading: share the Insistence Layer registry across classloaders
+ * # Classloading: every Simulatest jar carrying cross-classloader static
+ * # state or identity-sensitive types (Environment, annotations) must be
+ * # loaded by the parent classloader, so the engine and the Arc-loaded
+ * # extension share one view of them.
  * quarkus.class-loading.parent-first-artifacts=\
  *     org.simulatest:simulatest-insistencelayer,\
+ *     org.simulatest:simulatest-environment-core,\
+ *     org.simulatest:simulatest-environment-junit-platform,\
  *     org.simulatest:simulatest-di-quarkus
  *
  * # Disable Dev Services so they don't spin up their own datasource
@@ -88,6 +93,11 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
+		// A previous test session in the same JVM may have exited abruptly
+		// and left coordinator state behind. Resetting on every session entry
+		// guarantees a clean slate regardless of how the prior one ended.
+		DeferredEnvironmentCoordinator.reset();
+
 		if (InsistenceLayerFactory.isConfigured()) {
 			logger.info("InsistenceLayer already configured; skipping bootstrap");
 			return;
@@ -168,7 +178,7 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 	 */
 	@Override
 	public EnvironmentLifecycle environmentLifecycle() {
-		return new DeferredEnvironmentLifecycle();
+		return DeferredEnvironmentLifecycle.INSTANCE;
 	}
 
 	/**

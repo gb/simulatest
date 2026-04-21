@@ -17,6 +17,9 @@ import org.simulatest.environment.plugin.EnvironmentLifecycle;
  */
 public final class DeferredEnvironmentLifecycle implements EnvironmentLifecycle {
 
+	/** Stateless singleton; callers should prefer this over {@code new}. */
+	public static final DeferredEnvironmentLifecycle INSTANCE = new DeferredEnvironmentLifecycle();
+
 	@Override
 	public void onEnter(EnvironmentDefinition definition, EnvironmentExecution execution) {
 		// Intentionally empty. See class javadoc.

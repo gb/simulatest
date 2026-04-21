@@ -18,19 +18,20 @@ import org.simulatest.insistencelayer.InsistenceLayer;
 
 /**
  * Per-engine execution context bridging a {@link SimulatestSession} into
- * JUnit Platform's {@link EngineExecutionContext}. Implements
- * {@link EnvironmentExecution} so {@link EnvironmentLifecycle}
- * implementations receive a narrow callback surface instead of the full
- * engine state.
+ * JUnit Platform's {@link EngineExecutionContext}.
+ *
+ * <p>Exposes a narrow {@link EnvironmentExecution} view through
+ * {@link #asExecution()} for {@link EnvironmentLifecycle} implementations,
+ * keeping them free of any engine-internal surface.
  *
  * <p><b>Thread-safety:</b> the instance itself is not thread-safe — Jupiter
  * invokes lifecycle methods on a single executor thread per engine. The
  * {@link #getCurrent() current-context} ThreadLocal is per-thread by design
  * and returns empty if an extension runs on a thread that never set it.</p>
  */
-public final class SimulatestExecutionContext implements EngineExecutionContext, EnvironmentExecution {
+public final class SimulatestExecutionContext implements EngineExecutionContext {
 
-	private static final EnvironmentLifecycle DEFAULT_LIFECYCLE = new EagerEnvironmentLifecycle();
+	private static final EnvironmentLifecycle DEFAULT_LIFECYCLE = EagerEnvironmentLifecycle.INSTANCE;
 
 	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null, null, null, List.of());
 
@@ -45,6 +46,7 @@ public final class SimulatestExecutionContext implements EngineExecutionContext,
 	private final InsistenceLayer insistenceLayer;
 	private final List<SimulatestPlugin> plugins;
 	private final EnvironmentLifecycle lifecycle;
+	private final EnvironmentExecution execution;
 
 	public SimulatestExecutionContext(SimulatestSession session) {
 		this(
@@ -61,6 +63,7 @@ public final class SimulatestExecutionContext implements EngineExecutionContext,
 		this.insistenceLayer = insistenceLayer;
 		this.plugins = plugins;
 		this.lifecycle = selectLifecycle(plugins);
+		this.execution = new LifecycleExecutionView();
 	}
 
 	private static EnvironmentLifecycle selectLifecycle(List<SimulatestPlugin> plugins) {
@@ -88,7 +91,16 @@ public final class SimulatestExecutionContext implements EngineExecutionContext,
 		return lifecycle;
 	}
 
-	@Override
+	/**
+	 * Narrow {@link EnvironmentExecution} view onto this context for use by
+	 * lifecycles and other plugin-side collaborators. Hides engine-only state
+	 * (session, plugins list, classloader helpers) that a lifecycle has no
+	 * business seeing.
+	 */
+	public EnvironmentExecution asExecution() {
+		return execution;
+	}
+
 	public void runEnvironment(EnvironmentDefinition definition) {
 		Objects.requireNonNull(definition, "definition must not be null");
 		EnvironmentFactory envFactory = factory().orElseThrow(() -> new IllegalStateException(
@@ -101,12 +113,10 @@ public final class SimulatestExecutionContext implements EngineExecutionContext,
 		}
 	}
 
-	@Override
 	public void increaseInsistenceLevel() {
 		ifInsistenceLayer(InsistenceLayer::increaseLevel);
 	}
 
-	@Override
 	public void decreaseInsistenceLevel() {
 		ifInsistenceLayer(InsistenceLayer::decreaseLevelOrCleanup);
 	}
@@ -142,6 +152,20 @@ public final class SimulatestExecutionContext implements EngineExecutionContext,
 			action.run();
 		} finally {
 			CURRENT.remove();
+		}
+	}
+
+	// Inner class so the context doesn't publicly implement EnvironmentExecution.
+	// Lifecycle implementations see only the three methods they need.
+	private final class LifecycleExecutionView implements EnvironmentExecution {
+		@Override public void runEnvironment(EnvironmentDefinition definition) {
+			SimulatestExecutionContext.this.runEnvironment(definition);
+		}
+		@Override public void increaseInsistenceLevel() {
+			SimulatestExecutionContext.this.increaseInsistenceLevel();
+		}
+		@Override public void decreaseInsistenceLevel() {
+			SimulatestExecutionContext.this.decreaseInsistenceLevel();
 		}
 	}
 

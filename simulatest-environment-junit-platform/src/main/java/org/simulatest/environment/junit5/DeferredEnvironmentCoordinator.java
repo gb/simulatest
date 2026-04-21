@@ -35,15 +35,26 @@ public final class DeferredEnvironmentCoordinator {
 
 	/**
 	 * Returns the environment ancestry for {@code testClass} root-first: the
-	 * outermost ancestor is first, the class's own {@link UseEnvironment} last.
-	 * Returns an empty list if the class has no {@code @UseEnvironment}.
+	 * outermost ancestor is first, the class's leaf {@link UseEnvironment}
+	 * last. Returns an empty list if neither {@code testClass} nor any of its
+	 * enclosing classes carries {@code @UseEnvironment}.
+	 *
+	 * <p>Walks enclosing classes so {@code @Nested} inner classes inherit the
+	 * outer class's environment. Detects cycles in the {@link EnvironmentParent}
+	 * chain and fails loudly rather than looping.
 	 */
 	public static List<Class<? extends Environment>> ancestryOf(Class<?> testClass) {
-		UseEnvironment use = testClass.getAnnotation(UseEnvironment.class);
+		UseEnvironment use = resolveUseEnvironment(testClass);
 		if (use == null) return List.of();
 
 		List<Class<? extends Environment>> leafFirst = new ArrayList<>();
+		Set<Class<? extends Environment>> visited = new LinkedHashSet<>();
 		for (Class<? extends Environment> current = use.value(); current != null; current = parentOf(current)) {
+			if (!visited.add(current)) {
+				throw new IllegalStateException(
+					"Cyclic @EnvironmentParent chain detected starting at " + use.value().getName()
+					+ ": " + visited);
+			}
 			leafFirst.add(current);
 		}
 		Collections.reverse(leafFirst);
@@ -71,11 +82,23 @@ public final class DeferredEnvironmentCoordinator {
 	}
 
 	/**
-	 * Resets all tracking. Called by the engine between test sessions so the
-	 * next suite starts clean.
+	 * Resets all tracking. Called between test sessions so the next suite starts
+	 * clean, and when the Quarkus runtime restarts (e.g., {@code @TestProfile}
+	 * switch) so stale "already run" records don't mask the new runtime's empty
+	 * database.
 	 */
 	public static synchronized void reset() {
 		runEnvironments.clear();
+	}
+
+	// Walks @Nested enclosing chain so an inner class inherits the outer
+	// class's @UseEnvironment rather than coming back empty.
+	private static UseEnvironment resolveUseEnvironment(Class<?> testClass) {
+		for (Class<?> current = testClass; current != null; current = current.getEnclosingClass()) {
+			UseEnvironment use = current.getAnnotation(UseEnvironment.class);
+			if (use != null) return use;
+		}
+		return null;
 	}
 
 	private static Class<? extends Environment> parentOf(Class<? extends Environment> env) {
