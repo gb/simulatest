@@ -64,4 +64,22 @@ public interface SimulatestPlugin {
 	default void postProcessTestInstance(Object instance) {
 	}
 
+	/**
+	 * Returns this plugin's {@link EnvironmentLifecycle}, which decides what
+	 * happens when the Simulatest engine enters and exits an environment node
+	 * in the test tree. Return {@code null} (the default) to use whichever
+	 * lifecycle another plugin contributes, falling back to the eager tree-walk
+	 * behavior if none is contributed.
+	 *
+	 * <p>Plugins backed by DI containers that are only available once a test
+	 * class enters its JUnit lifecycle (e.g., Quarkus's Arc, bootstrapped by
+	 * {@code QuarkusTestExtension#beforeAll}) return a deferred lifecycle so
+	 * environment instantiation happens inside the inner Jupiter session.
+	 *
+	 * @return this plugin's lifecycle, or {@code null} to not contribute one
+	 */
+	default EnvironmentLifecycle environmentLifecycle() {
+		return null;
+	}
+
 }

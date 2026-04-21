@@ -9,6 +9,9 @@ import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
+import org.simulatest.environment.plugin.EagerEnvironmentLifecycle;
+import org.simulatest.environment.plugin.EnvironmentExecution;
+import org.simulatest.environment.plugin.EnvironmentLifecycle;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.insistencelayer.InsistenceLayer;
@@ -17,12 +20,18 @@ import org.simulatest.insistencelayer.InsistenceLayer;
  * Per-engine execution context bridging a {@link SimulatestSession} into
  * JUnit Platform's {@link EngineExecutionContext}.
  *
+ * <p>Exposes a narrow {@link EnvironmentExecution} view through
+ * {@link #asExecution()} for {@link EnvironmentLifecycle} implementations,
+ * keeping them free of any engine-internal surface.
+ *
  * <p><b>Thread-safety:</b> the instance itself is not thread-safe — Jupiter
  * invokes lifecycle methods on a single executor thread per engine. The
  * {@link #getCurrent() current-context} ThreadLocal is per-thread by design
  * and returns empty if an extension runs on a thread that never set it.</p>
  */
 public final class SimulatestExecutionContext implements EngineExecutionContext {
+
+	private static final EnvironmentLifecycle DEFAULT_LIFECYCLE = EagerEnvironmentLifecycle.INSTANCE;
 
 	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null, null, null, List.of());
 
@@ -36,6 +45,8 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 	private final EnvironmentFactory factory;
 	private final InsistenceLayer insistenceLayer;
 	private final List<SimulatestPlugin> plugins;
+	private final EnvironmentLifecycle lifecycle;
+	private final EnvironmentExecution execution;
 
 	public SimulatestExecutionContext(SimulatestSession session) {
 		this(
@@ -51,6 +62,16 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 		this.factory = factory;
 		this.insistenceLayer = insistenceLayer;
 		this.plugins = plugins;
+		this.lifecycle = selectLifecycle(plugins);
+		this.execution = new LifecycleExecutionView();
+	}
+
+	private static EnvironmentLifecycle selectLifecycle(List<SimulatestPlugin> plugins) {
+		return plugins.stream()
+				.map(SimulatestPlugin::environmentLifecycle)
+				.filter(Objects::nonNull)
+				.findFirst()
+				.orElse(DEFAULT_LIFECYCLE);
 	}
 
 	public Optional<InsistenceLayer> insistenceLayer() {
@@ -63,6 +84,24 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 
 	public List<SimulatestPlugin> plugins() {
 		return plugins;
+	}
+
+	/** The lifecycle chosen for this session. Descriptors delegate enter/exit to it. */
+	public EnvironmentLifecycle lifecycle() {
+		return lifecycle;
+	}
+
+	/**
+	 * Narrow {@link EnvironmentExecution} view onto this context for use by
+	 * lifecycles and other plugin-side collaborators. Hides engine-only state
+	 * (session, plugins list, classloader helpers) that a lifecycle has no
+	 * business seeing.
+	 *
+	 * <p>The returned instance is stable for the lifetime of this context, so
+	 * callers can safely cache the reference.
+	 */
+	public EnvironmentExecution asExecution() {
+		return execution;
 	}
 
 	public void runEnvironment(EnvironmentDefinition definition) {
@@ -116,6 +155,20 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 			action.run();
 		} finally {
 			CURRENT.remove();
+		}
+	}
+
+	// Inner class so the context doesn't publicly implement EnvironmentExecution.
+	// Lifecycle implementations see only the three methods they need.
+	private final class LifecycleExecutionView implements EnvironmentExecution {
+		@Override public void runEnvironment(EnvironmentDefinition definition) {
+			SimulatestExecutionContext.this.runEnvironment(definition);
+		}
+		@Override public void increaseInsistenceLevel() {
+			SimulatestExecutionContext.this.increaseInsistenceLevel();
+		}
+		@Override public void decreaseInsistenceLevel() {
+			SimulatestExecutionContext.this.decreaseInsistenceLevel();
 		}
 	}
 

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.simulatest</groupId>
+		<artifactId>simulatest</artifactId>
+		<version>0.1.0</version>
+	</parent>
+
+	<artifactId>simulatest-di-quarkus</artifactId>
+	<name>Simulatest - DI Quarkus Plugin</name>
+	<description>
+		Bootstraps Simulatest's Insistence Layer for use with Quarkus and
+		Panache. Environments use plain JDBC through the wrapped DataSource;
+		test methods use Panache/Arc through Quarkus's normal @QuarkusTest
+		lifecycle.
+	</description>
+
+	<properties>
+		<quarkus.version>3.30.1</quarkus.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-environment-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-insistencelayer</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.simulatest</groupId>
+			<artifactId>simulatest-environment-junit-platform</artifactId>
+		</dependency>
+
+		<!-- Quarkus Arc and JUnit Jupiter are compile-visible APIs; downstream
+		     Quarkus test projects always supply them, so they stay provided. -->
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-arc</artifactId>
+			<version>${quarkus.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- Test-scope dependencies. A full Quarkus + Panache end-to-end test
+		     lives in the simulatest-examples repo, where the Quarkus Maven
+		     plugin is already on the build. -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+</project>
