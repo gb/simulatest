@@ -12,6 +12,10 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.simulatest.environment.Environment;
+import org.simulatest.environment.junit5.DeferredEnvironmentCoordinator;
+import org.simulatest.environment.junit5.DeferredEnvironmentLifecycle;
+import org.simulatest.environment.plugin.EnvironmentLifecycle;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
@@ -106,6 +110,29 @@ class SimulatestQuarkusPluginTest {
 
 		assertFalse(InsistenceLayerFactory.isConfigured(),
 			"destroy() must clear the registry so a second run can reconfigure cleanly");
+	}
+
+	@Test
+	void pluginContributesDeferredLifecycle() {
+		EnvironmentLifecycle lifecycle = new SimulatestQuarkusPlugin().environmentLifecycle();
+
+		assertInstanceOf(DeferredEnvironmentLifecycle.class, lifecycle,
+			"Quarkus plugin must defer env execution so Arc is up when envs run");
+	}
+
+	@Test
+	void destroyAlsoClearsCoordinatorStateSoARestartStartsFresh() {
+		DeferredEnvironmentCoordinator.claimNotYetRun(FakeEnv.class);
+
+		new SimulatestQuarkusPlugin().destroy();
+
+		assertTrue(DeferredEnvironmentCoordinator.claimNotYetRun(FakeEnv.class),
+			"destroy() must clear coordinator state, otherwise a second suite in the same "
+			+ "JVM would skip environments that look like they already ran");
+	}
+
+	static class FakeEnv implements Environment {
+		@Override public void run() {}
 	}
 
 	@Test

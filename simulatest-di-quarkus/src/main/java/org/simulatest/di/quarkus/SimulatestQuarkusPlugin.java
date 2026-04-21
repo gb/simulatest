@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import org.simulatest.environment.junit5.DeferredEnvironmentCoordinator;
+import org.simulatest.environment.junit5.DeferredEnvironmentLifecycle;
+import org.simulatest.environment.plugin.EnvironmentLifecycle;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
@@ -159,13 +162,24 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 	}
 
 	/**
-	 * Clears the Insistence Layer registry so the next test run starts from a
-	 * clean slate, which matters when multiple test sessions share one JVM
-	 * and/or different {@code @TestProfile}s demand different schemas.
+	 * Contributes the deferred lifecycle so the engine's tree walk becomes a
+	 * no-op for env run and savepoint push; {@link QuarkusEnvironmentJupiterExtension}
+	 * does that work after Arc has booted inside the inner Jupiter session.
+	 */
+	@Override
+	public EnvironmentLifecycle environmentLifecycle() {
+		return new DeferredEnvironmentLifecycle();
+	}
+
+	/**
+	 * Clears suite-wide state so the next test run starts from a clean slate,
+	 * which matters when multiple test sessions share one JVM and/or different
+	 * {@code @TestProfile}s demand different schemas.
 	 */
 	@Override
 	public void destroy() {
 		InsistenceLayerFactory.clear();
+		DeferredEnvironmentCoordinator.reset();
 	}
 
 }

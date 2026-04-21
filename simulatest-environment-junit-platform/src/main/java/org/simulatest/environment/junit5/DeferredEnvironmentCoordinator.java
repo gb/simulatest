@@ -1,0 +1,86 @@
+package org.simulatest.environment.junit5;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.simulatest.environment.Environment;
+import org.simulatest.environment.annotation.EnvironmentParent;
+import org.simulatest.environment.annotation.UseEnvironment;
+
+/**
+ * Cross-class coordination for deferred environment execution.
+ *
+ * <p>When a plugin contributes a {@link DeferredEnvironmentLifecycle} via
+ * {@link org.simulatest.environment.plugin.SimulatestPlugin#environmentLifecycle()},
+ * the Simulatest engine skips running environments in its tree walk. A
+ * Jupiter extension shipped by the plugin then runs them from inside the
+ * inner Jupiter session, after its DI container is ready. Since the inner
+ * session is constructed per test class but the environment tree spans many
+ * classes, shared state is needed so each environment runs exactly once and
+ * later test classes don't re-seed state their ancestors already produced.
+ *
+ * <p>Suite-wide static state is acceptable here because Simulatest is
+ * single-threaded: the Insistence Layer's single shared connection already
+ * enforces that constraint upstream.
+ */
+public final class DeferredEnvironmentCoordinator {
+
+	private static final Set<Class<? extends Environment>> runEnvironments = new LinkedHashSet<>();
+
+	private DeferredEnvironmentCoordinator() {
+	}
+
+	/**
+	 * Returns the environment ancestry for {@code testClass} root-first: the
+	 * outermost ancestor is first, the class's own {@link UseEnvironment} last.
+	 * Returns an empty list if the class has no {@code @UseEnvironment}.
+	 */
+	public static List<Class<? extends Environment>> ancestryOf(Class<?> testClass) {
+		UseEnvironment use = testClass.getAnnotation(UseEnvironment.class);
+		if (use == null) return List.of();
+
+		List<Class<? extends Environment>> leafFirst = new ArrayList<>();
+		for (Class<? extends Environment> current = use.value(); current != null; current = parentOf(current)) {
+			leafFirst.add(current);
+		}
+		Collections.reverse(leafFirst);
+		return leafFirst;
+	}
+
+	/**
+	 * Marks {@code env} as already run in the current suite, so subsequent
+	 * callers receive {@code false} from {@link #claimNotYetRun(Class)}.
+	 *
+	 * @return {@code true} if this call registered the environment; {@code false}
+	 *         if another caller already did.
+	 */
+	public static synchronized boolean claimNotYetRun(Class<? extends Environment> env) {
+		return runEnvironments.add(env);
+	}
+
+	/**
+	 * Clears tracking for {@code env}. Called by the engine when the tree walk
+	 * exits the environment's subtree — at that point the savepoint has been
+	 * popped and the environment will need to run again if somehow re-entered.
+	 */
+	public static synchronized void forget(Class<? extends Environment> env) {
+		runEnvironments.remove(env);
+	}
+
+	/**
+	 * Resets all tracking. Called by the engine between test sessions so the
+	 * next suite starts clean.
+	 */
+	public static synchronized void reset() {
+		runEnvironments.clear();
+	}
+
+	private static Class<? extends Environment> parentOf(Class<? extends Environment> env) {
+		EnvironmentParent annotation = env.getAnnotation(EnvironmentParent.class);
+		return annotation != null ? annotation.value() : null;
+	}
+
+}
