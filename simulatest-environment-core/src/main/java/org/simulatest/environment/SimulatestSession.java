@@ -1,15 +1,18 @@
 package org.simulatest.environment;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import org.simulatest.environment.bootstrap.DatabaseBootstrapPlugin;
 import org.simulatest.environment.infra.ExceptionAggregator;
+import org.simulatest.environment.infra.ServiceLoaders;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -36,10 +39,16 @@ public final class SimulatestSession implements AutoCloseable {
 		this.insistenceLayer = insistenceLayer;
 	}
 
+	private static final int RUN_DEFAULT = 0;
+	private static final int RUN_LAST = 1;
+
 	public static List<SimulatestPlugin> loadPlugins() {
-		return ServiceLoader.load(SimulatestPlugin.class).stream()
-				.map(ServiceLoader.Provider::get)
-				.toList();
+		List<SimulatestPlugin> ordered = new ArrayList<>(ServiceLoaders.loadAll(SimulatestPlugin.class));
+		// DatabaseBootstrapPlugin runs after every other plugin so that DI plugins, which call
+		// InsistenceLayerFactory.configure() in their own initialize(), win the DataSource race.
+		ordered.sort(Comparator.comparingInt(plugin ->
+				plugin instanceof DatabaseBootstrapPlugin ? RUN_LAST : RUN_DEFAULT));
+		return List.copyOf(ordered);
 	}
 
 	public static EnvironmentFactory resolveFactory(List<SimulatestPlugin> plugins) {

@@ -146,40 +146,7 @@ class SimulatestQuarkusPluginTest {
 		@Override public void run() {}
 	}
 
-	@Test
-	void validationRejectsZeroConfigurers() {
-		IllegalStateException e = assertThrows(IllegalStateException.class,
-			() -> SimulatestQuarkusPlugin.requireExactlyOneConfigurer(List.of()));
-
-		assertTrue(e.getMessage().contains("META-INF/services"),
-			"error message should direct the user at the service registration: " + e.getMessage());
-	}
-
-	@Test
-	void validationRejectsMultipleConfigurersAndNamesBoth() {
-		QuarkusSimulatestConfigurer a = new TestConfigurer();
-		QuarkusSimulatestConfigurer b = new TestConfigurer();
-
-		IllegalStateException e = assertThrows(IllegalStateException.class,
-			() -> SimulatestQuarkusPlugin.requireExactlyOneConfigurer(List.of(a, b)));
-
-		String msg = e.getMessage();
-		assertTrue(msg.contains("Multiple"), "error should flag the plurality: " + msg);
-		assertTrue(msg.contains(a.getClass().getName()),
-			"error should name the first implementation: " + msg);
-		assertTrue(msg.contains(b.getClass().getName()),
-			"error should name the second implementation: " + msg);
-	}
-
-	@Test
-	void validationReturnsTheSoleConfigurerOtherwise() {
-		QuarkusSimulatestConfigurer only = new TestConfigurer();
-
-		QuarkusSimulatestConfigurer returned =
-			SimulatestQuarkusPlugin.requireExactlyOneConfigurer(List.of(only));
-
-		assertEquals(only, returned);
-	}
+	// Validation cases (zero/many configurers) covered by ServiceLoadersTest.
 
 	// =========================================================================
 	// Driver — URL recognition, registration, and routing

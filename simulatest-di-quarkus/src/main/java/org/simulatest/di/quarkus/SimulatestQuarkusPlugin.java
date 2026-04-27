@@ -1,12 +1,11 @@
 package org.simulatest.di.quarkus;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import org.simulatest.environment.infra.ServiceLoaders;
 import org.simulatest.environment.junit5.DeferredEnvironmentCoordinator;
 import org.simulatest.environment.junit5.DeferredEnvironmentLifecycle;
 import org.simulatest.environment.plugin.EnvironmentLifecycle;
@@ -104,35 +103,7 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 		}
 
 		logClassloaderContext();
-		apply(requireExactlyOneConfigurer(loadConfigurers()));
-	}
-
-	/**
-	 * Validates discovery found exactly one configurer and returns it. Throws
-	 * {@link IllegalStateException} with a diagnostic message on zero or more
-	 * than one, turning a silent misconfiguration into a loud, actionable
-	 * failure at plugin-init time rather than a confusing
-	 * {@code requireDataSource()} error during the first environment.
-	 *
-	 * <p>Package-private for direct testing of the validation paths without
-	 * having to simulate {@code ServiceLoader} behavior.
-	 */
-	static QuarkusSimulatestConfigurer requireExactlyOneConfigurer(
-			List<QuarkusSimulatestConfigurer> configurers) {
-		if (configurers.isEmpty()) {
-			throw new IllegalStateException(
-				"No " + QuarkusSimulatestConfigurer.class.getSimpleName() + " was found on the classpath. "
-				+ "Register one via META-INF/services/" + QuarkusSimulatestConfigurer.class.getName() + ".");
-		}
-		if (configurers.size() > 1) {
-			String names = configurers.stream()
-					.map(c -> c.getClass().getName())
-					.collect(Collectors.joining(", "));
-			throw new IllegalStateException(
-				"Multiple " + QuarkusSimulatestConfigurer.class.getSimpleName() + " implementations found: "
-				+ names + ". Exactly one is required.");
-		}
-		return configurers.get(0);
+		apply(ServiceLoaders.loadExactlyOne(QuarkusSimulatestConfigurer.class));
 	}
 
 	private void apply(QuarkusSimulatestConfigurer configurer) {
@@ -149,9 +120,9 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 		DataSource wrapped = InsistenceLayerFactory.requireDataSource();
 		try {
 			configurer.applySchema(wrapped);
-		} catch (RuntimeException fault) {
+		} catch (RuntimeException e) {
 			InsistenceLayerFactory.clear();
-			throw fault;
+			throw e;
 		}
 
 		logger.info("Simulatest Quarkus plugin initialized via {}", configurer.getClass().getName());
@@ -174,11 +145,6 @@ public final class SimulatestQuarkusPlugin implements SimulatestPlugin {
 		}
 	}
 
-	private static List<QuarkusSimulatestConfigurer> loadConfigurers() {
-		return ServiceLoader.load(QuarkusSimulatestConfigurer.class).stream()
-				.map(ServiceLoader.Provider::get)
-				.toList();
-	}
 
 	/**
 	 * Contributes the deferred lifecycle so the engine's tree walk becomes a

@@ -10,9 +10,9 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
-import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Test;
+import org.simulatest.environment.testsupport.H2TestDataSources;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 public class DependencyInjectionPluginTest {
@@ -55,11 +55,8 @@ public class DependencyInjectionPluginTest {
 		}
 	}
 
-	private static JdbcDataSource createH2DataSource() {
-		JdbcDataSource ds = new JdbcDataSource();
-		ds.setURL("jdbc:h2:mem:plugin-test-" + System.nanoTime());
-		ds.setUser("sa");
-		return ds;
+	private static DataSource createH2DataSource() {
+		return H2TestDataSources.freshInMemory("plugin-test");
 	}
 
 	private static class StubContext implements DependencyInjectionContext {
