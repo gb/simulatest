@@ -9,50 +9,39 @@ import io.quarkus.arc.InstanceHandle;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.simulatest.environment.Environment;
-import org.simulatest.environment.junit5.DeferredEnvironmentCoordinator;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Jupiter extension that runs the deferred environments for a test class
- * after Quarkus's Arc container has booted.
+ * Jupiter extension that runs the Simulatest environment ancestry for a
+ * test class after Quarkus's Arc container has booted.
  *
- * <p>Registered for auto-detection via
+ * <p>Auto-discovered via
  * {@code META-INF/services/org.junit.jupiter.api.extension.Extension}; the
- * inner Jupiter session that Simulatest launches for each test class has
- * auto-detection enabled, so this fires without the user adding
- * {@code @ExtendWith}.
+ * inner Jupiter session that {@code @QuarkusTest} runs has auto-detection
+ * enabled, so this fires without the user adding {@code @ExtendWith}.
  *
  * <p>Ordering: {@code QuarkusTestExtension#beforeAll} boots Arc. This
  * extension's {@code beforeAll} runs afterwards, resolves the test class's
  * environment ancestry from the {@code @UseEnvironment} chain, and for each
- * ancestor not yet run in this suite instantiates it through Arc (so its
- * {@code @Inject} fields are populated), invokes {@code run()}, and pushes
- * an Insistence Layer level. A sibling test class entering later sees the
+ * ancestor not yet seen in this suite instantiates it through Arc (so
+ * {@code @Inject} fields populate), invokes {@code run()}, and pushes an
+ * Insistence Layer level. A sibling test class entering later sees the
  * already-claimed ancestors and only runs its own leaf environment.
  *
  * <p>When a new Arc container is observed (typically a {@code @TestProfile}
- * switch), any savepoints pushed under the old container are unwound and
- * the coordinator is reset, so the new runtime starts from a clean stack.
+ * switch), savepoints pushed under the old container are unwound and the
+ * coordinator is reset, so the new runtime starts from a clean stack.
  */
-public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallback {
+public final class PostArcEnvironmentRunner implements BeforeAllCallback {
 
-	private static final Logger logger = LoggerFactory.getLogger(QuarkusEnvironmentJupiterExtension.class);
+	private static final Logger logger = LoggerFactory.getLogger(PostArcEnvironmentRunner.class);
 
 	// Different instance on the next beforeAll means Quarkus restarted
-	// (e.g. @TestProfile switch); we reset the coordinator in that case.
+	// (e.g. @TestProfile switch); we reset state in that case.
 	private static ArcContainer lastKnownContainer;
-
-	/**
-	 * Clears the cached Arc container reference. Called from
-	 * {@link SimulatestQuarkusPlugin#destroy()} so a long-lived JVM running
-	 * multiple sessions doesn't retain the final container of each session.
-	 */
-	static synchronized void forgetLastKnownContainer() {
-		lastKnownContainer = null;
-	}
 
 	@Override
 	public void beforeAll(ExtensionContext context) {
@@ -63,7 +52,7 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 		if (ancestry.isEmpty()) return;
 
 		InsistenceLayer layer = InsistenceLayerFactory.resolve().orElseThrow(() -> new IllegalStateException(
-				"Insistence Layer is not configured. Ensure SimulatestQuarkusPlugin has initialized "
+				"Insistence Layer is not configured. Ensure SimulatestQuarkusTestResource has run "
 				+ "before the test class enters Quarkus's lifecycle."));
 
 		for (Class<? extends Environment> environmentClass : ancestry) {
@@ -74,10 +63,9 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 
 	// Detects a new Arc container and unwinds both the logical (coordinator)
 	// and physical (savepoint stack) state belonging to the previous one.
-	// Without the physical unwind, levels pushed under the old Arc would remain
-	// on the connection; the coordinator would then claim ancestors freshly and
-	// push again on top, corrupting rollback boundaries for the rest of the
-	// suite.
+	// Without the physical unwind, levels pushed under the old Arc would
+	// remain on the connection; the coordinator would then claim ancestors
+	// freshly and push again on top, corrupting rollback boundaries.
 	private static synchronized void unwindStateIfQuarkusRestarted() {
 		ArcContainer current = currentArcContainer();
 		if (current == null || current == lastKnownContainer) return;
@@ -99,9 +87,8 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 
 	// If the env's run() or the savepoint push fails, release the claim so
 	// subsequent test classes can retry rather than silently skip on a stale
-	// record. The coordinator's push record is only set AFTER increaseLevel
-	// returns, so the matching onExit skips popping when a failure prevented
-	// the push from ever happening.
+	// record. The push record is only set AFTER increaseLevel returns, so the
+	// matching onExit skips popping when a failure prevented the push.
 	private static void runAndPushOrRollbackClaim(Class<? extends Environment> environmentClass, InsistenceLayer layer) {
 		try {
 			runEnvironment(environmentClass);
@@ -114,9 +101,9 @@ public final class QuarkusEnvironmentJupiterExtension implements BeforeAllCallba
 	}
 
 	// Threads the Arc InstanceHandle through so @Dependent-scoped environments
-	// are properly destroyed after run() completes. For @ApplicationScoped and
-	// @Singleton beans close() is a no-op; for @Dependent it triggers the
-	// disposal chain that would otherwise leak the instance.
+	// are properly destroyed after run() completes. For @ApplicationScoped
+	// and @Singleton beans close() is a no-op; for @Dependent it triggers
+	// the disposal chain that would otherwise leak the instance.
 	private static void runEnvironment(Class<? extends Environment> environmentClass) {
 		InstanceHandle<? extends Environment> arcHandle = resolveFromArc(environmentClass);
 		try {

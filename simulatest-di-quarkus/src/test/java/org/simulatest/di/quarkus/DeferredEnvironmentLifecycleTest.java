@@ -1,4 +1,4 @@
-package org.simulatest.environment.junit5;
+package org.simulatest.di.quarkus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ class DeferredEnvironmentLifecycleTest {
 
 		assertTrue(execution.events.isEmpty(),
 			"deferred entry must not run the env nor push a level; that work is done later "
-			+ "by the plugin's Jupiter extension, after its DI container is up");
+			+ "by PostArcEnvironmentRunner, after Arc has booted");
 	}
 
 	@Test

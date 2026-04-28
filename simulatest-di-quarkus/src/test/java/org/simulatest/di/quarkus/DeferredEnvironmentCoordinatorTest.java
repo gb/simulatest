@@ -1,4 +1,4 @@
-package org.simulatest.environment.junit5;
+package org.simulatest.di.quarkus;
 
 import java.util.List;
 
@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.simulatest.environment.Environment;
 import org.simulatest.environment.annotation.EnvironmentParent;
 import org.simulatest.environment.annotation.UseEnvironment;
-
-import org.simulatest.environment.junit5.testdouble.CyclicEnvironmentFixtures;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -51,7 +49,7 @@ class DeferredEnvironmentCoordinatorTest {
 	@Test
 	void cyclicParentChainThrowsRatherThanLooping() {
 		IllegalStateException error = assertThrows(IllegalStateException.class,
-			() -> DeferredEnvironmentCoordinator.walkParentChain(CyclicEnvironmentFixtures.NodeA.class));
+			() -> DeferredEnvironmentCoordinator.walkParentChain(CyclicNodeA.class));
 
 		assertTrue(error.getMessage().contains("Cyclic @EnvironmentParent"),
 			"error should name the cycle condition: " + error.getMessage());
@@ -152,6 +150,20 @@ class DeferredEnvironmentCoordinatorTest {
 	@UseEnvironment(Leaf.class)
 	static class UsesLeaf {
 		static class NestedInner { }
+	}
+
+	// Cyclic chain. Kept inside this test so the engine's classpath scan
+	// doesn't build a tree from it. No @UseEnvironment entry point — the
+	// test drives the cycle detection directly through walkParentChain.
+
+	@EnvironmentParent(CyclicNodeB.class)
+	static class CyclicNodeA implements Environment {
+		@Override public void run() {}
+	}
+
+	@EnvironmentParent(CyclicNodeA.class)
+	static class CyclicNodeB implements Environment {
+		@Override public void run() {}
 	}
 
 }

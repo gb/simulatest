@@ -1,1 +1,1 @@
-org.simulatest.di.quarkus.QuarkusEnvironmentJupiterExtension
+org.simulatest.di.quarkus.PostArcEnvironmentRunner

@@ -18,12 +18,12 @@ import javax.sql.DataSource;
  * {@link org.simulatest.insistencelayer.InsistenceLayerFactory#configure(DataSource)};
  * not intended as a general-purpose {@code DataSource}.
  */
-final class InsistenceLayerJdbcDataSource implements DataSource {
+public final class InsistenceLayerJdbcDataSource implements DataSource {
 
 	private final String url;
 	private final Properties properties;
 
-	InsistenceLayerJdbcDataSource(String url, Properties properties) {
+	public InsistenceLayerJdbcDataSource(String url, Properties properties) {
 		this.url = Objects.requireNonNull(url, "url must not be null");
 		// Defensive copy: the caller may keep a reference to the Properties
 		// object and mutate credentials afterwards; we want a stable snapshot.
