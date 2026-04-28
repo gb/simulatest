@@ -64,17 +64,31 @@
  *
  * <h2>What the user writes</h2>
  *
+ * <p>One annotation on the test class:
  * <pre>
  * &#064;QuarkusTest
- * &#064;QuarkusTestResource(SimulatestQuarkusTestResource.class)
+ * &#064;SimulatestQuarkusTest
  * &#064;UseEnvironment(MyEnv.class)
  * public class BookRepositoryTest { ... }
  * </pre>
  *
- * <p>Three annotations: two from Quarkus, one from Simulatest
- * ({@code @UseEnvironment}, the same one every other DI module uses). No
- * Simulatest-flavored Quarkus annotation; activation uses the vanilla
- * {@code @QuarkusTestResource} mechanism.
+ * <p>{@link org.simulatest.di.quarkus.SimulatestQuarkusTest} is meta-annotated
+ * with {@code @QuarkusTestResource(SimulatestQuarkusTestResource.class)} and
+ * {@code @ExtendWith(PostArcEnvironmentRunner.class)}, so one Simulatest
+ * annotation activates everything Simulatest needs. Quarkus does not enable
+ * JUnit Jupiter's {@code junit.jupiter.extensions.autodetection.enabled}
+ * property, so {@code META-INF/services} alone cannot register the post-Arc
+ * extension; the meta-annotation is the canonical activation path.
+ *
+ * <p>One line in {@code application.properties} is required because the JDBC
+ * driver class is a Quarkus build-time property and cannot be overridden at
+ * runtime by {@link org.simulatest.di.quarkus.SimulatestQuarkusTestResource}:
+ * <pre>
+ * %test.quarkus.datasource.jdbc.driver=org.simulatest.insistencelayer.infra.sql.InsistenceLayerJdbcDriver
+ * </pre>
+ * The {@code %test} prefix scopes it to the test profile so production
+ * configuration is untouched. The JDBC URL itself stays vanilla; the test
+ * resource rewrites it at session start.
  *
  * <p>If the project needs to install schema explicitly (rather than letting
  * Hibernate's {@code drop-and-create} or Flyway/Liquibase do it), implement

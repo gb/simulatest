@@ -6,7 +6,9 @@ import java.util.List;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.InstanceHandle;
+import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.simulatest.environment.Environment;
 import org.simulatest.insistencelayer.InsistenceLayer;
@@ -35,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * switch), savepoints pushed under the old container are unwound and the
  * coordinator is reset, so the new runtime starts from a clean stack.
  */
-public final class PostArcEnvironmentRunner implements BeforeAllCallback {
+public final class PostArcEnvironmentRunner implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback {
 
 	private static final Logger logger = LoggerFactory.getLogger(PostArcEnvironmentRunner.class);
 
@@ -59,6 +61,29 @@ public final class PostArcEnvironmentRunner implements BeforeAllCallback {
 			if (!DeferredEnvironmentCoordinator.claimNotYetRun(environmentClass)) continue;
 			runAndPushOrRollbackClaim(environmentClass, layer);
 		}
+	}
+
+	/**
+	 * Pushes a per-test Insistence Layer level so anything the test method
+	 * writes can be rolled back independently of fixture state. Runs after
+	 * Quarkus's transactional interceptors but before user code, since the
+	 * extension is auto-discovered and Quarkus's own interceptors are at
+	 * higher priority.
+	 */
+	@Override
+	public void beforeEach(ExtensionContext context) {
+		InsistenceLayerFactory.resolve().ifPresent(InsistenceLayer::increaseLevel);
+	}
+
+	/**
+	 * Rolls back everything the test method wrote. Pops the per-test level
+	 * pushed in {@link #beforeEach(ExtensionContext)}. Outer levels (e.g.
+	 * environment fixture state) are preserved so the next test starts from
+	 * the same baseline.
+	 */
+	@Override
+	public void afterEach(ExtensionContext context) {
+		InsistenceLayerFactory.resolve().ifPresent(InsistenceLayer::decreaseLevel);
 	}
 
 	// Detects a new Arc container and unwinds both the logical (coordinator)
