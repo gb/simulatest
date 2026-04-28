@@ -122,7 +122,7 @@ Add the JUnit 5 integration (Maven):
 <dependency>
     <groupId>org.simulatest</groupId>
     <artifactId>simulatest-environment-junit-platform</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <scope>test</scope>
 </dependency>
 ```
