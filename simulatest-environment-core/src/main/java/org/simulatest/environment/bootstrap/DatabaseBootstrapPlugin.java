@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * Simulatest test suite by discovering a {@link SimulatestDatabaseSetup}
  * via {@link java.util.ServiceLoader}.
  *
- * <p>Runs <em>after</em> any DI plugin (Spring/Guice/CDI/Quarkus) so that
+ * <p>Runs <em>after</em> any DI plugin (Spring/Guice/CDI) so that
  * a {@code DataSource} configured by DI takes precedence over one supplied
  * by {@link SimulatestDatabaseSetup#dataSource()}. The schema hook
  * ({@link SimulatestDatabaseSetup#setupSchema(DataSource)}) always runs

@@ -165,7 +165,7 @@ class EnvironmentTestDescriptorTest {
 						"The descriptor should request the environment instance for its own definition");
 				return environment;
 			};
-			return new SimulatestExecutionContext(null, factory, insistenceLayer, List.of());
+			return new SimulatestExecutionContext(null, factory, insistenceLayer);
 		}
 	}
 

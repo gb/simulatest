@@ -58,7 +58,7 @@ import javax.sql.DataSource;
  * }
  * }</pre>
  *
- * <h3>With Spring, Guice, CDI, or Quarkus</h3>
+ * <h3>With Spring, Guice, or CDI</h3>
  *
  * Your DI container already builds a {@code DataSource}. The matching
  * Simulatest DI plugin (e.g. {@code simulatest-di-spring}) discovers it and
@@ -127,8 +127,8 @@ public interface SimulatestDatabaseSetup {
 	 * <p><strong>Implement this when:</strong> you don't use a DI container,
 	 * or your DI container doesn't expose a {@code DataSource} bean.</p>
 	 *
-	 * <p><strong>Skip this when:</strong> you use Spring, Guice, CDI, or
-	 * Quarkus and bind a {@code DataSource} in the container. The matching
+	 * <p><strong>Skip this when:</strong> you use Spring, Guice, or CDI
+	 * and bind a {@code DataSource} in the container. The matching
 	 * Simulatest DI plugin will discover it. Returning {@code null} from
 	 * here (the default) tells Simulatest "look elsewhere for the
 	 * DataSource."</p>
