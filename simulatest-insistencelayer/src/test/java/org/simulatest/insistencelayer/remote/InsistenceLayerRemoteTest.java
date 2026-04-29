@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -27,7 +26,7 @@ public class InsistenceLayerRemoteTest {
 	private RemoteInsistenceLayer remoteLayer;
 
 	@Before
-	public void setup() throws SQLException, IOException {
+	public void setup() throws SQLException {
 		jdbcConnection = DriverManager.getConnection("jdbc:h2:mem:remote_test;DB_CLOSE_DELAY=-1");
 		ConnectionWrapper wrapper = new ConnectionWrapper(jdbcConnection);
 		serverLayer = InsistenceLayerFactory.build(wrapper);

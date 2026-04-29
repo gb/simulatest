@@ -17,6 +17,9 @@ import java.util.stream.StreamSupport;
  * represent the {@link org.simulatest.environment.EnvironmentDefinition}
  * hierarchy.</p>
  *
+ * <p><b>Thread-safety:</b> not thread-safe. Build the tree on a single thread
+ * before exposing it to readers.</p>
+ *
  * @param <T> the value type stored in each node
  */
 public final class Tree<T> implements Iterable<Node<T>> {

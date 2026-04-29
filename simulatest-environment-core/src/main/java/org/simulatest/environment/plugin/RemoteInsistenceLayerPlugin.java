@@ -1,7 +1,5 @@
 package org.simulatest.environment.plugin;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Collection;
 import org.simulatest.environment.infra.ExceptionAggregator;
 import org.simulatest.insistencelayer.InsistenceLayer;
@@ -30,12 +28,8 @@ public final class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 			InsistenceLayerFactory.requireDataSource().getConnectionWrapper()
 		);
 
-		try {
-			server = new InsistenceLayerServer(local, 0);
-			server.start();
-		} catch (IOException e) {
-			throw new UncheckedIOException("Failed to start Insistence Layer server", e);
-		}
+		server = new InsistenceLayerServer(local, 0);
+		server.start();
 
 		remote = new RemoteInsistenceLayer("localhost", server.getPort());
 		InsistenceLayerFactory.register(InsistenceLayerFactory.DEFAULT, remote);
@@ -45,16 +39,8 @@ public final class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 	public void destroy() {
 		ExceptionAggregator failures = new ExceptionAggregator();
 		if (remote != null) failures.capture(remote::close);
-		if (server != null) failures.capture(this::stopServer);
+		if (server != null) failures.capture(server::stop);
 		InsistenceLayerFactory.deregister(InsistenceLayerFactory.DEFAULT);
 		failures.throwIfAny();
-	}
-
-	private void stopServer() {
-		try {
-			server.stop();
-		} catch (IOException e) {
-			throw new UncheckedIOException("Failed to stop Insistence Layer server", e);
-		}
 	}
 }

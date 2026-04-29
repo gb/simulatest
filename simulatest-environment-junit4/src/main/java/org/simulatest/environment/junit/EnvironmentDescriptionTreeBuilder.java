@@ -28,10 +28,12 @@ public final class EnvironmentDescriptionTreeBuilder {
 		Description description = Description.createSuiteDescription(node.getValue().getEnvironmentClass());
 		descriptions.put(node.getValue(), description);
 
-		if (node.hasParent()) addTestDescription(node.getParentValue(), description);
+		node.getParentValue().ifPresent(parent -> addTestDescription(parent, description));
 	}
 
 	public void addTestDescription(EnvironmentDefinition environment, Description description) {
+		Objects.requireNonNull(environment, "environment must not be null");
+		Objects.requireNonNull(description, "description must not be null");
 		Description parent = descriptions.get(environment);
 		if (parent == null) {
 			throw new IllegalArgumentException("Unknown environment: " + environment.getName());

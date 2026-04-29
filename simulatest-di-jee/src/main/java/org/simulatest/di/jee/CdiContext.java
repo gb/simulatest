@@ -1,9 +1,10 @@
 package org.simulatest.di.jee;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -23,15 +24,17 @@ import org.simulatest.environment.plugin.DependencyInjectionContext;
 public final class CdiContext implements DependencyInjectionContext {
 
 	private SeContainer container;
-	private final Map<Class<?>, InjectionTarget<Object>> injectionTargetCache = new HashMap<>();
+	private final Map<Class<?>, InjectionTarget<Object>> injectionTargetCache = new ConcurrentHashMap<>();
 
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
+		Objects.requireNonNull(clazz, "clazz must not be null");
 		return getContainer().select(clazz).get();
 	}
 
 	@Override
 	public void injectMembers(Object instance) {
+		Objects.requireNonNull(instance, "instance must not be null");
 		InjectionTarget<Object> injectionTarget = injectionTargetCache.computeIfAbsent(
 			instance.getClass(), this::createInjectionTarget);
 		CreationalContext<Object> creationalContext = getContainer().getBeanManager().createCreationalContext(null);
@@ -44,6 +47,7 @@ public final class CdiContext implements DependencyInjectionContext {
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
+		Objects.requireNonNull(testClasses, "testClasses must not be null");
 		if (container != null && container.isRunning()) return;
 		container = SeContainerInitializer.newInstance().initialize();
 	}

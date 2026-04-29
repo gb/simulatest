@@ -20,6 +20,8 @@ import org.simulatest.environment.annotation.UseEnvironment;
  *
  * <p>Used by the runners to figure out which tests belong to which environment
  * node when walking the tree.</p>
+ *
+ * <p><b>Thread-safety:</b> immutable after construction; safe to share.</p>
  */
 public final class EnvironmentExtractor {
 

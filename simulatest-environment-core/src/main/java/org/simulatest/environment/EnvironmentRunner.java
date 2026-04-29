@@ -53,7 +53,7 @@ public final class EnvironmentRunner {
 	}
 
 	public EnvironmentRunner(EnvironmentFactory factory, EnvironmentTreeBuilder builder) {
-		this(factory, builder.getTree());
+		this(factory, Objects.requireNonNull(builder, "builder must not be null").getTree());
 	}
 
 	public static void runEnvironment(Class<? extends Environment> environment) {
@@ -131,7 +131,7 @@ public final class EnvironmentRunner {
 		if (!node.hasParent()) return;
 
 		if (node.isLastChild()) propagateAfterChildrenRun(node.getParent());
-		else fireAfterSiblingCleanup(node.getParentValue());
+		else fireAfterSiblingCleanup(node.getParentValue().orElseThrow());
 	}
 
 	private void propagateAfterChildrenRun(Node<EnvironmentDefinition> parent) {

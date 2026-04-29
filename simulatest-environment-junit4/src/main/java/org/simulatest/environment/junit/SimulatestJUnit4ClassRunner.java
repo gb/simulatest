@@ -13,12 +13,12 @@ import org.simulatest.environment.infra.exception.EnvironmentInstantiationExcept
 
 public final class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 
-	private final EnvironmentJUnitRunner runner;
+	private final Runnable resetInsistence;
 	private final List<SimulatestPlugin> plugins;
 
-	public SimulatestJUnit4ClassRunner(EnvironmentJUnitRunner runner, Class<?> clazz, List<SimulatestPlugin> plugins) throws InitializationError {
+	public SimulatestJUnit4ClassRunner(Runnable resetInsistence, Class<?> clazz, List<SimulatestPlugin> plugins) throws InitializationError {
 		super(clazz);
-		this.runner = Objects.requireNonNull(runner, "runner must not be null");
+		this.resetInsistence = Objects.requireNonNull(resetInsistence, "resetInsistence must not be null");
 		this.plugins = Objects.requireNonNull(plugins, "plugins must not be null");
 	}
 
@@ -44,7 +44,7 @@ public final class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 		try {
 			super.runChild(method, notifier);
 		} finally {
-			runner.resetInsistenceLevel();
+			resetInsistence.run();
 		}
 	}
 

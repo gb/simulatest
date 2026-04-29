@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -25,22 +26,25 @@ public final class GuiceContext implements DependencyInjectionContext {
 
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
+		Objects.requireNonNull(clazz, "clazz must not be null");
 		return getInjector().getInstance(clazz);
 	}
 
 	@Override
 	public void injectMembers(Object instance) {
+		Objects.requireNonNull(instance, "instance must not be null");
 		getInjector().injectMembers(instance);
 	}
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
+		Objects.requireNonNull(testClasses, "testClasses must not be null");
 		if (injector != null) return;
 
 		SimulatestGuiceConfig config = DependencyInjectionContext
 				.findConfigAnnotation(testClasses, SimulatestGuiceConfig.class)
 				.orElseThrow(() -> new IllegalStateException(
-						"No test class annotated with @SimulatestGuiceConfig found."));
+						"No test class annotated with @SimulatestGuiceConfig found among: " + classNames(testClasses)));
 
 		List<Module> modules = new ArrayList<>();
 
@@ -64,6 +68,10 @@ public final class GuiceContext implements DependencyInjectionContext {
 	@Override
 	public void destroy() {
 		injector = null;
+	}
+
+	private static String classNames(Collection<Class<?>> classes) {
+		return classes.stream().map(Class::getName).toList().toString();
 	}
 
 	private Injector getInjector() {

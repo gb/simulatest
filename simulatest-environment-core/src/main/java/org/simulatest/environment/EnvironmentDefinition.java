@@ -12,6 +12,8 @@ import org.simulatest.environment.annotation.EnvironmentParent;
  * <p>Two definitions are equal when they wrap the same environment class.
  * Used by {@link EnvironmentExtractor} and {@link org.simulatest.environment.tree.EnvironmentTreeBuilder}
  * to build the environment tree.</p>
+ *
+ * <p><b>Thread-safety:</b> immutable; safe to share.</p>
  */
 public final class EnvironmentDefinition {
 

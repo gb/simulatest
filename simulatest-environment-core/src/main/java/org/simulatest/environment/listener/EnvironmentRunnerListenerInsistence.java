@@ -24,7 +24,7 @@ import org.simulatest.insistencelayer.InsistenceLayer;
  * <p>Runs in {@link ListenerPhase#INFRASTRUCTURE} so it fires before any
  * application listener observes the state.</p>
  */
-public class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerListener {
+public final class EnvironmentRunnerListenerInsistence implements EnvironmentRunnerListener {
 
 	private final InsistenceLayer insistenceLayer;
 

@@ -105,11 +105,17 @@ public final class ConnectionWrapper {
 		return (Connection) Proxy.newProxyInstance(
 			Connection.class.getClassLoader(),
 			new Class<?>[] { Connection.class },
-			new ConnectionInvocationHandler()
+			new ConnectionInvocationHandler(this)
 		);
 	}
 
-	private class ConnectionInvocationHandler implements InvocationHandler {
+	private static final class ConnectionInvocationHandler implements InvocationHandler {
+
+		private final ConnectionWrapper wrapper;
+
+		ConnectionInvocationHandler(ConnectionWrapper wrapper) {
+			this.wrapper = wrapper;
+		}
 
 		@Override
 		public Object invoke(Object proxyObj, Method method, Object[] args) throws Throwable {
@@ -119,14 +125,14 @@ public final class ConnectionWrapper {
 			// from closing the real connection or re-enabling autocommit.
 			if (METHOD_CLOSE.equals(methodName)) return null;
 			if (METHOD_SET_AUTO_COMMIT.equals(methodName)) {
-				if (!active) realConnection.setAutoCommit(false);
+				if (!wrapper.active) wrapper.realConnection.setAutoCommit(false);
 				return null;
 			}
 
-			if (active) {
-				if (METHOD_COMMIT.equals(methodName)) { handleCommit(); return null; }
+			if (wrapper.active) {
+				if (METHOD_COMMIT.equals(methodName)) { wrapper.handleCommit(); return null; }
 				if (METHOD_ROLLBACK.equals(methodName) && (args == null || args.length == 0)) {
-					handleRollback();
+					wrapper.handleRollback();
 					return null;
 				}
 				if (METHOD_GET_AUTO_COMMIT.equals(methodName)) return false;
@@ -135,7 +141,7 @@ public final class ConnectionWrapper {
 			}
 
 			try {
-				return method.invoke(realConnection, args);
+				return method.invoke(wrapper.realConnection, args);
 			} catch (InvocationTargetException e) {
 				throw e.getCause();
 			}

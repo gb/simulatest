@@ -24,6 +24,10 @@ import org.simulatest.insistencelayer.InsistenceLayerFactory;
  * <p>Both the JUnit 4 and JUnit 5 integrations open a session at the start
  * of a suite run and close it when the suite completes. This keeps the
  * orchestration logic in one place instead of duplicated across runners.</p>
+ *
+ * <p><b>Thread-safety:</b> not thread-safe. {@link #close()} is idempotent
+ * across threads (guarded by an {@link AtomicBoolean}) so cleanup paths can
+ * race safely, but lifecycle methods otherwise expect single-thread use.</p>
  */
 public final class SimulatestSession implements AutoCloseable {
 

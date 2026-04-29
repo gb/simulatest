@@ -4,12 +4,15 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A node in a {@link Tree}: holds a non-null value, an optional parent, and
  * an ordered list of children. Children retain insertion order so callers can
  * rely on first/last positions ({@link #getFirstChild()}, {@link #getLastChild()},
  * {@link #isLastChild()}).
+ *
+ * <p><b>Thread-safety:</b> not thread-safe.</p>
  *
  * @param <T> the value type
  */
@@ -85,8 +88,8 @@ public final class Node<T> {
 		for (Node<T> child : children) child.print(builder, margin + "   ");
 	}
 	
-	public T getParentValue() {
-		return (getParent() != null) ? getParent().getValue() : null;
+	public Optional<T> getParentValue() {
+		return Optional.ofNullable(parent).map(Node::getValue);
 	}
 
 	@Override

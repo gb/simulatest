@@ -29,10 +29,17 @@ import org.simulatest.insistencelayer.InsistenceLayer;
 /**
  * JUnit 4 {@link Runner} that walks a test's environment tree and delegates
  * per-test execution to {@link SimulatestJUnit4ClassRunner}.
+ *
+ * <p>Designed for one specific extension point: {@link EnvironmentJUnitSuite}
+ * subclasses this runner only to bridge {@code @SuiteClasses} discovery into
+ * the {@code Set<Class<?>>} constructor. New subclasses outside this package
+ * are not supported — overriding {@link #run(RunNotifier)},
+ * {@link #filter(Filter)}, or {@link #getDescription()} will silently break
+ * the lifecycle bracket and savepoint management.</p>
  */
 public class EnvironmentJUnitRunner extends Runner implements Filterable {
 
-	private final Map<Class<?>, Runner> runnersByTest = new LinkedHashMap<>();
+	private final Map<Class<?>, SimulatestJUnit4ClassRunner> runnersByTest = new LinkedHashMap<>();
 	private final Set<Class<?>> testClasses = new LinkedHashSet<>();
 	private final List<SimulatestPlugin> plugins;
 	private EnvironmentInfrastructure infrastructure;
@@ -50,7 +57,11 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 	}
 
 	private EnvironmentInfrastructure buildInfrastructure() {
-		EnvironmentExtractor extractor = EnvironmentExtractor.extract(Collections.unmodifiableCollection(testClasses));
+		return buildInfrastructureFor(testClasses);
+	}
+
+	private EnvironmentInfrastructure buildInfrastructureFor(Set<Class<?>> classes) {
+		EnvironmentExtractor extractor = EnvironmentExtractor.extract(Collections.unmodifiableCollection(classes));
 		Tree<EnvironmentDefinition> tree = new EnvironmentTreeBuilder(extractor.getEnvironments()).getTree();
 		EnvironmentDescriptionTreeBuilder descriptions = new EnvironmentDescriptionTreeBuilder(tree);
 		for (EnvironmentDefinition environment : extractor.getEnvironments()) {
@@ -63,11 +74,11 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 
 	private void createTestRunners() throws InitializationError {
 		for (Class<?> testCase : testClasses)
-			runnersByTest.put(testCase, new SimulatestJUnit4ClassRunner(this, testCase, plugins));
+			runnersByTest.put(testCase, new SimulatestJUnit4ClassRunner(this::resetInsistenceLevel, testCase, plugins));
 	}
 
-	private Runner requireRunner(Class<?> testCase) {
-		Runner runner = runnersByTest.get(testCase);
+	private SimulatestJUnit4ClassRunner requireRunner(Class<?> testCase) {
+		SimulatestJUnit4ClassRunner runner = runnersByTest.get(testCase);
 		if (runner == null) throw new IllegalStateException("No runner found for test class: " + testCase.getName());
 		return runner;
 	}
@@ -110,19 +121,23 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 
 	@Override
 	public void filter(Filter filter) throws NoTestsRemainException {
+		Set<Class<?>> survivors = new LinkedHashSet<>(testClasses);
 		for (Class<?> testCase : List.copyOf(testClasses)) {
 			try {
-				((Filterable) requireRunner(testCase)).filter(filter);
+				requireRunner(testCase).filter(filter);
 			} catch (NoTestsRemainException e) {
-				testClasses.remove(testCase);
-				runnersByTest.remove(testCase);
+				survivors.remove(testCase);
 			}
 		}
 
-		if (testClasses.isEmpty())
-			throw new NoTestsRemainException();
+		if (survivors.isEmpty()) throw new NoTestsRemainException();
 
-		infrastructure = buildInfrastructure();
+		// Build the new infrastructure first; only commit field updates if it succeeds,
+		// so a build failure leaves the runner in its pre-filter state.
+		EnvironmentInfrastructure newInfrastructure = buildInfrastructureFor(survivors);
+		testClasses.retainAll(survivors);
+		runnersByTest.keySet().retainAll(survivors);
+		infrastructure = newInfrastructure;
 	}
 
 	private void initializeTestClasses() {

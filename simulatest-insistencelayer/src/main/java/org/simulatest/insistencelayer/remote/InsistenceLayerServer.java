@@ -12,6 +12,7 @@ import java.net.SocketException;
 import java.util.Objects;
 
 import org.simulatest.insistencelayer.InsistenceLayer;
+import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,10 +81,15 @@ public final class InsistenceLayerServer {
 	/**
 	 * Starts the server on a daemon thread. Returns immediately.
 	 *
-	 * @throws IOException if the port cannot be bound
+	 * @throws InsistenceLayerException if the port cannot be bound
 	 */
-	public void start() throws IOException {
-		serverSocket = new ServerSocket(requestedPort, ACCEPT_BACKLOG, bindAddress);
+	public void start() {
+		try {
+			serverSocket = new ServerSocket(requestedPort, ACCEPT_BACKLOG, bindAddress);
+		} catch (IOException e) {
+			throw new InsistenceLayerException(
+					"Failed to bind Insistence Layer server on " + bindAddress.getHostAddress() + ":" + requestedPort, e);
+		}
 		logger.info("Server started on {}:{}", bindAddress.getHostAddress(), serverSocket.getLocalPort());
 
 		serverThread = new Thread(this::acceptLoop, "insistence-layer-server");
@@ -95,12 +101,17 @@ public final class InsistenceLayerServer {
 	 * Stops the server, closes the listening socket, and waits for the
 	 * server thread to terminate (up to 5 seconds).
 	 *
-	 * @throws IOException if closing the socket fails
+	 * @throws InsistenceLayerException if closing the socket fails
 	 */
-	public void stop() throws IOException {
+	public void stop() {
 		logger.info("Stopping server on port {}", requestedPort);
 		if (serverSocket != null && !serverSocket.isClosed()) {
-			serverSocket.close();
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+				throw new InsistenceLayerException(
+						"Failed to close Insistence Layer server on port " + requestedPort, e);
+			}
 		}
 		closeActiveClient();
 		if (serverThread != null) {

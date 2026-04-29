@@ -17,7 +17,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-public class SQLWindow extends JFrame {
+public final class SQLWindow extends JFrame {
 
 	private static final long serialVersionUID = 7010069887814700821L;
 

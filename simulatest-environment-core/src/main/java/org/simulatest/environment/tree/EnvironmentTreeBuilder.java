@@ -17,6 +17,8 @@ import org.simulatest.environment.infra.exception.EnvironmentCyclicException;
  * graph are detected during insertion and raise
  * {@link EnvironmentCyclicException}. Adding the same definition twice is a
  * no-op.</p>
+ *
+ * <p><b>Thread-safety:</b> not thread-safe.</p>
  */
 public final class EnvironmentTreeBuilder {
 	

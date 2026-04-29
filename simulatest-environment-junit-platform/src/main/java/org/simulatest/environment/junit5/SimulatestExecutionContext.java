@@ -36,9 +36,9 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 
 	public SimulatestExecutionContext(SimulatestSession session) {
 		this(
-				session,
-				session != null ? session.factory() : null,
-				session != null ? session.insistenceLayer().orElse(null) : null);
+				Objects.requireNonNull(session, "session must not be null"),
+				session.factory(),
+				session.insistenceLayer().orElse(null));
 	}
 
 	public SimulatestExecutionContext(SimulatestSession session, EnvironmentFactory factory,
@@ -102,6 +102,8 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 	 * Prevents callers from forgetting to clear the ThreadLocal.
 	 */
 	public static void withCurrent(SimulatestExecutionContext context, Runnable action) {
+		Objects.requireNonNull(context, "context must not be null");
+		Objects.requireNonNull(action, "action must not be null");
 		CURRENT.set(context);
 		try {
 			action.run();

@@ -1,5 +1,7 @@
 package org.simulatest.environment.junit5.descriptor;
 
+import java.util.Objects;
+
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
@@ -31,6 +33,7 @@ class TestResultDescriptor extends AbstractTestDescriptor implements Node<Simula
 
 	static TestResultDescriptor fromResult(UniqueId id, String displayName,
 			TestSource source, TestExecutionResult result) {
+		Objects.requireNonNull(result, "result must not be null");
 		Throwable throwable = null;
 		if (result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
 			throwable = result.getThrowable()
@@ -41,6 +44,7 @@ class TestResultDescriptor extends AbstractTestDescriptor implements Node<Simula
 
 	static TestResultDescriptor skipped(UniqueId id, String displayName,
 			TestSource source, String reason) {
+		Objects.requireNonNull(reason, "reason must not be null");
 		return new TestResultDescriptor(id, displayName, source, null, reason);
 	}
 

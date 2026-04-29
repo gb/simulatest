@@ -10,6 +10,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import javax.sql.DataSource;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -28,6 +29,7 @@ public final class SpringContext implements DependencyInjectionContext {
 	 */
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
+		Objects.requireNonNull(clazz, "clazz must not be null");
 		var factory = getContext().getAutowireCapableBeanFactory();
 		var provider = getContext().getBeanProvider(clazz);
 		T managed = provider.getIfAvailable();
@@ -36,11 +38,13 @@ public final class SpringContext implements DependencyInjectionContext {
 
 	@Override
 	public void injectMembers(Object instance) {
+		Objects.requireNonNull(instance, "instance must not be null");
 		getContext().getAutowireCapableBeanFactory().autowireBean(instance);
 	}
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
+		Objects.requireNonNull(testClasses, "testClasses must not be null");
 		if (context != null) return;
 
 		context = new AnnotationConfigApplicationContext();

@@ -26,6 +26,9 @@ import org.simulatest.environment.tree.Tree;
  * <p>Extends {@link HierarchicalTestEngine} so the platform handles tree walking,
  * lifecycle notifications, and error handling. Each descriptor is a
  * {@link org.junit.platform.engine.support.hierarchical.Node Node} managing its own concerns.</p>
+ *
+ * <p><b>Thread-safety:</b> not thread-safe; the JUnit Platform invokes
+ * {@code discover}/{@code execute} on a single executor thread per engine.</p>
  */
 public final class SimulatestTestEngine extends HierarchicalTestEngine<SimulatestExecutionContext> {
 
@@ -80,14 +83,14 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 	private Set<EnvironmentDefinition> lastSiblingsOf(Tree<EnvironmentDefinition> envTree) {
 		Map<EnvironmentDefinition, EnvironmentDefinition> lastByParent = new HashMap<>();
 		for (Node<EnvironmentDefinition> node : envTree) {
-			lastByParent.put(node.hasParent() ? node.getParentValue() : null, node.getValue());
+			lastByParent.put(node.getParentValue().orElse(null), node.getValue());
 		}
 		return new HashSet<>(lastByParent.values());
 	}
 
 	private TestDescriptor resolveParent(Node<EnvironmentDefinition> node,
 			TestDescriptor root, Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv) {
-		return node.hasParent() ? descriptorsByEnv.get(node.getParentValue()) : root;
+		return node.getParentValue().<TestDescriptor>map(descriptorsByEnv::get).orElse(root);
 	}
 
 	private EnvironmentTestDescriptor createEnvironmentDescriptor(TestDescriptor parent,
