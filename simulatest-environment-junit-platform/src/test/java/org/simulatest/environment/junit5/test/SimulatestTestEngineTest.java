@@ -1,11 +1,13 @@
 package org.simulatest.environment.junit5.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.jdbcx.JdbcDataSource;
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
@@ -24,6 +28,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
+import org.simulatest.environment.junit5.descriptor.EnvironmentTestDescriptor;
 import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
@@ -225,6 +230,51 @@ class SimulatestTestEngineTest {
 				"ClasspathRootSelector scan should discover package-private @UseEnvironment test classes. " +
 				"Found: " + testPlan.getDescendants(engineRoot).stream()
 						.map(TestIdentifier::getDisplayName).toList());
+	}
+
+	@Test
+	void exactlyOneEnvironmentDescriptorPerParentShouldBeFlaggedAsLastSibling() {
+		SimulatestTestEngine engine = new SimulatestTestEngine();
+		LauncherDiscoveryRequest request = simulatestRequest(
+				FirstLevelTest.class, SecondLevelTest.class, InsistenceIsolationTest.class);
+
+		TestDescriptor root = engine.discover(request, UniqueId.forEngine(SimulatestTestEngine.ENGINE_ID));
+
+		EnvironmentTestDescriptor bigBangEnv = singleEnvironmentChild(root,
+				"The engine root should hold a single BigBangEnvironment descriptor");
+		assertTrue(bigBangEnv.isLastEnvironmentSibling(),
+				"A sole env child should be flagged as the last env sibling");
+
+		List<EnvironmentTestDescriptor> bigBangChildren = environmentChildrenOf(bigBangEnv);
+		assertEquals(2, bigBangChildren.size(),
+				"BigBang should contain two env children: FirstLevelEnvironment and InsistenceTestEnvironment");
+		EnvironmentTestDescriptor lastInOrder = bigBangChildren.get(bigBangChildren.size() - 1);
+		EnvironmentTestDescriptor firstInOrder = bigBangChildren.get(0);
+		assertTrue(lastInOrder.isLastEnvironmentSibling(),
+				"The env sibling appearing last in insertion order should be flagged as the last env sibling");
+		assertFalse(firstInOrder.isLastEnvironmentSibling(),
+				"The env sibling appearing earlier should not be flagged");
+
+		EnvironmentTestDescriptor firstLevelEnv = bigBangChildren.stream()
+				.filter(d -> d.getDefinition().getName().equals("FirstLevelEnvironment"))
+				.findFirst().orElseThrow();
+		EnvironmentTestDescriptor secondLevelEnv = singleEnvironmentChild(firstLevelEnv,
+				"FirstLevelEnvironment should contain exactly one env child (SecondLevelEnvironment)");
+		assertTrue(secondLevelEnv.isLastEnvironmentSibling(),
+				"A sole env child should be flagged as the last env sibling");
+	}
+
+	private static List<EnvironmentTestDescriptor> environmentChildrenOf(TestDescriptor parent) {
+		return parent.getChildren().stream()
+				.filter(EnvironmentTestDescriptor.class::isInstance)
+				.map(EnvironmentTestDescriptor.class::cast)
+				.toList();
+	}
+
+	private static EnvironmentTestDescriptor singleEnvironmentChild(TestDescriptor parent, String message) {
+		List<EnvironmentTestDescriptor> children = environmentChildrenOf(parent);
+		assertEquals(1, children.size(), message);
+		return children.get(0);
 	}
 
 	@Test

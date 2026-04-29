@@ -6,16 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.UniqueId;
-import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
-import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.simulatest.environment.Environment;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
-import org.simulatest.environment.annotation.EnvironmentParent;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 import org.simulatest.insistencelayer.InsistenceLayer;
@@ -52,67 +48,25 @@ class EnvironmentTestDescriptorTest {
 	}
 
 	@Test
-	void afterShouldOnlyDecreaseWhenDescriptorHasNoParent() {
+	void afterShouldOnlyDecreaseWhenDescriptorIsLastEnvironmentSibling() {
 		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
 		DescriptorFixture fixture = DescriptorFixture.with(new TrackingEnvironment(), insistenceLayer);
 
 		fixture.descriptor.after(fixture.context);
 
 		assertEquals(List.of("decrease"), insistenceLayer.operations(),
-				"A root environment should only unwind its own level");
+				"The last environment sibling should only unwind its own level; the parent will roll past its savepoint");
 	}
 
 	@Test
 	void afterShouldResetParentLevelWhenAnotherEnvironmentSiblingFollows() {
 		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
-		DescriptorFixture fixture = DescriptorFixture.with(new TrackingEnvironment(), insistenceLayer);
-		fixture.attachToParent();
-		fixture.addEnvironmentSibling(ChildEnvironment.class);
+		DescriptorFixture fixture = DescriptorFixture.notLastSibling(new TrackingEnvironment(), insistenceLayer);
 
 		fixture.descriptor.after(fixture.context);
 
 		assertEquals(List.of("decrease", "reset"), insistenceLayer.operations(),
 				"A non-last environment should reset the parent level for the next sibling subtree");
-	}
-
-	@Test
-	void afterShouldSkipResetWhenOnlyNonEnvironmentSiblingsFollow() {
-		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
-		DescriptorFixture fixture = DescriptorFixture.with(new TrackingEnvironment(), insistenceLayer);
-		fixture.attachToParent();
-		fixture.addNonEnvironmentSibling("test-class");
-
-		fixture.descriptor.after(fixture.context);
-
-		assertEquals(List.of("decrease"), insistenceLayer.operations(),
-				"Non-environment siblings should not trigger a parent-level reset");
-	}
-
-	@Test
-	void afterShouldIgnoreEnvironmentSiblingsThatAppearBeforeCurrentDescriptor() {
-		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
-		DescriptorFixture fixture = DescriptorFixture.with(new TrackingEnvironment(), insistenceLayer);
-		fixture.addEnvironmentSibling(ChildEnvironment.class);
-		fixture.attachToParent();
-
-		fixture.descriptor.after(fixture.context);
-
-		assertEquals(List.of("decrease"), insistenceLayer.operations(),
-				"Only environment siblings after the current descriptor should trigger a parent-level reset");
-	}
-
-	@Test
-	void afterShouldResetWhenEnvironmentSiblingAppearsAfterNonEnvironmentSibling() {
-		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
-		DescriptorFixture fixture = DescriptorFixture.with(new TrackingEnvironment(), insistenceLayer);
-		fixture.attachToParent();
-		fixture.addNonEnvironmentSibling("test-class");
-		fixture.addEnvironmentSibling(ChildEnvironment.class);
-
-		fixture.descriptor.after(fixture.context);
-
-		assertEquals(List.of("decrease", "reset"), insistenceLayer.operations(),
-				"The descriptor should scan past non-environment siblings until it finds the next environment subtree");
 	}
 
 	private static final class DescriptorFixture {
@@ -122,7 +76,6 @@ class EnvironmentTestDescriptorTest {
 		private final EnvironmentTestDescriptor descriptor;
 		private final SimulatestExecutionContext context;
 		private final TrackingInsistenceLayer insistenceLayer;
-		private final EngineDescriptor parent = new EngineDescriptor(ENGINE_ID, "Simulatest");
 
 		private DescriptorFixture(EnvironmentTestDescriptor descriptor, SimulatestExecutionContext context,
 				TrackingInsistenceLayer insistenceLayer) {
@@ -132,30 +85,22 @@ class EnvironmentTestDescriptorTest {
 		}
 
 		static DescriptorFixture with(Environment environment, TrackingInsistenceLayer insistenceLayer) {
+			return build(environment, insistenceLayer, true);
+		}
+
+		static DescriptorFixture notLastSibling(Environment environment, TrackingInsistenceLayer insistenceLayer) {
+			return build(environment, insistenceLayer, false);
+		}
+
+		private static DescriptorFixture build(Environment environment, TrackingInsistenceLayer insistenceLayer,
+				boolean lastEnvironmentSibling) {
 			EnvironmentDefinition definition = EnvironmentDefinition.create(ParentEnvironment.class);
 			EnvironmentTestDescriptor descriptor = new EnvironmentTestDescriptor(
 					ENGINE_ID.append("environment", ParentEnvironment.class.getName()),
-					definition);
+					definition,
+					lastEnvironmentSibling);
 			SimulatestExecutionContext context = contextFor(environment, definition, insistenceLayer);
 			return new DescriptorFixture(descriptor, context, insistenceLayer);
-		}
-
-		void attachToParent() {
-			parent.addChild(descriptor);
-		}
-
-		void addEnvironmentSibling(Class<? extends Environment> environmentClass) {
-			parent.addChild(newEnvironmentDescriptor(environmentClass));
-		}
-
-		private EnvironmentTestDescriptor newEnvironmentDescriptor(Class<? extends Environment> environmentClass) {
-			return new EnvironmentTestDescriptor(
-					parent.getUniqueId().append("environment", environmentClass.getName()),
-					EnvironmentDefinition.create(environmentClass));
-		}
-
-		void addNonEnvironmentSibling(String segment) {
-			parent.addChild(new DummyDescriptor(parent.getUniqueId().append("class", segment), segment));
 		}
 
 		private static SimulatestExecutionContext contextFor(Environment environment,
@@ -203,18 +148,6 @@ class EnvironmentTestDescriptorTest {
 		}
 	}
 
-	private static final class DummyDescriptor extends AbstractTestDescriptor {
-
-		private DummyDescriptor(UniqueId uniqueId, String displayName) {
-			super(uniqueId, displayName);
-		}
-
-		@Override
-		public Type getType() {
-			return Type.CONTAINER;
-		}
-	}
-
 	private static class TrackingEnvironment implements Environment {
 
 		private int runCount;
@@ -240,12 +173,6 @@ class EnvironmentTestDescriptorTest {
 	}
 
 	private static class ParentEnvironment implements Environment {
-		@Override
-		public void run() { }
-	}
-
-	@EnvironmentParent(ParentEnvironment.class)
-	private static class ChildEnvironment implements Environment {
 		@Override
 		public void run() { }
 	}

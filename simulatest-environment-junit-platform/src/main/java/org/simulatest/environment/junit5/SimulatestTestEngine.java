@@ -1,6 +1,7 @@
 package org.simulatest.environment.junit5;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,11 +61,13 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 
 	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor, Tree<EnvironmentDefinition> envTree,
 									 EnvironmentExtractor extractor) {
+		Set<EnvironmentDefinition> lastSiblings = lastSiblingsOf(envTree);
 		Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv = new HashMap<>();
 
 		for (Node<EnvironmentDefinition> node : envTree) {
 			TestDescriptor parent = resolveParent(node, engineDescriptor, descriptorsByEnv);
-			EnvironmentTestDescriptor environmentDescriptor = createEnvironmentDescriptor(parent, node.getValue());
+			EnvironmentTestDescriptor environmentDescriptor = createEnvironmentDescriptor(
+					parent, node.getValue(), lastSiblings.contains(node.getValue()));
 
 			descriptorsByEnv.put(node.getValue(), environmentDescriptor);
 			parent.addChild(environmentDescriptor);
@@ -72,15 +75,26 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 		}
 	}
 
+	// For each parent (or null for roots), the env that appears last in iteration order
+	// is the one whose savepoint the parent's decreaseLevel will roll past.
+	private Set<EnvironmentDefinition> lastSiblingsOf(Tree<EnvironmentDefinition> envTree) {
+		Map<EnvironmentDefinition, EnvironmentDefinition> lastByParent = new HashMap<>();
+		for (Node<EnvironmentDefinition> node : envTree) {
+			lastByParent.put(node.hasParent() ? node.getParentValue() : null, node.getValue());
+		}
+		return new HashSet<>(lastByParent.values());
+	}
+
 	private TestDescriptor resolveParent(Node<EnvironmentDefinition> node,
 			TestDescriptor root, Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv) {
 		return node.hasParent() ? descriptorsByEnv.get(node.getParentValue()) : root;
 	}
 
-	private EnvironmentTestDescriptor createEnvironmentDescriptor(TestDescriptor parent, EnvironmentDefinition environmentDefinition) {
+	private EnvironmentTestDescriptor createEnvironmentDescriptor(TestDescriptor parent,
+			EnvironmentDefinition environmentDefinition, boolean lastEnvironmentSibling) {
 		UniqueId id = parent.getUniqueId()
 				.append("environment", environmentDefinition.getEnvironmentClass().getName());
-		return new EnvironmentTestDescriptor(id, environmentDefinition);
+		return new EnvironmentTestDescriptor(id, environmentDefinition, lastEnvironmentSibling);
 	}
 
 	private void addTestClassChildren(EnvironmentTestDescriptor parent, List<Class<?>> testClasses) {
