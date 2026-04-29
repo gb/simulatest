@@ -179,8 +179,8 @@ public class InsistenceLayerTest {
 		} catch (InsistenceLayerException thrown) {
 			assertSame("underlying SQLException preserved as cause",
 					underlying, thrown.getCause());
-			assertTrue("error message should name the level being dropped, was: " + thrown.getMessage(),
-					thrown.getMessage().contains("dropping level"));
+			assertTrue("error message should name the level being released, was: " + thrown.getMessage(),
+					thrown.getMessage().contains("releasing savepoint at level"));
 		}
 
 		assertTrue("level must still reflect reality of the savepoint stack; reset for teardown",

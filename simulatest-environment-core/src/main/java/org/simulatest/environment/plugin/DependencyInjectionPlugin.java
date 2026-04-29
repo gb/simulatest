@@ -2,6 +2,7 @@ package org.simulatest.environment.plugin;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.simulatest.environment.EnvironmentFactory;
 import org.simulatest.environment.EnvironmentReflectionFactory;
@@ -58,13 +59,13 @@ public abstract class DependencyInjectionPlugin implements SimulatestPlugin {
 	}
 
 	@Override
-	public Object createTestInstance(Class<?> testClass) {
+	public Optional<Object> createTestInstance(Class<?> testClass) {
 		try {
-			return context.getInstance(testClass);
+			return Optional.of(context.getInstance(testClass));
 		} catch (Exception e) {
 			logger.debug("DI context could not create instance of {}, falling back to default construction",
 					testClass.getName(), e);
-			return null;
+			return Optional.empty();
 		}
 	}
 

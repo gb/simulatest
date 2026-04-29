@@ -48,7 +48,6 @@ public final class RemoteInsistenceLayer implements InsistenceLayer {
 	 */
 	public RemoteInsistenceLayer(String host, int port) {
 		this.client = new InsistenceLayerClient(host, port);
-		this.level = 0;
 	}
 
 	/**
@@ -69,7 +68,7 @@ public final class RemoteInsistenceLayer implements InsistenceLayer {
 	public void increaseLevel() {
 		client.sendCommand(InsistenceLayerProtocol.INCREASE);
 		level++;
-		logger.info("Level increased to {}", level);
+		logger.info("Level increased to {} on {}:{}", level, client.host(), client.port());
 	}
 
 	/**
@@ -80,7 +79,7 @@ public final class RemoteInsistenceLayer implements InsistenceLayer {
 	public void decreaseLevel() {
 		client.sendCommand(InsistenceLayerProtocol.DECREASE);
 		level--;
-		logger.info("Level decreased to {}", level);
+		logger.info("Level decreased to {} on {}:{}", level, client.host(), client.port());
 	}
 
 	/**
@@ -90,7 +89,7 @@ public final class RemoteInsistenceLayer implements InsistenceLayer {
 	@Override
 	public void resetCurrentLevel() {
 		client.sendCommand(InsistenceLayerProtocol.RESET);
-		logger.info("Cleaned current level: {}", level);
+		logger.info("Reset current level {} on {}:{}", level, client.host(), client.port());
 	}
 
 	/**
@@ -99,6 +98,11 @@ public final class RemoteInsistenceLayer implements InsistenceLayer {
 	@Override
 	public void close() {
 		client.close();
+	}
+
+	@Override
+	public String toString() {
+		return "RemoteInsistenceLayer[" + client.host() + ":" + client.port() + ", level=" + level + "]";
 	}
 
 }

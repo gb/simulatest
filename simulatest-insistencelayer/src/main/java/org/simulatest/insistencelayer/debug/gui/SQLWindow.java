@@ -96,8 +96,4 @@ public final class SQLWindow extends JFrame {
 		}
 	}
 
-	public void showMe() {
-		this.setVisible(true);
-	}
-
 }

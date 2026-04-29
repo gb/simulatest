@@ -12,7 +12,7 @@ import org.simulatest.environment.infra.ExceptionAggregator;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
-import org.simulatest.environment.infra.exception.EnvironmentGeneralException;
+import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.EnvironmentTreeBuilder;
 import org.simulatest.environment.tree.Node;
 import org.simulatest.environment.tree.Tree;
@@ -38,7 +38,10 @@ public final class EnvironmentRunner {
 	private final InsistenceLayer insistenceLayer;
 
 	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
-		this(factory, environmentTree, null);
+		this.factory = Objects.requireNonNull(factory, "factory must not be null");
+		this.tree = Objects.requireNonNull(environmentTree, "environmentTree must not be null");
+		this.listeners = new ArrayList<>();
+		this.insistenceLayer = null;
 	}
 
 	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree,
@@ -46,10 +49,8 @@ public final class EnvironmentRunner {
 		this.factory = Objects.requireNonNull(factory, "factory must not be null");
 		this.tree = Objects.requireNonNull(environmentTree, "environmentTree must not be null");
 		this.listeners = new ArrayList<>();
-		this.insistenceLayer = insistenceLayer;
-		if (insistenceLayer != null) {
-			addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
-		}
+		this.insistenceLayer = Objects.requireNonNull(insistenceLayer, "insistenceLayer must not be null");
+		addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
 	}
 
 	public EnvironmentRunner(EnvironmentFactory factory, EnvironmentTreeBuilder builder) {
@@ -69,7 +70,7 @@ public final class EnvironmentRunner {
 	private static EnvironmentFactory loadFactory() {
 		return ServiceLoader.load(EnvironmentFactory.class)
 				.findFirst()
-				.orElseThrow(() -> new EnvironmentGeneralException(
+				.orElseThrow(() -> new EnvironmentInstantiationException(
 						"META-INF/services environmentFactory was not found!"));
 	}
 

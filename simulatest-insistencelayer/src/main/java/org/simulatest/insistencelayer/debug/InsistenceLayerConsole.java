@@ -98,22 +98,83 @@ public final class InsistenceLayerConsole {
 			logger.warn("No input stream available, cannot open console");
 			return;
 		}
-
 		if (!isStdinConnected(reader)) {
-			out.println();
-			out.println("=== Insistence Layer Debug Console ===");
-			out.println("ERROR: stdin is not connected. Maven Surefire forks a new JVM that");
-			out.println("does not receive terminal input. Re-run with -DforkCount=0:");
-			out.println();
-			out.println("  mvn -Dtest=YourTest -DforkCount=0 test");
-			out.println();
-			out.println("This console was triggered by an InsistenceLayerDebugger.debug() call");
-			out.println("in your test. If this was unintentional, remove that line.");
-			out.println();
-			out.flush();
+			printStdinNotConnectedBanner(out);
 			return;
 		}
 
+		printWelcomeBanner(out);
+		printTables(connection, out);
+		out.flush();
+
+		runCommandLoop(connection, reader, out);
+	}
+
+	private static void runCommandLoop(Connection connection, BufferedReader reader, PrintStream out) {
+		try (Statement statement = connection.createStatement()) {
+			while (true) {
+				out.print("sql> ");
+				out.flush();
+
+				String line = reader.readLine();
+				if (line == null) break;
+
+				String input = line.trim();
+				if (input.isEmpty()) continue;
+				if ("resume".equalsIgnoreCase(input)) {
+					out.println("=== Resuming test execution ===");
+					break;
+				}
+				if (dispatchCommand(connection, statement, input, out)) continue;
+				executeSql(statement, input, out);
+			}
+		} catch (Exception e) {
+			logger.error("Console error", e);
+		}
+	}
+
+	private static boolean dispatchCommand(Connection connection, Statement statement, String input, PrintStream out) {
+		if ("tables".equalsIgnoreCase(input)) {
+			printTables(connection, out);
+			return true;
+		}
+		if (input.toLowerCase().startsWith("schema ")) {
+			String table = input.substring(7).trim();
+			printSchema(connection, table, out);
+			return true;
+		}
+		return false;
+	}
+
+	private static void executeSql(Statement statement, String input, PrintStream out) {
+		try {
+			if (statement.execute(input)) {
+				printResultSet(statement.getResultSet(), out);
+			} else {
+				out.println("Updated " + statement.getUpdateCount() + " row(s)");
+				out.println();
+			}
+		} catch (SQLException e) {
+			out.println("ERROR: " + e.getMessage());
+			out.println();
+		}
+	}
+
+	private static void printStdinNotConnectedBanner(PrintStream out) {
+		out.println();
+		out.println("=== Insistence Layer Debug Console ===");
+		out.println("ERROR: stdin is not connected. Maven Surefire forks a new JVM that");
+		out.println("does not receive terminal input. Re-run with -DforkCount=0:");
+		out.println();
+		out.println("  mvn -Dtest=YourTest -DforkCount=0 test");
+		out.println();
+		out.println("This console was triggered by an InsistenceLayerDebugger.debug() call");
+		out.println("in your test. If this was unintentional, remove that line.");
+		out.println();
+		out.flush();
+	}
+
+	private static void printWelcomeBanner(PrintStream out) {
 		int level = InsistenceLayerFactory.resolve().map(InsistenceLayer::getCurrentLevel).orElse(-1);
 
 		out.println();
@@ -131,52 +192,6 @@ public final class InsistenceLayerConsole {
 		out.println("This console was triggered by an InsistenceLayerDebugger.debug() call");
 		out.println("in your test. If this was unintentional, remove that line.");
 		out.println();
-
-		printTables(connection, out);
-		out.flush();
-
-		try (Statement statement = connection.createStatement()) {
-			while (true) {
-				out.print("sql> ");
-				out.flush();
-
-				String line = reader.readLine();
-				if (line == null) break;
-
-				String input = line.trim();
-				if (input.isEmpty()) continue;
-
-				if ("resume".equalsIgnoreCase(input)) {
-					out.println("=== Resuming test execution ===");
-					break;
-				}
-
-				if ("tables".equalsIgnoreCase(input)) {
-					printTables(connection, out);
-					continue;
-				}
-
-				if (input.toLowerCase().startsWith("schema ")) {
-					String table = input.substring(7).trim();
-					printSchema(connection, table, out);
-					continue;
-				}
-
-				try {
-					if (statement.execute(input)) {
-						printResultSet(statement.getResultSet(), out);
-					} else {
-						out.println("Updated " + statement.getUpdateCount() + " row(s)");
-						out.println();
-					}
-				} catch (SQLException e) {
-					out.println("ERROR: " + e.getMessage());
-					out.println();
-				}
-			}
-		} catch (Exception e) {
-			logger.error("Console error", e);
-		}
 	}
 
 	private static boolean isStdinConnected(BufferedReader reader) {

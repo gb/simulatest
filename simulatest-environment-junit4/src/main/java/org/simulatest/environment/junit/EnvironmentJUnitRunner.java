@@ -1,6 +1,7 @@
 package org.simulatest.environment.junit;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -84,17 +85,18 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 	}
 
 	@Override
-	public Description getDescription() {
+	public final Description getDescription() {
 		return infrastructure.descriptions().getDescription();
 	}
 
 	@Override
-	public void run(final RunNotifier notifier) {
+	public final void run(final RunNotifier notifier) {
 		initializeTestClasses();
 
 		try (SimulatestSession session = SimulatestSession.open(plugins, Collections.unmodifiableCollection(testClasses))) {
-			environmentRunner = new EnvironmentRunner(session.factory(), infrastructure.tree(),
-					session.insistenceLayer().orElse(null));
+			environmentRunner = session.insistenceLayer()
+					.map(layer -> new EnvironmentRunner(session.factory(), infrastructure.tree(), layer))
+					.orElseGet(() -> new EnvironmentRunner(session.factory(), infrastructure.tree()));
 
 			environmentRunner.addListener(new EnvironmentRunnerListener() {
 				@Override
@@ -120,13 +122,14 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 	}
 
 	@Override
-	public void filter(Filter filter) throws NoTestsRemainException {
+	public final void filter(Filter filter) throws NoTestsRemainException {
 		Set<Class<?>> survivors = new LinkedHashSet<>(testClasses);
-		for (Class<?> testCase : List.copyOf(testClasses)) {
+		for (Iterator<Class<?>> it = survivors.iterator(); it.hasNext(); ) {
+			Class<?> testCase = it.next();
 			try {
 				requireRunner(testCase).filter(filter);
 			} catch (NoTestsRemainException e) {
-				survivors.remove(testCase);
+				it.remove();
 			}
 		}
 

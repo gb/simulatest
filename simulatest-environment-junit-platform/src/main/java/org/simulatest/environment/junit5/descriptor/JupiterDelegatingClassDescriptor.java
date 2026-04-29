@@ -45,6 +45,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 
 	private static final String JUPITER_ENGINE_ID = "junit-jupiter";
 	private static final String AUTODETECTION_KEY = "junit.jupiter.extensions.autodetection.enabled";
+	private static final String AUTODETECTION_VALUE_ENABLED = "true";
 
 	// Shared launcher for the inner Jupiter sessions. Auto-registration is disabled
 	// to prevent SimulatestPostDiscoveryFilter from intercepting these internal runs
@@ -91,7 +92,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
 				.selectors(selectTestClass())
 				.filters(EngineFilter.includeEngines(JUPITER_ENGINE_ID))
-				.configurationParameter(AUTODETECTION_KEY, "true")
+				.configurationParameter(AUTODETECTION_KEY, AUTODETECTION_VALUE_ENABLED)
 				.build();
 
 		ResultCapturingListener listener = new ResultCapturingListener();
@@ -118,14 +119,18 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 		TestSource fallbackSource = ClassSource.from(testClass);
 		int index = 0;
 		for (CapturedResult captured : results) {
-			TestSource source = captured.source != null ? captured.source : fallbackSource;
-			UniqueId testId = getUniqueId().append("test", captured.displayName + "#" + (index++));
-			TestResultDescriptor descriptor = captured.isSkipped()
-					? TestResultDescriptor.skipped(testId, captured.displayName, source, captured.skipReason)
-					: TestResultDescriptor.fromResult(testId, captured.displayName, source, captured.result);
+			TestResultDescriptor descriptor = descriptorFor(captured, fallbackSource, index++);
 			addChild(descriptor);
 			executor.execute(descriptor);
 		}
+	}
+
+	private TestResultDescriptor descriptorFor(CapturedResult captured, TestSource fallbackSource, int index) {
+		TestSource source = captured.source != null ? captured.source : fallbackSource;
+		UniqueId testId = getUniqueId().append("test", captured.displayName + "#" + index);
+		return captured.isSkipped()
+				? TestResultDescriptor.skipped(testId, captured.displayName, source, captured.skipReason)
+				: TestResultDescriptor.fromResult(testId, captured.displayName, source, captured.result);
 	}
 
 	private static class ResultCapturingListener implements TestExecutionListener {

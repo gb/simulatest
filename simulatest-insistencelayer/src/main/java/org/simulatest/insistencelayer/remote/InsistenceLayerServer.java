@@ -43,6 +43,7 @@ public final class InsistenceLayerServer {
 	private static final Logger logger = LoggerFactory.getLogger(InsistenceLayerServer.class);
 
 	private static final int ACCEPT_BACKLOG = 50;
+	private static final long SHUTDOWN_TIMEOUT_MILLIS = 5_000L;
 
 	private final InsistenceLayer layer;
 	private final int requestedPort;
@@ -99,7 +100,7 @@ public final class InsistenceLayerServer {
 
 	/**
 	 * Stops the server, closes the listening socket, and waits for the
-	 * server thread to terminate (up to 5 seconds).
+	 * server thread to terminate (up to {@value #SHUTDOWN_TIMEOUT_MILLIS} ms).
 	 *
 	 * @throws InsistenceLayerException if closing the socket fails
 	 */
@@ -116,9 +117,9 @@ public final class InsistenceLayerServer {
 		closeActiveClient();
 		if (serverThread != null) {
 			try {
-				serverThread.join(5000);
+				serverThread.join(SHUTDOWN_TIMEOUT_MILLIS);
 				if (serverThread.isAlive()) {
-					logger.warn("Server thread did not terminate within 5 seconds");
+					logger.warn("Server thread did not terminate within {} ms", SHUTDOWN_TIMEOUT_MILLIS);
 				}
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();

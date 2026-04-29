@@ -132,4 +132,17 @@ public final class InsistenceLayerClient implements AutoCloseable {
 		resetConnection();
 	}
 
+	String host() {
+		return host;
+	}
+
+	int port() {
+		return port;
+	}
+
+	@Override
+	public String toString() {
+		return "InsistenceLayerClient[" + host + ":" + port + "]";
+	}
+
 }

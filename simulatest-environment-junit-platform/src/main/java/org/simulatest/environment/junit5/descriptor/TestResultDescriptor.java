@@ -61,6 +61,10 @@ class TestResultDescriptor extends AbstractTestDescriptor implements Node<Simula
 	@Override
 	public SimulatestExecutionContext execute(SimulatestExecutionContext context,
 			DynamicTestExecutor dynamicTestExecutor) throws Exception {
+		// Errors (OOM, StackOverflow, AssertionError) are propagated raw so the JVM
+		// and JUnit see them as-is. Exceptions are propagated raw to preserve type.
+		// Anything else (custom Throwable subclasses) is wrapped because the engine
+		// signature only allows Exception.
 		if (failure instanceof Exception e) throw e;
 		if (failure instanceof Error e) throw e;
 		if (failure != null) throw new EnvironmentExecutionException("Test failed with unexpected throwable", failure);

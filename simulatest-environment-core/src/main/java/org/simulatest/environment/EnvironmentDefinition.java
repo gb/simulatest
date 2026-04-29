@@ -73,6 +73,9 @@ public final class EnvironmentDefinition {
 		return environmentClass.hashCode();
 	}
 
+	// Equality is by environmentClass only. parentClass is derived from the
+	// @EnvironmentParent annotation on environmentClass, so two definitions
+	// with the same environmentClass always have the same parentClass.
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof EnvironmentDefinition that

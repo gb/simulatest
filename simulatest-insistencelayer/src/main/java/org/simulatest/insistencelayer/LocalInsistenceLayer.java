@@ -82,33 +82,25 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 		if (stackIsEmpty()) connection.unwrap();
 	}
 
+	// Overrides the interface default to optimize the decrease path:
+	// intermediate savepoints are released (dropped) instead of individually
+	// rolled back, since their data is undone by the final decreaseLevel.
 	@Override
 	public void setLevelTo(int level) {
 		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
 		logger.info("Setting level {} to {}", getCurrentLevel(), level);
 
-		if (getCurrentLevel() > level) decreaseToLevel(level);
-		else if (getCurrentLevel() < level) increaseToLevel(level);
-	}
-
-	private void increaseToLevel(int level) {
+		while (getCurrentLevel() > level + 1) releaseCurrentSavepoint();
+		if (getCurrentLevel() == level + 1) decreaseLevel();
 		while (getCurrentLevel() < level) increaseLevel();
 	}
 
-	// Optimization: intermediate levels are released (dropped) without rolling back,
-	// since their data will be undone by the final decreaseLevel's rollback anyway.
-	// Invariant on exit: current level == target.
-	private void decreaseToLevel(int target) {
-		while (getCurrentLevel() > target + 1) dropCurrentLevel();
-		if (getCurrentLevel() == target + 1) decreaseLevel();
-	}
-
-	private void dropCurrentLevel() {
+	private void releaseCurrentSavepoint() {
 		try {
 			connection.releaseSavepoint(savepoints.pop());
 		} catch (SQLException exception) {
 			throw new InsistenceLayerException(
-					"Error dropping level " + (getCurrentLevel() + 1), exception);
+					"Error releasing savepoint at level " + (getCurrentLevel() + 1), exception);
 		}
 	}
 
@@ -123,6 +115,11 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 
 	private boolean stackIsEmpty() {
 		return getCurrentLevel() == 0;
+	}
+
+	@Override
+	public String toString() {
+		return "LocalInsistenceLayer[level=" + getCurrentLevel() + ", savepoints=" + savepoints + "]";
 	}
 
 }

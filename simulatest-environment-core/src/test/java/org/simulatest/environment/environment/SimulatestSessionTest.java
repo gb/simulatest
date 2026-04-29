@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.Test;
@@ -113,14 +114,14 @@ public class SimulatestSessionTest {
 		SimulatestPlugin returnsNull = new SimulatestPlugin() {};
 		SimulatestPlugin returnsInstance = new SimulatestPlugin() {
 			@Override
-			public Object createTestInstance(Class<?> testClass) {
-				return expected;
+			public Optional<Object> createTestInstance(Class<?> testClass) {
+				return Optional.of(expected);
 			}
 		};
 		SimulatestPlugin neverReached = new SimulatestPlugin() {
 			@Override
-			public Object createTestInstance(Class<?> testClass) {
-				return "should-not-be-used";
+			public Optional<Object> createTestInstance(Class<?> testClass) {
+				return Optional.of("should-not-be-used");
 			}
 		};
 

@@ -76,13 +76,13 @@ public final class ConnectionWrapper {
 	}
 
 	public void unwrap() {
-		active = false;
-		lastCommitSavepoint = null;
 		try {
 			realConnection.setAutoCommit(true);
 		} catch (SQLException e) {
 			throw new InsistenceLayerException("Error disabling insistence layer", e);
 		}
+		active = false;
+		lastCommitSavepoint = null;
 	}
 
 	public boolean isActive() {

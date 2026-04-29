@@ -25,6 +25,10 @@ public final class ExceptionAggregator {
 		else first.addSuppressed(exception);
 	}
 
+	public boolean hasFailures() {
+		return first != null;
+	}
+
 	public void throwIfAny() {
 		if (first != null) throw first;
 	}

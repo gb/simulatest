@@ -4,6 +4,7 @@ import org.simulatest.environment.EnvironmentFactory;
 import org.simulatest.environment.SimulatestSession;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Service Provider Interface for integrating dependency injection frameworks
@@ -46,13 +47,13 @@ public interface SimulatestPlugin {
 
 	/**
 	 * Creates a test instance via dependency injection instead of reflection.
-	 * Return {@code null} to fall back to default construction.
+	 * Return {@link Optional#empty()} to fall back to default construction.
 	 *
 	 * @param testClass the test class to instantiate
-	 * @return a new test instance, or {@code null} for default construction
+	 * @return a new test instance, or empty for default construction
 	 */
-	default Object createTestInstance(Class<?> testClass) {
-		return null;
+	default Optional<Object> createTestInstance(Class<?> testClass) {
+		return Optional.empty();
 	}
 
 	/**

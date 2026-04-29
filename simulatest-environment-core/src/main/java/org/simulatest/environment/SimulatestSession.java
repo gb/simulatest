@@ -76,8 +76,7 @@ public final class SimulatestSession implements AutoCloseable {
 	public static Object createTestInstanceOrElse(List<SimulatestPlugin> plugins, Class<?> testClass,
 												   Supplier<Object> fallback) {
 		return plugins.stream()
-				.map(plugin -> plugin.createTestInstance(testClass))
-				.filter(Objects::nonNull)
+				.flatMap(plugin -> plugin.createTestInstance(testClass).stream())
 				.findFirst()
 				.orElseGet(fallback);
 	}
