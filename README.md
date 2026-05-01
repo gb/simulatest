@@ -17,7 +17,7 @@ It is a JVM toolkit built on two ideas:
 1. Reversible database state
 2. A better way to write test fixtures
 
-See it in action: [simulatest-examples](https://github.com/gb/simulatest-examples).
+See it in action: [simulatest-examples](https://github.com/gb/simulatest-examples). For deeper documentation, see the [wiki](https://github.com/gb/simulatest/wiki).
 
 ---
 
