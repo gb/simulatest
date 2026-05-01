@@ -8,11 +8,14 @@ updates:
     # downstream users on older toolchains can still adopt Simulatest.
     # Bumping them defeats the point; ignore them here.
     # The JUnit families share their version property with test-scope
-    # engines, so the wildcards cover both.
+    # engines, so the wildcards cover both. Vintage is included because
+    # junit-vintage-engine reuses the junit-jupiter.version property and
+    # would otherwise drag the whole property up.
     ignore:
       - dependency-name: "junit:junit"
       - dependency-name: "org.junit.platform:*"
       - dependency-name: "org.junit.jupiter:*"
+      - dependency-name: "org.junit.vintage:*"
       - dependency-name: "org.springframework:spring-context"
       - dependency-name: "com.google.inject:guice"
       - dependency-name: "jakarta.enterprise:jakarta.enterprise.cdi-api"
