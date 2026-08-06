@@ -1,5 +1,7 @@
 package org.simulatest.environment.infra;
 
+import java.util.function.Function;
+
 /**
  * Collects exceptions across multiple best-effort operations so the first
  * failure is rethrown with subsequent ones attached as suppressed.
@@ -33,7 +35,7 @@ public final class ExceptionAggregator {
 		if (first != null) throw first;
 	}
 
-	public <X extends Throwable> void throwIfAny(java.util.function.Function<RuntimeException, X> wrapper) throws X {
+	public <X extends Throwable> void throwIfAny(Function<RuntimeException, X> wrapper) throws X {
 		if (first != null) throw wrapper.apply(first);
 	}
 

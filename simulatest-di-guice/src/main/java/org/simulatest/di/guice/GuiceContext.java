@@ -1,5 +1,6 @@
 package org.simulatest.di.guice;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,6 +10,7 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -61,7 +63,7 @@ public final class GuiceContext implements DependencyInjectionContext {
 
 	@Override
 	public Optional<DataSource> dataSource() {
-		var binding = getInjector().getExistingBinding(Key.get(DataSource.class));
+		Binding<DataSource> binding = getInjector().getExistingBinding(Key.get(DataSource.class));
 		return binding != null ? Optional.of(binding.getProvider().get()) : Optional.empty();
 	}
 
@@ -84,7 +86,7 @@ public final class GuiceContext implements DependencyInjectionContext {
 
 	private static <T> T instantiate(Class<? extends T> clazz, Class<T> kind) {
 		try {
-			var constructor = clazz.getDeclaredConstructor();
+			Constructor<? extends T> constructor = clazz.getDeclaredConstructor();
 			constructor.setAccessible(true);
 			return constructor.newInstance();
 		} catch (InvocationTargetException e) {

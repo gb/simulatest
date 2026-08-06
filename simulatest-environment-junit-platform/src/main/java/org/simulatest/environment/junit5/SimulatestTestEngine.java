@@ -1,7 +1,6 @@
 package org.simulatest.environment.junit5;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,13 +63,12 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 
 	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor, Tree<EnvironmentDefinition> envTree,
 									 EnvironmentExtractor extractor) {
-		Set<EnvironmentDefinition> lastSiblings = lastSiblingsOf(envTree);
 		Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv = new HashMap<>();
 
 		for (Node<EnvironmentDefinition> node : envTree) {
 			TestDescriptor parent = resolveParent(node, engineDescriptor, descriptorsByEnv);
 			EnvironmentTestDescriptor environmentDescriptor = createEnvironmentDescriptor(
-					parent, node.getValue(), lastSiblings.contains(node.getValue()));
+					parent, node.getValue(), isLastEnvironmentSibling(node));
 
 			descriptorsByEnv.put(node.getValue(), environmentDescriptor);
 			parent.addChild(environmentDescriptor);
@@ -78,14 +76,10 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 		}
 	}
 
-	// For each parent (or null for roots), the env that appears last in iteration order
-	// is the one whose savepoint the parent's decreaseLevel will roll past.
-	private Set<EnvironmentDefinition> lastSiblingsOf(Tree<EnvironmentDefinition> envTree) {
-		Map<EnvironmentDefinition, EnvironmentDefinition> lastByParent = new HashMap<>();
-		for (Node<EnvironmentDefinition> node : envTree) {
-			lastByParent.put(node.getParentValue().orElse(null), node.getValue());
-		}
-		return new HashSet<>(lastByParent.values());
+	// The env that appears last among its siblings is the one whose savepoint the
+	// parent's decreaseLevel will roll past. The root counts as a last sibling.
+	private boolean isLastEnvironmentSibling(Node<EnvironmentDefinition> node) {
+		return !node.hasParent() || node.isLastChild();
 	}
 
 	private TestDescriptor resolveParent(Node<EnvironmentDefinition> node,

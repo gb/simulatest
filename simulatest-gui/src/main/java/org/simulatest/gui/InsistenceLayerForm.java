@@ -26,7 +26,6 @@ public class InsistenceLayerForm extends JFrame {
 		setTitle("Insistence Layer");
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setResizable(false);
-		setLocationRelativeTo(null);
 
 		JLabel label = new JLabel("Current Level");
 
@@ -35,51 +34,31 @@ public class InsistenceLayerForm extends JFrame {
 		tfCurrentLevel.setEditable(false);
 		tfCurrentLevel.setHorizontalAlignment(JTextField.CENTER);
 
-		JButton btnIncrease = new JButton("+");
-		btnIncrease.setName("+");
-		btnIncrease.setToolTipText("Increase Level");
-		btnIncrease.addActionListener(e -> {
-			insistenceLayer.increaseLevel();
-			updateDisplayLevel();
-		});
-
-		JButton btnDecrease = new JButton("-");
-		btnDecrease.setName("-");
-		btnDecrease.setToolTipText("Decrease Level");
-		btnDecrease.addActionListener(e -> {
-			insistenceLayer.decreaseLevel();
-			updateDisplayLevel();
-		});
-
-		JButton btnReset = new JButton("reset");
-		btnReset.setName("reset");
-		btnReset.setToolTipText("Reset all levels");
-		btnReset.addActionListener(e -> {
-			insistenceLayer.decreaseAllLevels();
-			updateDisplayLevel();
-		});
-
-		JButton btnClear = new JButton("clear");
-		btnClear.setName("clear");
-		btnClear.setToolTipText("Clear current level");
-		btnClear.addActionListener(e -> {
-			insistenceLayer.resetCurrentLevel();
-			updateDisplayLevel();
-		});
-
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
 		panel.add(label);
 		panel.add(tfCurrentLevel);
-		panel.add(btnIncrease);
-		panel.add(btnDecrease);
-		panel.add(btnReset);
-		panel.add(btnClear);
+		panel.add(levelButton("+", "Increase Level", insistenceLayer::increaseLevel));
+		panel.add(levelButton("-", "Decrease Level", insistenceLayer::decreaseLevel));
+		panel.add(levelButton("reset", "Reset all levels", insistenceLayer::decreaseAllLevels));
+		panel.add(levelButton("clear", "Clear current level", insistenceLayer::resetCurrentLevel));
 
 		getContentPane().add(panel);
 		updateDisplayLevel();
 		pack();
 		setLocationRelativeTo(null);
+	}
+
+	/** Every level action refreshes the display, so that rule is stated once here. */
+	private JButton levelButton(String label, String tooltip, Runnable action) {
+		JButton button = new JButton(label);
+		button.setName(label);
+		button.setToolTipText(tooltip);
+		button.addActionListener(e -> {
+			action.run();
+			updateDisplayLevel();
+		});
+		return button;
 	}
 
 	public void showMe() {

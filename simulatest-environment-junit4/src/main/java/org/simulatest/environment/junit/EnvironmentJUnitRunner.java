@@ -40,25 +40,25 @@ import org.simulatest.insistencelayer.InsistenceLayer;
  */
 public class EnvironmentJUnitRunner extends Runner implements Filterable {
 
+	// Keys are the live set of test classes; there is no second copy to keep in sync.
 	private final Map<Class<?>, SimulatestJUnit4ClassRunner> runnersByTest = new LinkedHashMap<>();
-	private final Set<Class<?>> testClasses = new LinkedHashSet<>();
 	private final List<SimulatestPlugin> plugins;
 	private EnvironmentInfrastructure infrastructure;
 	private EnvironmentRunner environmentRunner;
 
 	public EnvironmentJUnitRunner(Set<Class<?>> testClasses) throws InitializationError {
-		this.testClasses.addAll(Objects.requireNonNull(testClasses, "testClasses must not be null"));
+		Objects.requireNonNull(testClasses, "testClasses must not be null");
 		this.plugins = SimulatestSession.loadPlugins();
-		createTestRunners();
-		this.infrastructure = buildInfrastructure();
+		createTestRunners(testClasses);
+		this.infrastructure = buildInfrastructureFor(testClasses());
 	}
 
 	public EnvironmentJUnitRunner(Class<?> testClass) throws InitializationError {
 		this(Set.of(Objects.requireNonNull(testClass, "testClass must not be null")));
 	}
 
-	private EnvironmentInfrastructure buildInfrastructure() {
-		return buildInfrastructureFor(testClasses);
+	private Set<Class<?>> testClasses() {
+		return runnersByTest.keySet();
 	}
 
 	private EnvironmentInfrastructure buildInfrastructureFor(Set<Class<?>> classes) {
@@ -73,7 +73,7 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 		return new EnvironmentInfrastructure(extractor, tree, descriptions);
 	}
 
-	private void createTestRunners() throws InitializationError {
+	private void createTestRunners(Set<Class<?>> testClasses) throws InitializationError {
 		for (Class<?> testCase : testClasses)
 			runnersByTest.put(testCase, new SimulatestJUnit4ClassRunner(this::resetInsistenceLevel, testCase, plugins));
 	}
@@ -93,7 +93,7 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 	public final void run(final RunNotifier notifier) {
 		initializeTestClasses();
 
-		try (SimulatestSession session = SimulatestSession.open(plugins, Collections.unmodifiableCollection(testClasses))) {
+		try (SimulatestSession session = SimulatestSession.open(plugins, Collections.unmodifiableCollection(testClasses()))) {
 			environmentRunner = session.insistenceLayer()
 					.map(layer -> new EnvironmentRunner(session.factory(), infrastructure.tree(), layer))
 					.orElseGet(() -> new EnvironmentRunner(session.factory(), infrastructure.tree()));
@@ -123,7 +123,7 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 
 	@Override
 	public final void filter(Filter filter) throws NoTestsRemainException {
-		Set<Class<?>> survivors = new LinkedHashSet<>(testClasses);
+		Set<Class<?>> survivors = new LinkedHashSet<>(testClasses());
 		for (Iterator<Class<?>> it = survivors.iterator(); it.hasNext(); ) {
 			Class<?> testCase = it.next();
 			try {
@@ -138,13 +138,12 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 		// Build the new infrastructure first; only commit field updates if it succeeds,
 		// so a build failure leaves the runner in its pre-filter state.
 		EnvironmentInfrastructure newInfrastructure = buildInfrastructureFor(survivors);
-		testClasses.retainAll(survivors);
 		runnersByTest.keySet().retainAll(survivors);
 		infrastructure = newInfrastructure;
 	}
 
 	private void initializeTestClasses() {
-		for (Class<?> testClass : testClasses) {
+		for (Class<?> testClass : testClasses()) {
 			try {
 				Class.forName(testClass.getName(), true, testClass.getClassLoader());
 			} catch (ClassNotFoundException e) {

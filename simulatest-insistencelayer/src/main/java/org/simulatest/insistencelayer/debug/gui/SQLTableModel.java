@@ -37,36 +37,39 @@ class SQLTableModel extends AbstractTableModel {
 		rows = new ArrayList<>();
 		headers = new String[0];
 
+		// The refresh happens on every path, so it belongs in the finally rather
+		// than being repeated on each return.
 		try {
-			if (statement.execute(sql)) {
-				ResultSet rs = statement.getResultSet();
-				ResultSetMetaData meta = rs.getMetaData();
-				int colCount = meta.getColumnCount();
-
-				headers = new String[colCount];
-				for (int i = 1; i <= colCount; i++) {
-					headers[i - 1] = meta.getColumnName(i);
-				}
-
-				while (rs.next()) {
-					String[] record = new String[colCount];
-					for (int i = 0; i < colCount; i++) {
-						record[i] = rs.getString(i + 1);
-					}
-					rows.add(record);
-				}
-
-				fireTableStructureChanged();
-				return rows.size() + " row" + (rows.size() != 1 ? "s" : "");
-			} else {
-				fireTableStructureChanged();
-				return "Updated " + statement.getUpdateCount() + " row(s)";
-			}
+			return statement.execute(sql)
+					? readResultSet()
+					: "Updated " + statement.getUpdateCount() + " row(s)";
 		} catch (SQLException e) {
 			logger.error("Query execution failed", e);
-			fireTableStructureChanged();
 			return "ERROR: " + e.getMessage();
+		} finally {
+			fireTableStructureChanged();
 		}
+	}
+
+	private String readResultSet() throws SQLException {
+		ResultSet rs = statement.getResultSet();
+		ResultSetMetaData meta = rs.getMetaData();
+		int colCount = meta.getColumnCount();
+
+		headers = new String[colCount];
+		for (int i = 1; i <= colCount; i++) {
+			headers[i - 1] = meta.getColumnName(i);
+		}
+
+		while (rs.next()) {
+			String[] record = new String[colCount];
+			for (int i = 0; i < colCount; i++) {
+				record[i] = rs.getString(i + 1);
+			}
+			rows.add(record);
+		}
+
+		return rows.size() + " row" + (rows.size() != 1 ? "s" : "");
 	}
 
 	@Override

@@ -30,7 +30,7 @@ public final class InsistenceLayerRegistry {
 
 	public synchronized void configure(DataSource dataSource) {
 		Objects.requireNonNull(dataSource, "dataSource must not be null");
-		var wrapped = new InsistenceLayerDataSource(dataSource);
+		InsistenceLayerDataSource wrapped = new InsistenceLayerDataSource(dataSource);
 		dataSources.put(DEFAULT_KEY, wrapped);
 		registry.put(DEFAULT_KEY, new LocalInsistenceLayer(wrapped.getConnectionWrapper()));
 	}

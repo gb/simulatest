@@ -63,7 +63,6 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
         JButton hireButton = new JButton("Find");
         HireListener hireListener = new HireListener(hireButton);
         hireButton.setActionCommand("Find");
-        hireButton.addActionListener(hireListener);
         hireButton.setEnabled(false);
 
         fireButton = new JButton("Run");
@@ -71,9 +70,7 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
         fireButton.addActionListener(new FireListener());
 
         employeeName = new JTextField(10);
-        employeeName.addActionListener(hireListener);
         employeeName.getDocument().addDocumentListener(hireListener);
-//        String name = listModel.getElementAt(list.getSelectedIndex()).toString();
 
         //Create a panel that uses BoxLayout.
         JPanel buttonPane = new JPanel();
@@ -103,65 +100,32 @@ public class EnvironmentRunner extends JFrame implements ListSelectionListener {
 			}
             org.simulatest.environment.EnvironmentRunner.runEnvironment(clazz);
 
-            int size = listModel.getSize();
-
-            if (size == 0) { //Nobody's left, disable firing.
-                fireButton.setEnabled(false);
-
-            } else { //Select an index.
-                if (index == listModel.getSize()) {
-                    //removed item in last position
-                    index--;
-                }
-
-                list.setSelectedIndex(index);
-                list.ensureIndexIsVisible(index);
-            }
+            list.ensureIndexIsVisible(index);
         }
     }
 
-    class HireListener implements ActionListener, DocumentListener {
-        private boolean alreadyEnabled = false;
-        private JButton button;
+    /** Enables its button exactly while the text field is non-empty. */
+    class HireListener implements DocumentListener {
+        private final JButton button;
 
         public HireListener(JButton button) {
             this.button = button;
         }
 
-        public void actionPerformed(ActionEvent e) {
-        }
-
-        protected boolean alreadyInList(String name) {
-            return listModel.contains(name);
-        }
-
         public void insertUpdate(DocumentEvent e) {
-            enableButton();
+            syncEnabled(e);
         }
 
         public void removeUpdate(DocumentEvent e) {
-            handleEmptyTextField(e);
+            syncEnabled(e);
         }
 
         public void changedUpdate(DocumentEvent e) {
-            if (!handleEmptyTextField(e)) {
-                enableButton();
-            }
+            syncEnabled(e);
         }
 
-        private void enableButton() {
-            if (!alreadyEnabled) {
-                button.setEnabled(true);
-            }
-        }
-
-        private boolean handleEmptyTextField(DocumentEvent e) {
-            if (e.getDocument().getLength() <= 0) {
-                button.setEnabled(false);
-                alreadyEnabled = false;
-                return true;
-            }
-            return false;
+        private void syncEnabled(DocumentEvent e) {
+            button.setEnabled(e.getDocument().getLength() > 0);
         }
     }
 

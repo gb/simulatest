@@ -19,7 +19,7 @@ public class InsistenceLayerDefaultMethodsTest {
 
 	@Test
 	public void runIsolatedShouldDecreaseLevelOnNormalCompletion() {
-		var layer = new RecordingLayer();
+		RecordingLayer layer = new RecordingLayer();
 
 		layer.runIsolated(() -> { /* no-op */ });
 
@@ -32,7 +32,7 @@ public class InsistenceLayerDefaultMethodsTest {
 	public void runIsolatedShouldRethrowPrimaryExceptionWithCleanupSuppressed() {
 		RuntimeException primary = new RuntimeException("action failed");
 		RuntimeException cleanup = new RuntimeException("cleanup failed");
-		var layer = new RecordingLayer();
+		RecordingLayer layer = new RecordingLayer();
 		layer.failSetLevelToZeroWith(cleanup);
 
 		try {
@@ -48,7 +48,7 @@ public class InsistenceLayerDefaultMethodsTest {
 	@Test
 	public void runIsolatedShouldRethrowPrimaryWithoutSuppressedWhenCleanupSucceeds() {
 		RuntimeException primary = new RuntimeException("action failed");
-		var layer = new RecordingLayer();
+		RecordingLayer layer = new RecordingLayer();
 
 		try {
 			layer.runIsolated(() -> { throw primary; });
@@ -63,7 +63,7 @@ public class InsistenceLayerDefaultMethodsTest {
 
 	@Test
 	public void decreaseLevelOrCleanupShouldJustDecreaseWhenItSucceeds() {
-		var layer = new RecordingLayer();
+		RecordingLayer layer = new RecordingLayer();
 		layer.increaseLevel();
 		layer.increaseLevel();
 
@@ -77,7 +77,7 @@ public class InsistenceLayerDefaultMethodsTest {
 	public void decreaseLevelOrCleanupShouldRethrowOriginalWithFallbackSuppressed() {
 		RuntimeException original = new RuntimeException("decreaseLevel failed");
 		RuntimeException fallback = new RuntimeException("decreaseAllLevels failed");
-		var layer = new RecordingLayer();
+		RecordingLayer layer = new RecordingLayer();
 		layer.increaseLevel();
 		layer.failDecreaseLevelWith(original);
 		layer.failSetLevelToZeroWith(fallback);
@@ -95,7 +95,7 @@ public class InsistenceLayerDefaultMethodsTest {
 	@Test
 	public void decreaseLevelOrCleanupShouldRethrowOriginalWithoutSuppressedWhenFallbackSucceeds() {
 		RuntimeException original = new RuntimeException("decreaseLevel failed");
-		var layer = new RecordingLayer();
+		RecordingLayer layer = new RecordingLayer();
 		layer.increaseLevel();
 		layer.increaseLevel();
 		layer.failDecreaseLevelWith(original);

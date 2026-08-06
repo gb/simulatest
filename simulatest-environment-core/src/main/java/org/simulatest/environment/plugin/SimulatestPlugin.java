@@ -65,4 +65,27 @@ public interface SimulatestPlugin {
 	default void postProcessTestInstance(Object instance) {
 	}
 
+	/**
+	 * Relative position in the plugin run order: lower runs first, and plugins
+	 * with equal order keep their {@link java.util.ServiceLoader} discovery
+	 * order.
+	 *
+	 * <p>Override this when the plugin must run after others, rather than
+	 * relying on where it appears in a {@code META-INF/services} file. The
+	 * scale the built-in plugins use:</p>
+	 * <ul>
+	 *   <li><b>0</b> (the default) for plugins that supply a {@code DataSource},
+	 *       such as the Spring, Guice and CDI plugins.</li>
+	 *   <li><b>100</b> for {@code DatabaseBootstrapPlugin}, so a DataSource
+	 *       configured by a DI plugin wins over the one it would supply itself.</li>
+	 *   <li><b>200 and above</b> for plugins that need a DataSource already
+	 *       configured, whichever plugin configured it.</li>
+	 * </ul>
+	 *
+	 * @return the run order; {@code 0} by default
+	 */
+	default int order() {
+		return 0;
+	}
+
 }

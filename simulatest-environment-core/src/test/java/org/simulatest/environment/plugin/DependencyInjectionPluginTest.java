@@ -14,6 +14,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.simulatest.environment.testsupport.H2TestDataSources;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 
 public class DependencyInjectionPluginTest {
 
@@ -24,7 +25,7 @@ public class DependencyInjectionPluginTest {
 
 	@Test
 	public void shouldAutoConfigureInsistenceLayerWhenContextProvidesDataSource() {
-		var plugin = new StubPlugin(new StubContext(createH2DataSource()));
+		StubPlugin plugin = new StubPlugin(new StubContext(createH2DataSource()));
 		plugin.initialize(List.of());
 
 		assertTrue(InsistenceLayerFactory.isConfigured());
@@ -32,7 +33,7 @@ public class DependencyInjectionPluginTest {
 
 	@Test
 	public void shouldNotConfigureWhenContextProvidesNoDataSource() {
-		var plugin = new StubPlugin(new StubContext(null));
+		StubPlugin plugin = new StubPlugin(new StubContext(null));
 		plugin.initialize(List.of());
 
 		assertFalse(InsistenceLayerFactory.isConfigured());
@@ -41,9 +42,9 @@ public class DependencyInjectionPluginTest {
 	@Test
 	public void shouldNotOverrideManualConfiguration() {
 		InsistenceLayerFactory.configure(createH2DataSource());
-		var manualDataSource = InsistenceLayerFactory.dataSource().orElseThrow();
+		InsistenceLayerDataSource manualDataSource = InsistenceLayerFactory.dataSource().orElseThrow();
 
-		var plugin = new StubPlugin(new StubContext(createH2DataSource()));
+		StubPlugin plugin = new StubPlugin(new StubContext(createH2DataSource()));
 		plugin.initialize(List.of());
 
 		assertSame(manualDataSource, InsistenceLayerFactory.dataSource().orElseThrow());

@@ -94,11 +94,7 @@ public interface InsistenceLayer extends AutoCloseable {
 			action.run();
 			decreaseLevel();
 		} catch (RuntimeException primary) {
-			try {
-				decreaseAllLevels();
-			} catch (RuntimeException cleanup) {
-				primary.addSuppressed(cleanup);
-			}
+			cleanUpSuppressing(primary);
 			throw primary;
 		}
 	}
@@ -114,12 +110,21 @@ public interface InsistenceLayer extends AutoCloseable {
 		try {
 			decreaseLevel();
 		} catch (RuntimeException exception) {
-			try {
-				decreaseAllLevels();
-			} catch (RuntimeException cleanupException) {
-				exception.addSuppressed(cleanupException);
-			}
+			cleanUpSuppressing(exception);
 			throw exception;
+		}
+	}
+
+	/**
+	 * Runs {@link #decreaseAllLevels()} as emergency cleanup, attaching any
+	 * failure of its own as suppressed to {@code primary} so the original
+	 * exception is the one that reaches the caller.
+	 */
+	private void cleanUpSuppressing(RuntimeException primary) {
+		try {
+			decreaseAllLevels();
+		} catch (RuntimeException cleanup) {
+			primary.addSuppressed(cleanup);
 		}
 	}
 

@@ -5,10 +5,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 
 import org.simulatest.environment.infra.ExceptionAggregator;
+import org.simulatest.environment.infra.ServiceLoaders;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
 import org.simulatest.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
@@ -68,8 +68,7 @@ public final class EnvironmentRunner {
 	}
 
 	private static EnvironmentFactory loadFactory() {
-		return ServiceLoader.load(EnvironmentFactory.class)
-				.findFirst()
+		return ServiceLoaders.loadAtMostOne(EnvironmentFactory.class)
 				.orElseThrow(() -> new EnvironmentInstantiationException(
 						"META-INF/services environmentFactory was not found!"));
 	}
@@ -109,12 +108,7 @@ public final class EnvironmentRunner {
 	}
 
 	private void executeEnvironment(EnvironmentDefinition definition) {
-		try {
-			factory.create(definition).run();
-		} catch (Exception exception) {
-			throw new EnvironmentExecutionException(
-					"Failed during run for environment '" + definition.getName() + "'", exception);
-		}
+		factory.createAndRun(definition);
 	}
 
 	// After visiting a leaf, propagate "after children" callbacks up the tree

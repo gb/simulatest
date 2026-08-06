@@ -15,6 +15,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.simulatest.environment.testsupport.H2TestDataSources;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 
 public class DatabaseBootstrapPluginTest {
 
@@ -26,9 +27,9 @@ public class DatabaseBootstrapPluginTest {
 	@Test
 	public void shouldNoOpWhenNoSetupIsRegisteredAndDataSourceAlreadyConfigured() {
 		InsistenceLayerFactory.configure(createH2DataSource());
-		var preconfigured = InsistenceLayerFactory.dataSource().orElseThrow();
+		InsistenceLayerDataSource preconfigured = InsistenceLayerFactory.dataSource().orElseThrow();
 
-		var plugin = new DatabaseBootstrapPlugin(Optional::empty);
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(Optional::empty);
 		plugin.initialize(List.of());
 
 		assertSame(preconfigured, InsistenceLayerFactory.dataSource().orElseThrow());
@@ -40,7 +41,7 @@ public class DatabaseBootstrapPluginTest {
 		// DataSource at all. The bootstrap plugin must not impose one. If the
 		// user actually tries to use the layer at test time,
 		// InsistenceLayerFactory.requireDataSource() fails on its own.
-		var plugin = new DatabaseBootstrapPlugin(Optional::empty);
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(Optional::empty);
 
 		plugin.initialize(List.of());
 
@@ -49,9 +50,9 @@ public class DatabaseBootstrapPluginTest {
 
 	@Test
 	public void shouldConfigureDataSourceAndRunSchemaWhenOnlySetupIsRegistered() {
-		var setup = new RecordingSetup(createH2DataSource());
+		RecordingSetup setup = new RecordingSetup(createH2DataSource());
 
-		var plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
 		plugin.initialize(List.of());
 
 		assertTrue(InsistenceLayerFactory.isConfigured());
@@ -62,10 +63,10 @@ public class DatabaseBootstrapPluginTest {
 	@Test
 	public void shouldSkipDataSourceButStillRunSchemaWhenLayerAlreadyConfiguredByDi() {
 		InsistenceLayerFactory.configure(createH2DataSource());
-		var diConfigured = InsistenceLayerFactory.requireDataSource();
-		var setup = new RecordingSetup(createH2DataSource());
+		InsistenceLayerDataSource diConfigured = InsistenceLayerFactory.requireDataSource();
+		RecordingSetup setup = new RecordingSetup(createH2DataSource());
 
-		var plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
 		plugin.initialize(List.of());
 
 		assertSame("DI-configured DataSource must win",
@@ -76,9 +77,9 @@ public class DatabaseBootstrapPluginTest {
 
 	@Test
 	public void shouldFailWhenSetupReturnsNullDataSourceAndNothingElseConfigured() {
-		var setup = new RecordingSetup(null);
+		RecordingSetup setup = new RecordingSetup(null);
 
-		var plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
 		IllegalStateException error = assertThrows(IllegalStateException.class,
 				() -> plugin.initialize(List.of()));
 
@@ -88,9 +89,9 @@ public class DatabaseBootstrapPluginTest {
 
 	@Test
 	public void shouldWrapExceptionThrownBySetupSchemaWithSetupClassName() {
-		var setup = new ThrowingSetup(createH2DataSource(), new RuntimeException("boom"));
+		ThrowingSetup setup = new ThrowingSetup(createH2DataSource(), new RuntimeException("boom"));
 
-		var plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
 		IllegalStateException error = assertThrows(IllegalStateException.class,
 				() -> plugin.initialize(List.of()));
 
@@ -102,9 +103,9 @@ public class DatabaseBootstrapPluginTest {
 
 	@Test
 	public void shouldClearLayerOnSchemaFailureWhenPluginConfiguredIt() {
-		var setup = new ThrowingSetup(createH2DataSource(), new RuntimeException("boom"));
+		ThrowingSetup setup = new ThrowingSetup(createH2DataSource(), new RuntimeException("boom"));
 
-		var plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
 		assertThrows(IllegalStateException.class, () -> plugin.initialize(List.of()));
 
 		assertTrue("layer must be cleared so a retry can bootstrap cleanly",
@@ -114,10 +115,10 @@ public class DatabaseBootstrapPluginTest {
 	@Test
 	public void shouldNotClearLayerOnSchemaFailureWhenDiPluginConfiguredIt() {
 		InsistenceLayerFactory.configure(createH2DataSource());
-		var diConfigured = InsistenceLayerFactory.requireDataSource();
-		var setup = new ThrowingSetup(createH2DataSource(), new RuntimeException("boom"));
+		InsistenceLayerDataSource diConfigured = InsistenceLayerFactory.requireDataSource();
+		ThrowingSetup setup = new ThrowingSetup(createH2DataSource(), new RuntimeException("boom"));
 
-		var plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
 		assertThrows(IllegalStateException.class, () -> plugin.initialize(List.of()));
 
 		assertSame("DI-configured layer must not be cleared by a setup-schema failure",
@@ -127,10 +128,10 @@ public class DatabaseBootstrapPluginTest {
 	@Test
 	public void shouldRunSchemaAgainstDiDataSourceEvenWhenSetupReturnsNull() {
 		InsistenceLayerFactory.configure(createH2DataSource());
-		var diConfigured = InsistenceLayerFactory.requireDataSource();
-		var setup = new RecordingSetup(null);
+		InsistenceLayerDataSource diConfigured = InsistenceLayerFactory.requireDataSource();
+		RecordingSetup setup = new RecordingSetup(null);
 
-		var plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
+		DatabaseBootstrapPlugin plugin = new DatabaseBootstrapPlugin(() -> Optional.of(setup));
 		plugin.initialize(List.of());
 
 		assertSame(diConfigured, setup.schemaRanAgainst);

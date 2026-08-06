@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import org.junit.After;
 import org.junit.Test;
 import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
+import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 import org.simulatest.insistencelayer.mock.ConnectionMock;
 import org.simulatest.insistencelayer.util.TestDataSources;
 
@@ -110,7 +111,7 @@ public class InsistenceLayerFactoryTest {
 	@Test
 	public void configureOverwritesPreviousDataSource() {
 		InsistenceLayerFactory.configure(TestDataSources.createH2("first"));
-		var firstDataSource = InsistenceLayerFactory.dataSource().orElseThrow();
+		InsistenceLayerDataSource firstDataSource = InsistenceLayerFactory.dataSource().orElseThrow();
 
 		InsistenceLayerFactory.configure(TestDataSources.createH2("second"));
 

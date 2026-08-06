@@ -1,10 +1,9 @@
 package org.simulatest.gui;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JFrame;
+
+import org.simulatest.insistencelayer.debug.gui.SQLWindow;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -18,10 +17,10 @@ public class SimulatestHub extends JFrame {
 
 	private final EnvironmentRunner environmentRunner;
 	private final InsistenceLayerForm insistenceLayerForm;
-	private final SimulatestSQLWindow simulatestSQLWindow;
+	private final SQLWindow simulatestSQLWindow;
 
 	public SimulatestHub(EnvironmentRunner environmentRunner, InsistenceLayerForm insistenceLayerForm,
-			SimulatestSQLWindow simulatestSQLWindow) {
+			SQLWindow simulatestSQLWindow) {
 		super("Simulatest Hub");
 
 		this.environmentRunner = environmentRunner;
@@ -36,17 +35,9 @@ public class SimulatestHub extends JFrame {
 	private void createEvents() {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		insistenceLayerButton.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			insistenceLayerForm.showMe();
-		}});
-
-		environmentRunnerButton.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			environmentRunner.setVisible(true);
-		}});
-
-		sqlWindow.addActionListener(new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-			simulatestSQLWindow.showMe();
-		}});
+		insistenceLayerButton.addActionListener(e -> insistenceLayerForm.showMe());
+		environmentRunnerButton.addActionListener(e -> environmentRunner.setVisible(true));
+		sqlWindow.addActionListener(e -> simulatestSQLWindow.setVisible(true));
 	}
 
 	private void configureLayout() {

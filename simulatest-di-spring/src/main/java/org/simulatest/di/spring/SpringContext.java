@@ -30,10 +30,11 @@ public final class SpringContext implements DependencyInjectionContext {
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
 		Objects.requireNonNull(clazz, "clazz must not be null");
-		var factory = getContext().getAutowireCapableBeanFactory();
-		var provider = getContext().getBeanProvider(clazz);
-		T managed = provider.getIfAvailable();
-		return managed != null ? managed : factory.createBean(clazz);
+		AnnotationConfigApplicationContext applicationContext = getContext();
+		T managed = applicationContext.getBeanProvider(clazz).getIfAvailable();
+		return managed != null
+				? managed
+				: applicationContext.getAutowireCapableBeanFactory().createBean(clazz);
 	}
 
 	@Override

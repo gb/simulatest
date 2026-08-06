@@ -7,6 +7,7 @@ import org.picocontainer.Startable;
 import org.picocontainer.behaviors.Caching;
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.simulatest.insistencelayer.debug.gui.SQLWindow;
 
 public class App implements Startable {
 
@@ -27,7 +28,7 @@ public class App implements Startable {
 		container.addComponent(InsistenceLayerForm.class);
 		container.addComponent(App.class);
 		container.addComponent(SimulatestHub.class);	
-		container.addComponent(SimulatestSQLWindow.class);
+		container.addComponent(SQLWindow.class);
 		container.start();
 	}
 	
