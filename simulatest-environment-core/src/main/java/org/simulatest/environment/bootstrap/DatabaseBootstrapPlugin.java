@@ -33,6 +33,11 @@ public final class DatabaseBootstrapPlugin implements SimulatestPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseBootstrapPlugin.class);
 
+	// Above the DI plugins, which keep the default order of 0, so a DataSource they
+	// configure in their own initialize() wins over the one this plugin would supply.
+	// This is not the final position: see SimulatestPlugin.order() for the scale.
+	private static final int RUN_AFTER_DI_PLUGINS = 100;
+
 	private final Supplier<Optional<SimulatestDatabaseSetup>> setupSupplier;
 
 	public DatabaseBootstrapPlugin() {
@@ -43,10 +48,6 @@ public final class DatabaseBootstrapPlugin implements SimulatestPlugin {
 	DatabaseBootstrapPlugin(Supplier<Optional<SimulatestDatabaseSetup>> setupSupplier) {
 		this.setupSupplier = Objects.requireNonNull(setupSupplier, "setupSupplier");
 	}
-
-	// Runs after every other plugin so DI plugins, which call
-	// InsistenceLayerFactory.configure() in their own initialize(), win the DataSource race.
-	private static final int RUN_AFTER_DI_PLUGINS = 100;
 
 	@Override
 	public int order() {

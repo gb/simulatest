@@ -13,14 +13,23 @@ import org.simulatest.insistencelayer.remote.RemoteInsistenceLayer;
  * proving the remote protocol works as a drop-in replacement.
  *
  * <p>Requires a DataSource to be configured via
- * {@link InsistenceLayerFactory#configure} first.
- * List this plugin AFTER the datasource-configuring plugin in the
- * ServiceLoader file.
+ * {@link InsistenceLayerFactory#configure} first. It orders itself after
+ * every plugin that supplies one, so the order it appears in the
+ * {@code META-INF/services} file does not matter.
  */
 public final class RemoteInsistenceLayerPlugin implements SimulatestPlugin {
 
+	// Runs after both the DI plugins and DatabaseBootstrapPlugin, since either
+	// of them may be the one that configures the DataSource this needs.
+	private static final int RUN_AFTER_DATASOURCE_CONFIGURED = 200;
+
 	private InsistenceLayerServer server;
 	private RemoteInsistenceLayer remote;
+
+	@Override
+	public int order() {
+		return RUN_AFTER_DATASOURCE_CONFIGURED;
+	}
 
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {

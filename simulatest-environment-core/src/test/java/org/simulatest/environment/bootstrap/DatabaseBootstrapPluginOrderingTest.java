@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.environment.bootstrap.FakePluginsForOrderingTest.FirstFake;
 import org.simulatest.environment.bootstrap.FakePluginsForOrderingTest.SecondFake;
+import org.simulatest.environment.plugin.RemoteInsistenceLayerPlugin;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 
 /**
@@ -38,6 +39,24 @@ public class DatabaseBootstrapPluginOrderingTest {
 				.count();
 		assertEquals("only the single registered DatabaseBootstrapPlugin should appear",
 				1, bootstrapCount);
+	}
+
+	/**
+	 * The run order is a scale, not a single reserved last slot: bootstrap sits
+	 * above the plugins that supply a DataSource and below those that consume one.
+	 */
+	@Test
+	public void orderScaleSeparatesDataSourceProvidersBootstrapAndConsumers() {
+		int dataSourceProvider = new SimulatestPlugin() { }.order();
+		int bootstrap = new DatabaseBootstrapPlugin().order();
+		int dataSourceConsumer = new RemoteInsistenceLayerPlugin().order();
+
+		assertEquals("DI plugins supply the DataSource and keep the default order",
+				0, dataSourceProvider);
+		assertTrue("bootstrap must run after the plugins that supply a DataSource",
+				bootstrap > dataSourceProvider);
+		assertTrue("a plugin needing the configured DataSource must be able to run after bootstrap",
+				dataSourceConsumer > bootstrap);
 	}
 
 }
