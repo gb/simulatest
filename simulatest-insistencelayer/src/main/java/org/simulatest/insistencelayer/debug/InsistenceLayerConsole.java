@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.simulatest.insistencelayer.InsistenceLayer;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
+import org.simulatest.insistencelayer.infra.sql.InsistenceLayerDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,7 @@ public final class InsistenceLayerConsole {
 	private InsistenceLayerConsole() {}
 
 	public static void debug() {
-		var dataSource = InsistenceLayerFactory.dataSource().orElse(null);
+		InsistenceLayerDataSource dataSource = InsistenceLayerFactory.dataSource().orElse(null);
 		if (dataSource == null) {
 			logger.warn("No InsistenceLayer DataSource configured, cannot open console");
 			return;

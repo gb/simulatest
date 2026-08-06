@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.DataSource;
 
 import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
 import jakarta.enterprise.inject.spi.AnnotatedType;
@@ -54,7 +55,7 @@ public final class CdiContext implements DependencyInjectionContext {
 
 	@Override
 	public Optional<DataSource> dataSource() {
-		var instance = getContainer().select(DataSource.class);
+		Instance<DataSource> instance = getContainer().select(DataSource.class);
 		return instance.isResolvable() ? Optional.of(instance.get()) : Optional.empty();
 	}
 

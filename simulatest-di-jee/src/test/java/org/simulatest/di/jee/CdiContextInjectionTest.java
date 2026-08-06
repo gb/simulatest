@@ -82,7 +82,7 @@ class CdiContextInjectionTest {
 
 	@Test
 	void methodInjection() {
-		var target = new MethodInjectionTarget();
+		MethodInjectionTarget target = new MethodInjectionTarget();
 		context.injectMembers(target);
 		assertNotNull(target.greeter, "setter-injected field should be populated");
 		assertEquals("Hello", target.greeter.greet());
@@ -90,7 +90,7 @@ class CdiContextInjectionTest {
 
 	@Test
 	void qualifierInjection() {
-		var target = new QualifierInjectionTarget();
+		QualifierInjectionTarget target = new QualifierInjectionTarget();
 		context.injectMembers(target);
 		assertEquals("Hello", target.english.greet());
 		assertEquals("Bonjour", target.french.greet());
@@ -98,7 +98,7 @@ class CdiContextInjectionTest {
 
 	@Test
 	void superclassFieldInjection() {
-		var target = new DerivedTarget();
+		DerivedTarget target = new DerivedTarget();
 		context.injectMembers(target);
 		assertNotNull(target.greeter, "superclass @Inject field should be populated");
 		assertEquals("Hello", target.greeter.greet());
