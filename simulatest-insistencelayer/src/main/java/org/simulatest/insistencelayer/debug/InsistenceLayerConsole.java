@@ -64,7 +64,7 @@ import org.slf4j.LoggerFactory;
  *
  * <h3>For IDE usage</h3>
  * <p>IDE test runners do not support terminal input. Use
- * {@code SimulatestSQLWindow.debug()} from the simulatest-gui module instead,
+ * {@link org.simulatest.insistencelayer.debug.gui.SQLWindow} instead,
  * which opens a Swing window on the same connection.</p>
  *
  * @see InsistenceLayer
@@ -234,7 +234,6 @@ public final class InsistenceLayerConsole {
 			DatabaseMetaData meta = connection.getMetaData();
 
 			List<String[]> columns = new ArrayList<>();
-			int nameWidth = 6, typeWidth = 4, nullWidth = 8;
 
 			try (ResultSet rs = meta.getColumns(null, null, table.toUpperCase(), "%")) {
 				while (rs.next()) {
@@ -243,12 +242,7 @@ public final class InsistenceLayerConsole {
 					int size = rs.getInt("COLUMN_SIZE");
 					String nullable = "YES".equals(rs.getString("IS_NULLABLE")) ? "nullable" : "not null";
 
-					String typeStr = type + "(" + size + ")";
-					columns.add(new String[]{name, typeStr, nullable});
-
-					nameWidth = Math.max(nameWidth, name.length());
-					typeWidth = Math.max(typeWidth, typeStr.length());
-					nullWidth = Math.max(nullWidth, nullable.length());
+					columns.add(new String[]{name, type + "(" + size + ")", nullable});
 				}
 			}
 
@@ -256,12 +250,7 @@ public final class InsistenceLayerConsole {
 				out.println("Table not found: " + table);
 			} else {
 				out.println("Schema: " + table.toUpperCase());
-				int[] widths = {nameWidth, typeWidth, nullWidth};
-				printRow(new String[]{"COLUMN", "TYPE", "NULLABLE"}, widths, out);
-				printSeparator(widths, out);
-				for (String[] col : columns) {
-					printRow(col, widths, out);
-				}
+				printTable(new String[]{"COLUMN", "TYPE", "NULLABLE"}, columns, out);
 			}
 			out.println();
 		} catch (SQLException e) {
@@ -275,11 +264,8 @@ public final class InsistenceLayerConsole {
 		int colCount = meta.getColumnCount();
 
 		String[] headers = new String[colCount];
-		int[] widths = new int[colCount];
-
 		for (int i = 0; i < colCount; i++) {
 			headers[i] = meta.getColumnName(i + 1);
-			widths[i] = headers[i].length();
 		}
 
 		List<String[]> rows = new ArrayList<>();
@@ -288,19 +274,27 @@ public final class InsistenceLayerConsole {
 			for (int i = 0; i < colCount; i++) {
 				String value = rs.getString(i + 1);
 				row[i] = value != null ? value : "NULL";
-				widths[i] = Math.max(widths[i], row[i].length());
 			}
 			rows.add(row);
 		}
 
-		printRow(headers, widths, out);
-		printSeparator(widths, out);
-		for (String[] row : rows) {
-			printRow(row, widths, out);
-		}
-
+		printTable(headers, rows, out);
 		out.println("(" + rows.size() + " row" + (rows.size() != 1 ? "s" : "") + ")");
 		out.println();
+	}
+
+	/** Prints a header row, a separator, then one line per row, each column sized to its widest value. */
+	private static void printTable(String[] headers, List<String[]> rows, PrintStream out) {
+		int[] widths = new int[headers.length];
+		for (int i = 0; i < headers.length; i++) widths[i] = headers[i].length();
+
+		for (String[] row : rows) {
+			for (int i = 0; i < row.length; i++) widths[i] = Math.max(widths[i], row[i].length());
+		}
+
+		printRow(headers, widths, out);
+		printSeparator(widths, out);
+		for (String[] row : rows) printRow(row, widths, out);
 	}
 
 	private static void printRow(String[] values, int[] widths, PrintStream out) {

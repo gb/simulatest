@@ -65,4 +65,19 @@ public interface SimulatestPlugin {
 	default void postProcessTestInstance(Object instance) {
 	}
 
+	/**
+	 * Relative position in the plugin run order: lower runs first, and plugins
+	 * with equal order keep their ServiceLoader discovery order.
+	 *
+	 * <p>Override this when the plugin must run after others. A plugin that
+	 * needs a DataSource another plugin configures should return a value above
+	 * zero rather than relying on where it appears in a
+	 * {@code META-INF/services} file.</p>
+	 *
+	 * @return the run order; {@code 0} by default
+	 */
+	default int order() {
+		return 0;
+	}
+
 }

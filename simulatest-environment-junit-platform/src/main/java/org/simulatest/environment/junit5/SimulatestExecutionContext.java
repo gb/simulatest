@@ -2,12 +2,10 @@ package org.simulatest.environment.junit5;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
-import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.insistencelayer.InsistenceLayer;
 
@@ -60,32 +58,23 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 		Objects.requireNonNull(definition, "definition must not be null");
 		EnvironmentFactory envFactory = factory().orElseThrow(() -> new IllegalStateException(
 				"Cannot run environment '" + definition.getName() + "': no Simulatest session open"));
-		try {
-			envFactory.create(definition).run();
-		} catch (Exception exception) {
-			throw new EnvironmentExecutionException(
-					"Failed during run for environment '" + definition.getName() + "'", exception);
-		}
+		envFactory.createAndRun(definition);
 	}
 
 	public void increaseInsistenceLevel() {
-		ifInsistenceLayer(InsistenceLayer::increaseLevel);
+		insistenceLayer().ifPresent(InsistenceLayer::increaseLevel);
 	}
 
 	public void decreaseInsistenceLevel() {
-		ifInsistenceLayer(InsistenceLayer::decreaseLevelOrCleanup);
+		insistenceLayer().ifPresent(InsistenceLayer::decreaseLevelOrCleanup);
 	}
 
 	public void resetInsistenceLevel() {
-		ifInsistenceLayer(InsistenceLayer::resetCurrentLevel);
+		insistenceLayer().ifPresent(InsistenceLayer::resetCurrentLevel);
 	}
 
 	public void postProcessTestInstance(Object instance) {
 		if (session != null) session.postProcessTestInstance(instance);
-	}
-
-	private void ifInsistenceLayer(Consumer<InsistenceLayer> action) {
-		insistenceLayer().ifPresent(action);
 	}
 
 	public void close() {

@@ -1,5 +1,7 @@
 package org.simulatest.environment;
 
+import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
+
 /**
  * Creates {@link Environment} instances from their definitions.
  *
@@ -18,5 +20,23 @@ public interface EnvironmentFactory {
 	 * @return a new {@link Environment} instance
 	 */
 	Environment create(EnvironmentDefinition definition);
+
+	/**
+	 * Creates the environment for {@code definition} and runs it, wrapping any
+	 * failure in an {@link EnvironmentExecutionException} naming the environment.
+	 *
+	 * <p>Shared by every runner so that all integrations report environment
+	 * failures the same way.</p>
+	 *
+	 * @param definition the environment definition to instantiate and run
+	 */
+	default void createAndRun(EnvironmentDefinition definition) {
+		try {
+			create(definition).run();
+		} catch (Exception exception) {
+			throw new EnvironmentExecutionException(
+					"Failed during run for environment '" + definition.getName() + "'", exception);
+		}
+	}
 
 }

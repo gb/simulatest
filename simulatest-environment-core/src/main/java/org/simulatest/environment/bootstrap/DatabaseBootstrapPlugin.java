@@ -44,6 +44,15 @@ public final class DatabaseBootstrapPlugin implements SimulatestPlugin {
 		this.setupSupplier = Objects.requireNonNull(setupSupplier, "setupSupplier");
 	}
 
+	// Runs after every other plugin so DI plugins, which call
+	// InsistenceLayerFactory.configure() in their own initialize(), win the DataSource race.
+	private static final int RUN_AFTER_DI_PLUGINS = 100;
+
+	@Override
+	public int order() {
+		return RUN_AFTER_DI_PLUGINS;
+	}
+
 	@Override
 	public void initialize(Collection<Class<?>> testClasses) {
 		Optional<SimulatestDatabaseSetup> loaded = setupSupplier.get();
@@ -52,7 +61,7 @@ public final class DatabaseBootstrapPlugin implements SimulatestPlugin {
 		SimulatestDatabaseSetup setup = loaded.get();
 		if (InsistenceLayerFactory.isConfigured()) {
 			logger.info("InsistenceLayer already configured by an earlier plugin; skipping dataSource()");
-			runSchemaPreservingExistingLayer(setup);
+			invokeSetupSchema(setup);
 		} else {
 			configureDataSource(setup);
 			runSchemaAndClearLayerOnFailure(setup);
@@ -78,10 +87,6 @@ public final class DatabaseBootstrapPlugin implements SimulatestPlugin {
 			InsistenceLayerFactory.clear();
 			throw e;
 		}
-	}
-
-	private static void runSchemaPreservingExistingLayer(SimulatestDatabaseSetup setup) {
-		invokeSetupSchema(setup);
 	}
 
 	private static void invokeSetupSchema(SimulatestDatabaseSetup setup) {
