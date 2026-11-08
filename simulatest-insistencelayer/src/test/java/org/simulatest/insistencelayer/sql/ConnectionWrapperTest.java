@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,15 +55,15 @@ public class ConnectionWrapperTest {
 	}
 
 	@Test
-	public void whenInsistenceLayerIsStartedTheConnectionIsNotReal() {
-		connectionWrapper.wrap();
+	public void whenInsistenceLayerIsStartedTheConnectionIsNotReal() throws SQLException {
+		connectionWrapper.pushLevel();
 		assertTrue(connectionWrapper.isActive());
 	}
 
 	@Test
-	public void whenInsistenceLayerIsDisabledTheConnectionIsRealAgain() {
-		connectionWrapper.wrap();
-		connectionWrapper.unwrap();
+	public void whenInsistenceLayerIsDisabledTheConnectionIsRealAgain() throws SQLException {
+		connectionWrapper.pushLevel();
+		connectionWrapper.popLevel();
 		assertFalse(connectionWrapper.isActive());
 	}
 
@@ -112,7 +113,7 @@ public class ConnectionWrapperTest {
 	public void commitShouldNotDelegateWhenActive() throws SQLException {
 		Connection mockConnection = mock(Connection.class);
 		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
-		wrapper.wrap();
+		wrapper.pushLevel();
 
 		wrapper.getConnection().commit();
 
@@ -123,7 +124,7 @@ public class ConnectionWrapperTest {
 	public void rollbackShouldNotDelegateWhenActive() throws SQLException {
 		Connection mockConnection = mock(Connection.class);
 		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
-		wrapper.wrap();
+		wrapper.pushLevel();
 
 		wrapper.getConnection().rollback();
 
@@ -132,7 +133,7 @@ public class ConnectionWrapperTest {
 
 	@Test
 	public void getAutoCommitShouldReturnFalseWhenActive() throws SQLException {
-		connectionWrapper.wrap();
+		connectionWrapper.pushLevel();
 		assertFalse(connectionWrapper.getConnection().getAutoCommit());
 	}
 
@@ -178,7 +179,7 @@ public class ConnectionWrapperTest {
 		doThrow(underlying).when(mockConnection).releaseSavepoint(first);
 
 		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
-		wrapper.wrap();
+		wrapper.pushLevel();
 		wrapper.getConnection().commit();
 
 		try {
@@ -191,6 +192,60 @@ public class ConnectionWrapperTest {
 
 		wrapper.getConnection().rollback();
 		verify(mockConnection, never()).rollback();
+	}
+
+	@Test
+	public void rollbackWithoutCommitShouldReturnToTheStartOfTheLevel() throws SQLException {
+		Connection mockConnection = mock(Connection.class);
+		Savepoint levelStart = mock(Savepoint.class);
+		when(mockConnection.setSavepoint("LAYER1")).thenReturn(levelStart);
+		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
+		wrapper.pushLevel();
+
+		wrapper.getConnection().rollback();
+
+		verify(mockConnection).rollback(levelStart);
+	}
+
+	@Test
+	public void rollbackAfterResetShouldNotTargetTheCommitMadeBeforeTheReset() throws SQLException {
+		Connection mockConnection = mock(Connection.class);
+		Savepoint levelStart = mock(Savepoint.class);
+		Savepoint staleCommit = mock(Savepoint.class);
+		when(mockConnection.setSavepoint("LAYER1")).thenReturn(levelStart);
+		when(mockConnection.setSavepoint("USER_COMMIT")).thenReturn(staleCommit);
+		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
+		wrapper.pushLevel();
+		wrapper.getConnection().commit();
+
+		wrapper.resetLevel();
+		wrapper.getConnection().rollback();
+
+		verify(mockConnection, never()).rollback(staleCommit);
+		verify(mockConnection, times(2)).rollback(levelStart);
+	}
+
+	@Test
+	public void popLevelShouldRestoreTheCommitOfTheLevelBelowAsRollbackTarget() throws SQLException {
+		Connection mockConnection = mock(Connection.class);
+		Savepoint outerStart = mock(Savepoint.class);
+		Savepoint outerCommit = mock(Savepoint.class);
+		Savepoint innerStart = mock(Savepoint.class);
+		when(mockConnection.setSavepoint("LAYER1")).thenReturn(outerStart);
+		when(mockConnection.setSavepoint("USER_COMMIT")).thenReturn(outerCommit);
+		when(mockConnection.setSavepoint("LAYER2")).thenReturn(innerStart);
+		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
+		wrapper.pushLevel();
+		wrapper.getConnection().commit();
+		wrapper.pushLevel();
+
+		wrapper.getConnection().rollback();
+		verify(mockConnection).rollback(innerStart);
+		verify(mockConnection, never()).rollback(outerCommit);
+
+		wrapper.popLevel();
+		wrapper.getConnection().rollback();
+		verify(mockConnection).rollback(outerCommit);
 	}
 
 }

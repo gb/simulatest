@@ -1,9 +1,6 @@
 package org.simulatest.insistencelayer;
 
 import java.sql.SQLException;
-import java.sql.Savepoint;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Objects;
 
 import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
@@ -14,55 +11,46 @@ import org.slf4j.LoggerFactory;
 /**
  * JDBC implementation of {@link InsistenceLayer} that uses savepoints
  * as its checkpoint mechanism. Each level corresponds to a named savepoint
- * on the underlying connection.
+ * on the underlying connection, kept by the {@link ConnectionWrapper}.
  */
 public final class LocalInsistenceLayer implements InsistenceLayer {
 
-	private static final String SAVEPOINT_PREFIX = "LAYER";
 	private static final Logger logger = LoggerFactory.getLogger(LocalInsistenceLayer.class);
 
 	private final ConnectionWrapper connection;
-	private final Deque<Savepoint> savepoints;
 
 	LocalInsistenceLayer(ConnectionWrapper connection) {
 		Objects.requireNonNull(connection, "Connection is null");
 		this.connection = connection;
-		this.savepoints = new ArrayDeque<>();
 	}
 
 	@Override
 	public int getCurrentLevel() {
-		return savepoints.size();
+		return connection.levelCount();
 	}
 
 	@Override
 	public void increaseLevel() {
-		wrapConnectionIfFirstLevel();
-		createSavepoint();
+		try {
+			connection.pushLevel();
+		} catch (SQLException exception) {
+			throw new InsistenceLayerException(
+					"Error creating savepoint for level " + (getCurrentLevel() + 1), exception);
+		}
 
 		logger.info("Level increased to {}", getCurrentLevel());
-	}
-
-	private void wrapConnectionIfFirstLevel() {
-		if (stackIsEmpty()) connection.wrap();
-	}
-
-	private void createSavepoint() {
-		String savePointName = SAVEPOINT_PREFIX + (getCurrentLevel() + 1);
-
-		try {
-			savepoints.push(connection.setSavepoint(savePointName));
-		} catch (SQLException exception) {
-			String message = "Error creating the savepoint: " + savePointName;
-			throw new InsistenceLayerException(message, exception);
-		}
 	}
 
 	@Override
 	public void resetCurrentLevel() {
 		if (stackIsEmpty()) return;
 
-		rollbackSavepoint(savepoints.peek());
+		try {
+			connection.resetLevel();
+		} catch (SQLException exception) {
+			throw rollbackFailure(exception);
+		}
+
 		logger.info("Cleaned current level: {}", getCurrentLevel());
 	}
 
@@ -72,14 +60,13 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 			throw new IllegalStateException("Cannot decrease level: already at level 0");
 		}
 
-		rollbackSavepoint(savepoints.pop());
-		unwrapConnectionIfStackEmptied();
+		try {
+			connection.popLevel();
+		} catch (SQLException exception) {
+			throw rollbackFailure(exception);
+		}
 
 		logger.info("Level decreased to {}", getCurrentLevel());
-	}
-
-	private void unwrapConnectionIfStackEmptied() {
-		if (stackIsEmpty()) connection.unwrap();
 	}
 
 	// Overrides the interface default to optimize the decrease path:
@@ -90,27 +77,23 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 		if (level < 0) throw new IllegalArgumentException("Level cannot be negative");
 		logger.info("Setting level {} to {}", getCurrentLevel(), level);
 
-		while (getCurrentLevel() > level + 1) releaseCurrentSavepoint();
+		while (getCurrentLevel() > level + 1) dropCurrentLevel();
 		if (getCurrentLevel() == level + 1) decreaseLevel();
 		while (getCurrentLevel() < level) increaseLevel();
 	}
 
-	private void releaseCurrentSavepoint() {
+	private void dropCurrentLevel() {
 		try {
-			connection.releaseSavepoint(savepoints.pop());
+			connection.dropLevel();
 		} catch (SQLException exception) {
 			throw new InsistenceLayerException(
-					"Error releasing savepoint at level " + (getCurrentLevel() + 1), exception);
+					"Error releasing savepoint at level " + getCurrentLevel(), exception);
 		}
 	}
 
-	private void rollbackSavepoint(Savepoint savepoint) {
-		try {
-			connection.rollback(savepoint);
-		} catch (SQLException exception) {
-			throw new InsistenceLayerException(
-					"Error rolling back savepoint at level " + getCurrentLevel(), exception);
-		}
+	private InsistenceLayerException rollbackFailure(SQLException exception) {
+		return new InsistenceLayerException(
+				"Error rolling back savepoint at level " + getCurrentLevel(), exception);
 	}
 
 	private boolean stackIsEmpty() {
@@ -119,7 +102,7 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 
 	@Override
 	public String toString() {
-		return "LocalInsistenceLayer[level=" + getCurrentLevel() + ", savepoints=" + savepoints + "]";
+		return "LocalInsistenceLayer[level=" + getCurrentLevel() + "]";
 	}
 
 }

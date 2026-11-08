@@ -10,6 +10,8 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Objects;
 
 import javax.sql.DataSource;
@@ -21,11 +23,16 @@ import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
  * JDBC {@link Connection} wrapper that intercepts commit/rollback to stage
  * changes behind savepoints managed by the Insistence Layer.
  *
+ * <p>The wrapper keeps a stack of levels. Each level owns the savepoint
+ * created when it was pushed and remembers the last user {@code commit()}
+ * made inside it. A user {@code rollback()} returns to that commit, or to
+ * the start of the level when nothing was committed in it. It never goes
+ * below the current level's savepoint, so the state a level started with
+ * is always preserved.</p>
+ *
  * <p><b>Thread-safety:</b> not thread-safe. JDBC connections are not
  * thread-safe by design, so this wrapper assumes exclusive use by one
- * thread at a time. {@link #isActive()} is {@code volatile} as the single
- * exception: external observers (e.g., cleanup hooks) may read it from
- * another thread. All other fields are owning-thread-only.</p>
+ * thread at a time.</p>
  */
 public final class ConnectionWrapper {
 
@@ -37,12 +44,12 @@ public final class ConnectionWrapper {
 	private static final String METHOD_IS_CLOSED = "isClosed";
 	private static final String METHOD_SET_AUTO_COMMIT = "setAutoCommit";
 	private static final String METHOD_GET_AUTO_COMMIT = "getAutoCommit";
+	private static final String LEVEL_SAVEPOINT_PREFIX = "LAYER";
 	private static final String USER_COMMIT_SAVEPOINT = "USER_COMMIT";
 
 	private final Connection realConnection;
 	private final Connection proxy;
-	private volatile boolean active;
-	private Savepoint lastCommitSavepoint;
+	private final Deque<Level> levels = new ArrayDeque<>();
 
 	public ConnectionWrapper(DataSource source) {
 		Objects.requireNonNull(source, "DataSource is null");
@@ -66,39 +73,86 @@ public final class ConnectionWrapper {
 		return proxy;
 	}
 
-	public void wrap() {
+	/**
+	 * Returns {@code true} while at least one level is open, meaning
+	 * commit and rollback are being intercepted.
+	 */
+	public boolean isActive() {
+		return !levels.isEmpty();
+	}
+
+	/**
+	 * Returns how many levels are open.
+	 */
+	public int levelCount() {
+		return levels.size();
+	}
+
+	/**
+	 * Opens a level: creates the savepoint {@code LAYER<n>} for the new
+	 * depth and makes it the floor for user rollbacks. Opening the first
+	 * level also disables autocommit on the real connection.
+	 */
+	public void pushLevel() throws SQLException {
+		if (levels.isEmpty()) wrap();
+		String savepointName = LEVEL_SAVEPOINT_PREFIX + (levels.size() + 1);
+		levels.push(new Level(realConnection.setSavepoint(savepointName)));
+	}
+
+	/**
+	 * Rolls back to the start of the current level and forgets the user
+	 * commits made inside it.
+	 */
+	public void resetLevel() throws SQLException {
+		Level current = currentLevel();
+		realConnection.rollback(current.savepoint);
+		current.lastCommit = null;
+	}
+
+	/**
+	 * Rolls back to the start of the current level and closes it. Closing
+	 * the last level also restores autocommit on the real connection.
+	 */
+	public void popLevel() throws SQLException {
+		realConnection.rollback(currentLevel().savepoint);
+		closeCurrentLevel();
+	}
+
+	/**
+	 * Closes the current level without rolling back, releasing its
+	 * savepoint. Meant for when a lower level is about to be rolled back
+	 * anyway, which undoes this level's data as well.
+	 */
+	public void dropLevel() throws SQLException {
+		realConnection.releaseSavepoint(currentLevel().savepoint);
+		closeCurrentLevel();
+	}
+
+	private Level currentLevel() {
+		Level current = levels.peek();
+		if (current == null) throw new IllegalStateException("No level is open");
+		return current;
+	}
+
+	private void closeCurrentLevel() {
+		levels.pop();
+		if (levels.isEmpty()) unwrap();
+	}
+
+	private void wrap() {
 		try {
 			realConnection.setAutoCommit(false);
 		} catch (SQLException e) {
 			throw new InsistenceLayerException("Error enabling insistence layer", e);
 		}
-		active = true;
 	}
 
-	public void unwrap() {
+	private void unwrap() {
 		try {
 			realConnection.setAutoCommit(true);
 		} catch (SQLException e) {
 			throw new InsistenceLayerException("Error disabling insistence layer", e);
 		}
-		active = false;
-		lastCommitSavepoint = null;
-	}
-
-	public boolean isActive() {
-		return active;
-	}
-
-	public Savepoint setSavepoint(String name) throws SQLException {
-		return realConnection.setSavepoint(name);
-	}
-
-	public void rollback(Savepoint savepoint) throws SQLException {
-		realConnection.rollback(savepoint);
-	}
-
-	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-		realConnection.releaseSavepoint(savepoint);
 	}
 
 	private Connection createProxy() {
@@ -125,11 +179,11 @@ public final class ConnectionWrapper {
 			// from closing the real connection or re-enabling autocommit.
 			if (METHOD_CLOSE.equals(methodName)) return null;
 			if (METHOD_SET_AUTO_COMMIT.equals(methodName)) {
-				if (!wrapper.active) wrapper.realConnection.setAutoCommit(false);
+				if (!wrapper.isActive()) wrapper.realConnection.setAutoCommit(false);
 				return null;
 			}
 
-			if (wrapper.active) {
+			if (wrapper.isActive()) {
 				if (METHOD_COMMIT.equals(methodName)) { wrapper.handleCommit(); return null; }
 				if (METHOD_ROLLBACK.equals(methodName) && (args == null || args.length == 0)) {
 					wrapper.handleRollback();
@@ -150,17 +204,35 @@ public final class ConnectionWrapper {
 
 	private void handleCommit() throws SQLException {
 		logger.debug("Commit (bumping savepoint)");
-		if (lastCommitSavepoint != null) {
-			realConnection.releaseSavepoint(lastCommitSavepoint);
+		Level current = currentLevel();
+		if (current.lastCommit != null) {
+			realConnection.releaseSavepoint(current.lastCommit);
 		}
-		lastCommitSavepoint = realConnection.setSavepoint(USER_COMMIT_SAVEPOINT);
+		current.lastCommit = realConnection.setSavepoint(USER_COMMIT_SAVEPOINT);
 	}
 
 	private void handleRollback() throws SQLException {
 		logger.debug("Rollback");
-		if (lastCommitSavepoint != null) {
-			realConnection.rollback(lastCommitSavepoint);
+		realConnection.rollback(currentLevel().rollbackTarget());
+	}
+
+	/**
+	 * One open level: the savepoint it started with and the last user
+	 * commit made inside it, if any.
+	 */
+	private static final class Level {
+
+		private final Savepoint savepoint;
+		private Savepoint lastCommit;
+
+		Level(Savepoint savepoint) {
+			this.savepoint = savepoint;
 		}
+
+		Savepoint rollbackTarget() {
+			return lastCommit != null ? lastCommit : savepoint;
+		}
+
 	}
 
 }
