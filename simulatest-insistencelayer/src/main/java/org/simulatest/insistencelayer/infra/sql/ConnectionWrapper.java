@@ -30,6 +30,11 @@ import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
  * below the current level's savepoint, so the state a level started with
  * is always preserved.</p>
  *
+ * <p>No two live savepoints share a name, because H2 keys savepoints by
+ * name. Level savepoints are named by depth ({@code LAYER<n>}), which is
+ * unique among open levels. Commit savepoints are unnamed, because every
+ * open level may hold one at the same time.</p>
+ *
  * <p><b>Thread-safety:</b> not thread-safe. JDBC connections are not
  * thread-safe by design, so this wrapper assumes exclusive use by one
  * thread at a time.</p>
@@ -45,11 +50,11 @@ public final class ConnectionWrapper {
 	private static final String METHOD_SET_AUTO_COMMIT = "setAutoCommit";
 	private static final String METHOD_GET_AUTO_COMMIT = "getAutoCommit";
 	private static final String LEVEL_SAVEPOINT_PREFIX = "LAYER";
-	private static final String USER_COMMIT_SAVEPOINT = "USER_COMMIT";
 
 	private final Connection realConnection;
 	private final Connection proxy;
 	private final Deque<Level> levels = new ArrayDeque<>();
+	private boolean autoCommitBeforeFirstLevel;
 
 	public ConnectionWrapper(DataSource source) {
 		Objects.requireNonNull(source, "DataSource is null");
@@ -91,7 +96,8 @@ public final class ConnectionWrapper {
 	/**
 	 * Opens a level: creates the savepoint {@code LAYER<n>} for the new
 	 * depth and makes it the floor for user rollbacks. Opening the first
-	 * level also disables autocommit on the real connection.
+	 * level also disables autocommit on the real connection, remembering
+	 * the value it had.
 	 */
 	public void pushLevel() throws SQLException {
 		if (levels.isEmpty()) wrap();
@@ -111,7 +117,8 @@ public final class ConnectionWrapper {
 
 	/**
 	 * Rolls back to the start of the current level and closes it. Closing
-	 * the last level also restores autocommit on the real connection.
+	 * the last level also puts autocommit back to the value the real
+	 * connection had before the first level was opened.
 	 */
 	public void popLevel() throws SQLException {
 		realConnection.rollback(currentLevel().savepoint);
@@ -141,6 +148,7 @@ public final class ConnectionWrapper {
 
 	private void wrap() {
 		try {
+			autoCommitBeforeFirstLevel = realConnection.getAutoCommit();
 			realConnection.setAutoCommit(false);
 		} catch (SQLException e) {
 			throw new InsistenceLayerException("Error enabling insistence layer", e);
@@ -149,7 +157,7 @@ public final class ConnectionWrapper {
 
 	private void unwrap() {
 		try {
-			realConnection.setAutoCommit(true);
+			realConnection.setAutoCommit(autoCommitBeforeFirstLevel);
 		} catch (SQLException e) {
 			throw new InsistenceLayerException("Error disabling insistence layer", e);
 		}
@@ -176,14 +184,12 @@ public final class ConnectionWrapper {
 			String methodName = method.getName();
 
 			// Always intercepted: prevent frameworks (Spring, connection pools)
-			// from closing the real connection or re-enabling autocommit.
+			// from closing the real connection.
 			if (METHOD_CLOSE.equals(methodName)) return null;
-			if (METHOD_SET_AUTO_COMMIT.equals(methodName)) {
-				if (!wrapper.isActive()) wrapper.realConnection.setAutoCommit(false);
-				return null;
-			}
 
+			// While a level is open the layer owns the transaction; nobody may re-enable autocommit.
 			if (wrapper.isActive()) {
+				if (METHOD_SET_AUTO_COMMIT.equals(methodName)) return null;
 				if (METHOD_COMMIT.equals(methodName)) { wrapper.handleCommit(); return null; }
 				if (METHOD_ROLLBACK.equals(methodName) && (args == null || args.length == 0)) {
 					wrapper.handleRollback();
@@ -208,7 +214,7 @@ public final class ConnectionWrapper {
 		if (current.lastCommit != null) {
 			realConnection.releaseSavepoint(current.lastCommit);
 		}
-		current.lastCommit = realConnection.setSavepoint(USER_COMMIT_SAVEPOINT);
+		current.lastCommit = realConnection.setSavepoint();
 	}
 
 	private void handleRollback() throws SQLException {

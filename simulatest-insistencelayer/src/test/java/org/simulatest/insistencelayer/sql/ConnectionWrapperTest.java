@@ -25,12 +25,14 @@ import org.simulatest.insistencelayer.infra.sql.ConnectionWrapper;
 
 public class ConnectionWrapperTest {
 
+	private static final String URL = "jdbc:h2:mem:connectionwrappertest";
+
 	private Connection realConnection;
 	private ConnectionWrapper connectionWrapper;
 
 	@Before
 	public void setup() throws SQLException {
-		realConnection = DriverManager.getConnection("jdbc:h2:mem:connectionwrappertest", "sa", "");
+		realConnection = DriverManager.getConnection(URL, "sa", "");
 		connectionWrapper = new ConnectionWrapper(realConnection);
 	}
 
@@ -138,6 +140,63 @@ public class ConnectionWrapperTest {
 	}
 
 	@Test
+	public void outsideAnyLevelSetAutoCommitShouldReachTheRealConnection() throws SQLException {
+		connectionWrapper.getConnection().setAutoCommit(true);
+
+		assertTrue(realConnection.getAutoCommit());
+	}
+
+	@Test
+	public void outsideAnyLevelSetAutoCommitTrueShouldPersistRowsForOtherConnections() throws SQLException {
+		Connection proxy = connectionWrapper.getConnection();
+		createSeedTable();
+
+		proxy.setAutoCommit(true);
+		proxy.createStatement().executeUpdate("INSERT INTO SEED VALUES ('kept')");
+
+		assertEquals(1, seedRowsSeenByAnotherConnection());
+	}
+
+	@Test
+	public void outsideAnyLevelRestoringAutoCommitAfterATransactionShouldPersistLaterRows() throws SQLException {
+		Connection proxy = connectionWrapper.getConnection();
+		createSeedTable();
+
+		// What Spring's DataSourceTransactionManager does around one @Transactional block.
+		proxy.setAutoCommit(false);
+		proxy.createStatement().executeUpdate("INSERT INTO SEED VALUES ('in-tx')");
+		proxy.commit();
+		proxy.setAutoCommit(true);
+
+		proxy.createStatement().executeUpdate("INSERT INTO SEED VALUES ('after-tx')");
+
+		assertEquals(2, seedRowsSeenByAnotherConnection());
+	}
+
+	private void createSeedTable() throws SQLException {
+		connectionWrapper.getConnection().createStatement().executeUpdate("CREATE TABLE SEED (NAME VARCHAR(50))");
+	}
+
+	// The in-memory database lives as long as realConnection, so a second connection sees only committed rows.
+	private int seedRowsSeenByAnotherConnection() throws SQLException {
+		try (Connection other = DriverManager.getConnection(URL, "sa", "")) {
+			ResultSet rs = other.createStatement().executeQuery("SELECT COUNT(*) FROM SEED");
+			rs.next();
+			return rs.getInt(1);
+		}
+	}
+
+	@Test
+	public void closingTheLastLevelShouldRestoreTheAutoCommitTheConnectionHadBefore() throws SQLException {
+		realConnection.setAutoCommit(false);
+
+		connectionWrapper.pushLevel();
+		connectionWrapper.popLevel();
+
+		assertFalse(realConnection.getAutoCommit());
+	}
+
+	@Test
 	public void closeShouldAlwaysBeNoOp() throws SQLException {
 		Connection mockConnection = mock(Connection.class);
 		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
@@ -172,7 +231,7 @@ public class ConnectionWrapperTest {
 		Connection mockConnection = mock(Connection.class);
 		Savepoint first = mock(Savepoint.class);
 		Savepoint second = mock(Savepoint.class);
-		when(mockConnection.setSavepoint("USER_COMMIT"))
+		when(mockConnection.setSavepoint())
 				.thenReturn(first)
 				.thenReturn(second);
 		SQLException underlying = new SQLException("release refused");
@@ -213,7 +272,7 @@ public class ConnectionWrapperTest {
 		Savepoint levelStart = mock(Savepoint.class);
 		Savepoint staleCommit = mock(Savepoint.class);
 		when(mockConnection.setSavepoint("LAYER1")).thenReturn(levelStart);
-		when(mockConnection.setSavepoint("USER_COMMIT")).thenReturn(staleCommit);
+		when(mockConnection.setSavepoint()).thenReturn(staleCommit);
 		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
 		wrapper.pushLevel();
 		wrapper.getConnection().commit();
@@ -232,7 +291,7 @@ public class ConnectionWrapperTest {
 		Savepoint outerCommit = mock(Savepoint.class);
 		Savepoint innerStart = mock(Savepoint.class);
 		when(mockConnection.setSavepoint("LAYER1")).thenReturn(outerStart);
-		when(mockConnection.setSavepoint("USER_COMMIT")).thenReturn(outerCommit);
+		when(mockConnection.setSavepoint()).thenReturn(outerCommit);
 		when(mockConnection.setSavepoint("LAYER2")).thenReturn(innerStart);
 		ConnectionWrapper wrapper = new ConnectionWrapper(mockConnection);
 		wrapper.pushLevel();

@@ -198,6 +198,21 @@ public class UserTransactionInsistenceLayerTest {
 		assertEquals(Arrays.asList("committed-at-3"), valuesFromTableLog());
 	}
 
+	@Test
+	public void rollbackShouldReturnToTheOuterCommitAfterAnInnerLevelAlsoCommitted() throws SQLException {
+		statement.executeUpdate("INSERT INTO LOG VALUES ('committed-at-3')");
+		connection.commit();
+
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('committed-at-4')");
+		connection.commit();
+		insistenceLayer.decreaseLevel();
+
+		statement.executeUpdate("INSERT INTO LOG VALUES ('uncommitted-at-3')");
+		connection.rollback();
+		assertEquals(Arrays.asList("committed-at-3"), valuesFromTableLog());
+	}
+
 	private List<String> valuesFromTableLog() throws SQLException {
 		ResultSet rs = statement.executeQuery("SELECT NAME FROM LOG ORDER BY NAME");
 		List<String> values = new ArrayList<String>();
