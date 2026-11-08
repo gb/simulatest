@@ -68,11 +68,11 @@ public class UserTransactionInsistenceLayerTest {
 	}
 
 	@Test
-	public void rollbackWithoutPriorCommitShouldBeNoOp() throws SQLException {
+	public void rollbackWithoutPriorCommitShouldUndoUncommittedData() throws SQLException {
 		statement.executeUpdate("INSERT INTO LOG VALUES ('Entity-1')");
 		connection.rollback();
 
-		assertEquals(Arrays.asList("Entity-1"), valuesFromTableLog());
+		assertTrue(valuesFromTableLog().isEmpty());
 		assertEquals(3, insistenceLayer.getCurrentLevel());
 	}
 
@@ -147,6 +147,55 @@ public class UserTransactionInsistenceLayerTest {
 		insistenceLayer.decreaseLevel();
 		assertEquals(3, insistenceLayer.getCurrentLevel());
 		assertEquals(Arrays.asList("uncommitted"), valuesFromTableLog());
+	}
+
+	@Test
+	public void rollbackAfterDecreaseLevelShouldUndoUncommittedData() throws SQLException {
+		statement.executeUpdate("INSERT INTO LOG VALUES ('at-level-3')");
+		connection.commit();
+
+		insistenceLayer.decreaseLevel();
+		assertTrue(valuesFromTableLog().isEmpty());
+
+		statement.executeUpdate("INSERT INTO LOG VALUES ('should-vanish')");
+		connection.rollback();
+
+		assertTrue(valuesFromTableLog().isEmpty());
+		assertEquals(2, insistenceLayer.getCurrentLevel());
+	}
+
+	@Test
+	public void rollbackAfterResetCurrentLevelShouldUndoUncommittedData() throws SQLException {
+		statement.executeUpdate("INSERT INTO LOG VALUES ('a1')");
+		statement.executeUpdate("INSERT INTO LOG VALUES ('a2')");
+		connection.commit();
+
+		insistenceLayer.resetCurrentLevel();
+		assertTrue(valuesFromTableLog().isEmpty());
+
+		statement.executeUpdate("INSERT INTO LOG VALUES ('b1')");
+		statement.executeUpdate("INSERT INTO LOG VALUES ('b2')");
+		statement.executeUpdate("INSERT INTO LOG VALUES ('b3')");
+		statement.executeUpdate("INSERT INTO LOG VALUES ('b4')");
+		connection.rollback();
+
+		assertEquals(Arrays.asList(), valuesFromTableLog());
+	}
+
+	@Test
+	public void rollbackShouldNeverGoBelowTheStartOfTheCurrentLevel() throws SQLException {
+		statement.executeUpdate("INSERT INTO LOG VALUES ('committed-at-3')");
+		connection.commit();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('uncommitted-at-3')");
+
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('uncommitted-at-4')");
+		connection.rollback();
+		assertEquals(Arrays.asList("committed-at-3", "uncommitted-at-3"), valuesFromTableLog());
+
+		insistenceLayer.decreaseLevel();
+		connection.rollback();
+		assertEquals(Arrays.asList("committed-at-3"), valuesFromTableLog());
 	}
 
 	private List<String> valuesFromTableLog() throws SQLException {

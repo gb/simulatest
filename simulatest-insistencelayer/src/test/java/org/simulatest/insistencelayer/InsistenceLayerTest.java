@@ -4,17 +4,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -136,7 +136,8 @@ public class InsistenceLayerTest {
 		insistenceLayer.setLevelTo(1);
 		assertEquals(1, insistenceLayer.getCurrentLevel());
 
-		verify(spyConnection, atMost(1)).rollback((Savepoint) any());
+		verify(spyConnection, atMost(1)).popLevel();
+		verify(spyConnection, never()).resetLevel();
 	}
 
 	@Test(expected = IllegalStateException.class)
@@ -148,10 +149,10 @@ public class InsistenceLayerTest {
 
 	@Test
 	public void increaseLevelShouldLeaveStackEmptyWhenSetSavepointFails() throws SQLException {
-		ConnectionWrapper failingConnection = mock(ConnectionWrapper.class);
+		Connection failingConnection = mock(Connection.class);
 		SQLException underlying = new SQLException("savepoint limit reached");
 		when(failingConnection.setSavepoint(anyString())).thenThrow(underlying);
-		LocalInsistenceLayer layerUnderTest = new LocalInsistenceLayer(failingConnection);
+		LocalInsistenceLayer layerUnderTest = new LocalInsistenceLayer(new ConnectionWrapper(failingConnection));
 
 		assertEquals("guard: starts at level 0", 0, layerUnderTest.getCurrentLevel());
 		try {
@@ -169,7 +170,7 @@ public class InsistenceLayerTest {
 	public void setLevelToShouldWrapReleaseSavepointFailureAsInsistenceException() throws SQLException {
 		ConnectionWrapper spyConnection = spy(connection);
 		SQLException underlying = new SQLException("release refused");
-		doThrow(underlying).when(spyConnection).releaseSavepoint((Savepoint) any());
+		doThrow(underlying).when(spyConnection).dropLevel();
 		LocalInsistenceLayer layerUnderTest = new LocalInsistenceLayer(spyConnection);
 		layerUnderTest.setLevelTo(4);
 
