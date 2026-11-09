@@ -86,6 +86,18 @@ public final class ConnectionWrapper {
 	}
 
 	/**
+	 * Closes the real connection. The proxy swallows {@code close()} so that
+	 * frameworks cannot end the sandbox; this is the one way to release it.
+	 */
+	public void close() {
+		try {
+			realConnection.close();
+		} catch (SQLException e) {
+			throw new InsistenceLayerException("Error closing connection", e);
+		}
+	}
+
+	/**
 	 * Returns {@code true} while at least one level is open, meaning
 	 * commit and rollback are being intercepted.
 	 */

@@ -81,8 +81,13 @@ public final class InsistenceLayerRegistry {
 		return Optional.empty();
 	}
 
+	/**
+	 * Forgets every layer and data source and closes the connections the data
+	 * sources hold, so a cleared registry leaves nothing open behind it.
+	 */
 	public synchronized void clear() {
 		registry.clear();
+		for (InsistenceLayerDataSource dataSource : dataSources.values()) dataSource.getConnectionWrapper().close();
 		dataSources.clear();
 	}
 
