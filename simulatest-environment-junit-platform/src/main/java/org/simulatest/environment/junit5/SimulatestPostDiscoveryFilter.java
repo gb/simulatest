@@ -1,11 +1,7 @@
 package org.simulatest.environment.junit5;
 
-import java.util.Optional;
-
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
-import org.junit.platform.engine.support.descriptor.ClassSource;
-import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.PostDiscoveryFilter;
 import org.simulatest.environment.annotation.UseEnvironment;
 
@@ -36,17 +32,7 @@ public final class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter 
 	}
 
 	private static boolean belongsToUseEnvironmentClass(TestDescriptor descriptor) {
-		return resolveTestClass(descriptor)
-				.flatMap(UseEnvironmentClassScanner::resolveUseEnvironmentClass)
-				.isPresent();
-	}
-
-	private static Optional<Class<?>> resolveTestClass(TestDescriptor descriptor) {
-		return descriptor.getSource().map(source -> {
-			if (source instanceof ClassSource s) return s.getJavaClass();
-			if (source instanceof MethodSource s) return s.getJavaClass();
-			return null;
-		});
+		return UseEnvironmentClassScanner.resolveUseEnvironmentClass(descriptor).isPresent();
 	}
 
 	private static boolean isExternalEngine(TestDescriptor descriptor) {
