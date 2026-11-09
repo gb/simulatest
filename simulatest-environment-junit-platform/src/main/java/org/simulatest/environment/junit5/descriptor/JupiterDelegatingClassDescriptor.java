@@ -21,6 +21,7 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
+import org.simulatest.environment.junit5.OwnEnvironmentClassFilter;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 /**
@@ -91,7 +92,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 	private List<CapturedResult> runJupiter() {
 		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
 				.selectors(selectTestClass())
-				.filters(EngineFilter.includeEngines(JUPITER_ENGINE_ID))
+				.filters(EngineFilter.includeEngines(JUPITER_ENGINE_ID), new OwnEnvironmentClassFilter(testClass))
 				.configurationParameter(AUTODETECTION_KEY, AUTODETECTION_VALUE_ENABLED)
 				.build();
 

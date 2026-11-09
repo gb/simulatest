@@ -30,6 +30,9 @@ import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
 import org.simulatest.environment.junit5.descriptor.EnvironmentTestDescriptor;
 import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
+import org.simulatest.environment.junit5.test.testdouble.EnvRows;
+import org.simulatest.environment.junit5.test.testdouble.InheritedNestedTest;
+import org.simulatest.environment.junit5.test.testdouble.NestedOwnEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
 import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
@@ -51,6 +54,8 @@ class SimulatestTestEngineTest {
 		JdbcDataSource h2 = new JdbcDataSource();
 		h2.setURL("jdbc:h2:mem:junit5test;DB_CLOSE_DELAY=-1");
 		h2.setUser("sa");
+		// DDL on the raw connection: H2 commits on CREATE TABLE, which would destroy open savepoints.
+		EnvRows.createTable(h2);
 		InsistenceLayerFactory.configure(h2);
 	}
 
@@ -197,6 +202,33 @@ class SimulatestTestEngineTest {
 		assertNoFailures(summary);
 		assertEquals(5, summary.getTestsSucceededCount(),
 				"Should run 2 from FirstLevelTest + 3 from NestedEnvironmentsTest nested classes");
+	}
+
+	@Test
+	void nestedClassWithOwnEnvironmentShouldRunOnceUnderItsOwnEnvironment() {
+		TestExecutionSummary summary = runSimulatest(NestedOwnEnvironmentTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(2, summary.getTestsSucceededCount(),
+				"1 outer test + 1 nested test; the nested test must not also run under the outer environment");
+	}
+
+	@Test
+	void selectingNestedClassWithOwnEnvironmentDirectlyShouldRunItOnce() throws ClassNotFoundException {
+		Class<?> nestedClass = Class.forName(NestedOwnEnvironmentTest.class.getName() + "$WithChildEnvironment");
+		TestExecutionSummary summary = runSimulatest(nestedClass);
+
+		assertNoFailures(summary);
+		assertEquals(1, summary.getTestsSucceededCount(), "Only the nested test should run");
+	}
+
+	@Test
+	void inheritedNestedClassWithoutOwnEnvironmentShouldRunUnderTheSubclassEnvironment() {
+		TestExecutionSummary summary = runSimulatest(InheritedNestedTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(1, summary.getTestsSucceededCount(),
+				"The nested class inherited from the base class should run once, under the subclass environment");
 	}
 
 	@Test
