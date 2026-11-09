@@ -6,12 +6,9 @@ import java.util.Set;
 
 import org.junit.platform.commons.support.ReflectionSupport;
 import org.junit.platform.engine.EngineDiscoveryRequest;
-import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.discovery.ClassSelector;
 import org.junit.platform.engine.discovery.ClasspathRootSelector;
 import org.junit.platform.engine.discovery.PackageSelector;
-import org.junit.platform.engine.support.descriptor.ClassSource;
-import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.simulatest.environment.annotation.UseEnvironment;
 
 /**
@@ -57,23 +54,6 @@ class UseEnvironmentClassScanner {
 				return Optional.of(currentClass);
 
 		return Optional.empty();
-	}
-
-	/**
-	 * Resolves the {@link UseEnvironment} class the descriptor's test class
-	 * belongs to, or empty when the descriptor has no class or method source
-	 * or no enclosing class is annotated.
-	 */
-	static Optional<Class<?>> resolveUseEnvironmentClass(TestDescriptor descriptor) {
-		return resolveTestClass(descriptor).flatMap(UseEnvironmentClassScanner::resolveUseEnvironmentClass);
-	}
-
-	private static Optional<Class<?>> resolveTestClass(TestDescriptor descriptor) {
-		return descriptor.getSource().map(source -> {
-			if (source instanceof ClassSource s) return s.getJavaClass();
-			if (source instanceof MethodSource s) return s.getJavaClass();
-			return null;
-		});
 	}
 
 	private static boolean isAnnotated(Class<?> clazz) {

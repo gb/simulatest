@@ -31,6 +31,7 @@ import org.simulatest.environment.junit5.SimulatestTestEngine;
 import org.simulatest.environment.junit5.descriptor.EnvironmentTestDescriptor;
 import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvRows;
+import org.simulatest.environment.junit5.test.testdouble.InheritedNestedTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedOwnEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
@@ -219,6 +220,15 @@ class SimulatestTestEngineTest {
 
 		assertNoFailures(summary);
 		assertEquals(1, summary.getTestsSucceededCount(), "Only the nested test should run");
+	}
+
+	@Test
+	void inheritedNestedClassWithoutOwnEnvironmentShouldRunUnderTheSubclassEnvironment() {
+		TestExecutionSummary summary = runSimulatest(InheritedNestedTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(1, summary.getTestsSucceededCount(),
+				"The nested class inherited from the base class should run once, under the subclass environment");
 	}
 
 	@Test
