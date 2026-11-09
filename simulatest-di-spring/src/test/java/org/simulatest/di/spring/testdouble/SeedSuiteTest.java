@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @RunWith(EnvironmentJUnitRunner.class)
 @UseEnvironment(SeedEnvironment.class)
 @SimulatestSpringConfig(SeedDataSourceConfig.class)
-public class SeedSuite {
+public class SeedSuiteTest {
 
 	@Autowired
 	private DataSource dataSource;

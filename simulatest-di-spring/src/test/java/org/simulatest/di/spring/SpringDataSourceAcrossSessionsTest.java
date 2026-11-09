@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.simulatest.di.spring.testdouble.SeedDataSourceConfig;
-import org.simulatest.di.spring.testdouble.SeedSuite;
+import org.simulatest.di.spring.testdouble.SeedSuiteTest;
 import org.simulatest.di.spring.testdouble.SeedTable;
 import org.simulatest.environment.junit.EnvironmentJUnitRunner;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -56,7 +56,7 @@ public class SpringDataSourceAcrossSessionsTest {
 	}
 
 	private static void runAndExpectSuccess() {
-		Result result = JUnitCore.runClasses(SeedSuite.class);
+		Result result = JUnitCore.runClasses(SeedSuiteTest.class);
 		assertTrue(String.valueOf(result.getFailures()), result.wasSuccessful());
 	}
 
