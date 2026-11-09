@@ -1,6 +1,8 @@
 package org.simulatest.insistencelayer;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -81,9 +83,30 @@ public final class InsistenceLayerRegistry {
 		return Optional.empty();
 	}
 
+	/**
+	 * Forgets every layer and data source and closes the connections the data
+	 * sources hold, so a cleared registry leaves nothing open behind it. The
+	 * registry is empty afterwards even when a connection fails to close; the
+	 * first such failure is rethrown once every connection has been tried.
+	 */
 	public synchronized void clear() {
+		List<InsistenceLayerDataSource> toClose = new ArrayList<>(dataSources.values());
 		registry.clear();
 		dataSources.clear();
+		closeAll(toClose);
+	}
+
+	private static void closeAll(List<InsistenceLayerDataSource> dataSources) {
+		RuntimeException first = null;
+		for (InsistenceLayerDataSource dataSource : dataSources) {
+			try {
+				dataSource.getConnectionWrapper().close();
+			} catch (RuntimeException e) {
+				if (first == null) first = e;
+				else first.addSuppressed(e);
+			}
+		}
+		if (first != null) throw first;
 	}
 
 }

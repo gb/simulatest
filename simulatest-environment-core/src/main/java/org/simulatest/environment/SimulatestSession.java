@@ -23,6 +23,11 @@ import org.simulatest.insistencelayer.InsistenceLayerFactory;
  * of a suite run and close it when the suite completes. This keeps the
  * orchestration logic in one place instead of duplicated across runners.</p>
  *
+ * <p>The Insistence Layer registry is shared by the whole JVM. A session that
+ * finds it empty owns whatever the plugins configure in it, and clears it
+ * again on {@link #close()}, so the next session wraps the DataSource of its
+ * own container. A registry configured before the session is left alone.</p>
+ *
  * <p><b>Thread-safety:</b> not thread-safe. {@link #close()} is idempotent
  * across threads (guarded by an {@link AtomicBoolean}) so cleanup paths can
  * race safely, but lifecycle methods otherwise expect single-thread use.</p>
@@ -32,13 +37,15 @@ public final class SimulatestSession implements AutoCloseable {
 	private final List<SimulatestPlugin> plugins;
 	private final EnvironmentFactory factory;
 	private final InsistenceLayer insistenceLayer;
+	private final boolean ownsInsistenceLayer;
 	private final AtomicBoolean closed = new AtomicBoolean(false);
 
 	private SimulatestSession(List<SimulatestPlugin> plugins, EnvironmentFactory factory,
-							  InsistenceLayer insistenceLayer) {
+							  InsistenceLayer insistenceLayer, boolean ownsInsistenceLayer) {
 		this.plugins = plugins;
 		this.factory = factory;
 		this.insistenceLayer = insistenceLayer;
+		this.ownsInsistenceLayer = ownsInsistenceLayer;
 	}
 
 	public static List<SimulatestPlugin> loadPlugins() {
@@ -97,11 +104,18 @@ public final class SimulatestSession implements AutoCloseable {
 	public static SimulatestSession open(List<SimulatestPlugin> plugins,
 										 Collection<Class<?>> testClasses) {
 		Objects.requireNonNull(plugins, "plugins must not be null");
-		initializePlugins(plugins, testClasses);
+		boolean ownsInsistenceLayer = !InsistenceLayerFactory.isConfigured();
+		try {
+			initializePlugins(plugins, testClasses);
+		} catch (RuntimeException e) {
+			if (ownsInsistenceLayer) InsistenceLayerFactory.clear();
+			throw e;
+		}
 		return new SimulatestSession(
 				List.copyOf(plugins),
 				resolveFactory(plugins),
-				InsistenceLayerFactory.resolve().orElse(null));
+				InsistenceLayerFactory.resolve().orElse(null),
+				ownsInsistenceLayer);
 	}
 
 	public List<SimulatestPlugin> plugins() {
@@ -153,7 +167,11 @@ public final class SimulatestSession implements AutoCloseable {
 	@Override
 	public void close() {
 		if (!closed.compareAndSet(false, true)) return;
-		destroyPlugins(plugins);
+		try {
+			destroyPlugins(plugins);
+		} finally {
+			if (ownsInsistenceLayer) InsistenceLayerFactory.clear();
+		}
 	}
 
 }
