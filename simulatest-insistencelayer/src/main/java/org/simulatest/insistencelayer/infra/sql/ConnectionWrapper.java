@@ -13,6 +13,7 @@ import java.sql.Savepoint;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -35,6 +36,12 @@ import org.simulatest.insistencelayer.infra.exception.InsistenceLayerException;
  * unique among open levels. Commit savepoints are unnamed, because every
  * open level may hold one at the same time.</p>
  *
+ * <p>While a level is open the layer owns the transaction, so the proxy
+ * ignores {@code setAutoCommit} and {@code setTransactionIsolation}. Some
+ * drivers (H2) commit the open transaction when the isolation level
+ * changes, which would persist every level and destroy every savepoint.
+ * Outside any level both calls reach the real connection.</p>
+ *
  * <p><b>Thread-safety:</b> not thread-safe. JDBC connections are not
  * thread-safe by design, so this wrapper assumes exclusive use by one
  * thread at a time.</p>
@@ -47,8 +54,8 @@ public final class ConnectionWrapper {
 	private static final String METHOD_ROLLBACK = "rollback";
 	private static final String METHOD_CLOSE = "close";
 	private static final String METHOD_IS_CLOSED = "isClosed";
-	private static final String METHOD_SET_AUTO_COMMIT = "setAutoCommit";
 	private static final String METHOD_GET_AUTO_COMMIT = "getAutoCommit";
+	private static final Set<String> IGNORED_WHILE_ACTIVE = Set.of("setAutoCommit", "setTransactionIsolation");
 	private static final String LEVEL_SAVEPOINT_PREFIX = "LAYER";
 
 	private final Connection realConnection;
@@ -187,9 +194,10 @@ public final class ConnectionWrapper {
 			// from closing the real connection.
 			if (METHOD_CLOSE.equals(methodName)) return null;
 
-			// While a level is open the layer owns the transaction; nobody may re-enable autocommit.
+			// While a level is open the layer owns the transaction; nobody may re-enable
+			// autocommit or change the isolation level (which commits on H2).
 			if (wrapper.isActive()) {
-				if (METHOD_SET_AUTO_COMMIT.equals(methodName)) return null;
+				if (IGNORED_WHILE_ACTIVE.contains(methodName)) return null;
 				if (METHOD_COMMIT.equals(methodName)) { wrapper.handleCommit(); return null; }
 				if (METHOD_ROLLBACK.equals(methodName) && (args == null || args.length == 0)) {
 					wrapper.handleRollback();
