@@ -187,6 +187,23 @@ public class ConnectionWrapperTest {
 	}
 
 	@Test
+	public void insideALevelSetTransactionIsolationShouldNotReachTheRealConnection() throws SQLException {
+		int before = realConnection.getTransactionIsolation();
+		connectionWrapper.pushLevel();
+
+		connectionWrapper.getConnection().setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+
+		assertEquals(before, realConnection.getTransactionIsolation());
+	}
+
+	@Test
+	public void outsideAnyLevelSetTransactionIsolationShouldReachTheRealConnection() throws SQLException {
+		connectionWrapper.getConnection().setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+
+		assertEquals(Connection.TRANSACTION_SERIALIZABLE, realConnection.getTransactionIsolation());
+	}
+
+	@Test
 	public void closingTheLastLevelShouldRestoreTheAutoCommitTheConnectionHadBefore() throws SQLException {
 		realConnection.setAutoCommit(false);
 
