@@ -30,8 +30,9 @@ public interface EnvironmentRunnerListener {
 	default void afterRun(EnvironmentDefinition definition) { }
 
 	/**
-	 * Called after all children of the environment have finished. Used by the
-	 * Insistence Layer to decrease the checkpoint level. Called for every
+	 * Called after all children of the environment have finished and before
+	 * the level on top of the environment closes: the data of the environment
+	 * is there, and so is what its last child wrote. Called for every
 	 * environment that got {@code afterRun}, also when a child or a listener
 	 * failed after it.
 	 *
@@ -40,10 +41,10 @@ public interface EnvironmentRunnerListener {
 	default void afterChildrenRun(EnvironmentDefinition definition) { }
 
 	/**
-	 * Called between sibling subtrees. Used by the Insistence Layer to reset
-	 * the current checkpoint level so the next sibling starts from the same state.
+	 * Called between sibling subtrees, after the data of the sibling that just
+	 * finished was undone, so the next sibling starts from the same state.
 	 *
-	 * @param definition the sibling environment that just completed its subtree
+	 * @param definition the parent of the siblings
 	 */
 	default void afterSiblingCleanup(EnvironmentDefinition definition) { }
 

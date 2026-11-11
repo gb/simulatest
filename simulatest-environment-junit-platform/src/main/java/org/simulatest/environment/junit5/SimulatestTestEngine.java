@@ -65,18 +65,12 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 		for (Node<EnvironmentDefinition> node : envTree) {
 			TestDescriptor parent = resolveParent(node, engineDescriptor, descriptorsByEnv);
 			EnvironmentTestDescriptor environmentDescriptor = createEnvironmentDescriptor(
-					parent, node.getValue(), isLastEnvironmentSibling(node));
+					parent, node.getValue(), !node.hasNextSibling());
 
 			descriptorsByEnv.put(node.getValue(), environmentDescriptor);
 			parent.addChild(environmentDescriptor);
 			addTestClassChildren(environmentDescriptor, extractor.getTests(node.getValue()), selected);
 		}
-	}
-
-	// The env that appears last among its siblings is the one whose savepoint the
-	// parent's decreaseLevel will roll past. The root counts as a last sibling.
-	private boolean isLastEnvironmentSibling(Node<EnvironmentDefinition> node) {
-		return !node.hasParent() || node.isLastChild();
 	}
 
 	private TestDescriptor resolveParent(Node<EnvironmentDefinition> node,

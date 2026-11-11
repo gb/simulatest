@@ -14,7 +14,6 @@ import java.util.List;
 import org.junit.Test;
 import static org.simulatest.environment.EnvironmentDefinition.bigBang;
 import static org.simulatest.environment.EnvironmentDefinition.create;
-import org.simulatest.environment.Environment;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
 import org.simulatest.environment.EnvironmentReflectionFactory;
@@ -28,6 +27,7 @@ import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.EmpresaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.PessoaFisicaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.ProjetoEnvironment;
+import org.simulatest.environment.test.testdouble.ThrowingEnvironmentFactory;
 
 public class EnvironmentRunnerTest {
 
@@ -236,7 +236,7 @@ public class EnvironmentRunnerTest {
 					expected.getMessage().contains("ColaboradorEnvironment"));
 		}
 
-		assertTrue("parent's afterSiblingCleanup must fire so insistence level resets before next sibling; "
+		assertTrue("the parent should still get afterSiblingCleanup before the next sibling; "
 				+ "listener log was: " + listenerLog.getLogs(),
 				listenerLog.getLogs().contains("[PessoaEnvironment] afterSiblingCleanup"));
 	}
@@ -257,7 +257,7 @@ public class EnvironmentRunnerTest {
 
 		assertThrows(EnvironmentExecutionException.class, runner::run);
 
-		assertTrue("the parent must close the level it opened; log was: " + listenerLog.getLogs(),
+		assertTrue("the parent should still get afterChildrenRun; log was: " + listenerLog.getLogs(),
 				listenerLog.getLogs().contains("[BigBangEnvironment] afterChildrenRun"));
 	}
 
@@ -380,24 +380,6 @@ public class EnvironmentRunnerTest {
 				if (phase == Phase.AFTER_SIBLING_CLEANUP) throw failure;
 			}
 		};
-	}
-
-	/** Test Stub factory that forces a specific environment class to throw from {@code run()}. */
-	private static final class ThrowingEnvironmentFactory implements EnvironmentFactory {
-		private final Class<? extends Environment> throwingClass;
-		private final EnvironmentFactory delegate = new EnvironmentReflectionFactory();
-
-		ThrowingEnvironmentFactory(Class<? extends Environment> throwingClass) {
-			this.throwingClass = throwingClass;
-		}
-
-		@Override
-		public Environment create(EnvironmentDefinition definition) {
-			if (throwingClass.equals(definition.getEnvironmentClass())) {
-				return () -> { throw new RuntimeException("simulated environment failure"); };
-			}
-			return delegate.create(definition);
-		}
 	}
 
 }

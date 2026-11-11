@@ -113,6 +113,24 @@ public class NodeTest {
 	}
 
 	@Test
+	public void aChildThatIsNotTheLastShouldHaveANextSibling() {
+		assertTrue(silvia.hasNextSibling());
+		assertTrue(mario.hasNextSibling());
+		assertTrue(antonio.hasNextSibling());
+	}
+
+	@Test
+	public void theLastChildShouldHaveNoNextSibling() {
+		assertFalse(raimundo.hasNextSibling());
+		assertFalse(jozefa.hasNextSibling());
+	}
+
+	@Test
+	public void theRootShouldHaveNoNextSibling() {
+		assertFalse(jose.hasNextSibling());
+	}
+
+	@Test
 	public void testSize() {
 		assertEquals(6, jose.size());
 	}
