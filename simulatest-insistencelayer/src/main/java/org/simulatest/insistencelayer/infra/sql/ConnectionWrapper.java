@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
@@ -129,9 +130,7 @@ public final class ConnectionWrapper {
 	 * commits made inside it.
 	 */
 	public void resetLevel() throws SQLException {
-		Level current = currentLevel();
-		realConnection.rollback(current.savepoint);
-		current.lastCommit = null;
+		rollBackToStartOf(currentLevel());
 	}
 
 	/**
@@ -142,6 +141,22 @@ public final class ConnectionWrapper {
 	public void popLevel() throws SQLException {
 		realConnection.rollback(currentLevel().savepoint);
 		closeCurrentLevel();
+	}
+
+	/**
+	 * Closes the current level and rolls the level below back to its start,
+	 * with one rollback: going back to the savepoint of the level below also
+	 * undoes the current level and discards its savepoint. Without a level
+	 * below, this is {@link #popLevel()}.
+	 */
+	public void popLevelAndReset() throws SQLException {
+		if (levels.size() < 2) {
+			popLevel();
+			return;
+		}
+
+		rollBackToStartOf(levelBelowCurrent());
+		levels.pop();
 	}
 
 	/**
@@ -158,6 +173,17 @@ public final class ConnectionWrapper {
 		Level current = levels.peek();
 		if (current == null) throw new IllegalStateException("No level is open");
 		return current;
+	}
+
+	private Level levelBelowCurrent() {
+		Iterator<Level> fromCurrentDown = levels.iterator();
+		fromCurrentDown.next();
+		return fromCurrentDown.next();
+	}
+
+	private void rollBackToStartOf(Level level) throws SQLException {
+		realConnection.rollback(level.savepoint);
+		level.lastCommit = null;
 	}
 
 	private void closeCurrentLevel() {

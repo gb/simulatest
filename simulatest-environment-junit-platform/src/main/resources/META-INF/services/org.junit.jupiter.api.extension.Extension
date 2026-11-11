@@ -1,2 +1,3 @@
 org.simulatest.environment.junit5.extension.InsistenceAfterEachExtension
 org.simulatest.environment.junit5.extension.SimulatestInstancePostProcessor
+org.simulatest.environment.junit5.extension.ClassLevelExtension

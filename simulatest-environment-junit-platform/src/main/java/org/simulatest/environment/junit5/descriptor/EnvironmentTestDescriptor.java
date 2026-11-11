@@ -6,6 +6,7 @@ import org.junit.platform.engine.support.hierarchical.Node;
 import java.util.Objects;
 
 import org.simulatest.environment.EnvironmentDefinition;
+import org.simulatest.environment.SetupLevel;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 /**
@@ -17,7 +18,7 @@ public final class EnvironmentTestDescriptor extends AbstractTestDescriptor
 
 	private final EnvironmentDefinition definition;
 	private final boolean lastEnvironmentSibling;
-	private boolean levelOpened;
+	private SetupLevel level = SetupLevel.withoutLayer();
 
 	public EnvironmentTestDescriptor(UniqueId uniqueId, EnvironmentDefinition definition, boolean lastEnvironmentSibling) {
 		super(uniqueId, Objects.requireNonNull(definition, "definition must not be null").getName());
@@ -40,24 +41,22 @@ public final class EnvironmentTestDescriptor extends AbstractTestDescriptor
 
 	@Override
 	public SimulatestExecutionContext before(SimulatestExecutionContext context) {
+		level = context.newSetupLevel();
 		context.runEnvironment(definition);
-		context.increaseInsistenceLevel();
-		levelOpened = true;
+		level.open();
 		return context;
 	}
 
 	// The platform calls after() even when before() threw. A failed environment
-	// opened no level, so decreasing here would close its parent's level instead.
+	// opened no level, and the level knows that, so the level of the parent is
+	// never closed in its place.
+	//
+	// The data of the last sibling is left for the parent to undo: the parent
+	// rolls back past it anyway, so undoing it here would waste a round trip.
 	@Override
 	public void after(SimulatestExecutionContext context) {
-		if (levelOpened) context.decreaseInsistenceLevel();
-
-		// Undoes what this environment wrote in the parent's level, also when it
-		// failed halfway. Skipped for the last sibling: the parent's decreaseLevel
-		// will roll back past this savepoint anyway, so resetting here would waste I/O.
-		if (!lastEnvironmentSibling) {
-			context.resetInsistenceLevel();
-		}
+		if (lastEnvironmentSibling) level.close();
+		else level.closeUndoingSetup();
 	}
 
 }

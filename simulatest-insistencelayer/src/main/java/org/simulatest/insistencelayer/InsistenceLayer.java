@@ -54,6 +54,21 @@ public interface InsistenceLayer extends AutoCloseable {
 	void resetCurrentLevel();
 
 	/**
+	 * Leaves the current level and resets the one below it: everything written
+	 * in either of them is undone. The result is the same as
+	 * {@link #decreaseLevel()} followed by {@link #resetCurrentLevel()};
+	 * implementations may do both in one step.
+	 *
+	 * <p>At level 1 there is no level below, so this only leaves the level.</p>
+	 *
+	 * @throws IllegalStateException if the stack is already at level 0
+	 */
+	default void decreaseLevelAndReset() {
+		decreaseLevel();
+		resetCurrentLevel();
+	}
+
+	/**
 	 * Restores all levels back to zero, equivalent to {@code setLevelTo(0)}.
 	 */
 	default void decreaseAllLevels() {
@@ -107,8 +122,22 @@ public interface InsistenceLayer extends AutoCloseable {
 	 * @throws RuntimeException the original exception from {@code decreaseLevel()}
 	 */
 	default void decreaseLevelOrCleanup() {
+		orCleanup(this::decreaseLevel);
+	}
+
+	/**
+	 * Attempts to {@link #decreaseLevelAndReset()}, with the same emergency
+	 * cleanup as {@link #decreaseLevelOrCleanup()} when that fails.
+	 *
+	 * @throws RuntimeException the original exception from {@code decreaseLevelAndReset()}
+	 */
+	default void decreaseLevelAndResetOrCleanup() {
+		orCleanup(this::decreaseLevelAndReset);
+	}
+
+	private void orCleanup(Runnable leaveLevel) {
 		try {
-			decreaseLevel();
+			leaveLevel.run();
 		} catch (RuntimeException exception) {
 			cleanUpSuppressing(exception);
 			throw exception;

@@ -39,7 +39,10 @@ import org.simulatest.environment.junit5.test.testdouble.InheritedNestedTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedOwnEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
+import org.simulatest.environment.junit5.test.testdouble.ClassSetupRowTest;
 import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
+import org.simulatest.environment.junit5.test.testdouble.FailingClassSetupTest;
+import org.simulatest.environment.junit5.test.testdouble.NestedClassSetupTest;
 import org.simulatest.environment.junit5.test.testdouble.FailingEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
@@ -47,6 +50,7 @@ import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
 import org.simulatest.environment.junit5.test.testdouble.RowBaseTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelEnvironment;
+import org.simulatest.environment.junit5.test.testdouble.environment.InsistenceTestEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 /**
@@ -62,6 +66,7 @@ class SimulatestTestEngineTest {
 		h2.setUser("sa");
 		// DDL on the raw connection: H2 commits on CREATE TABLE, which would destroy open savepoints.
 		EnvRows.createTable(h2);
+		InsistenceTestEnvironment.createTable(h2);
 		InsistenceLayerFactory.configure(h2);
 	}
 
@@ -256,6 +261,53 @@ class SimulatestTestEngineTest {
 				"Only the failing environment should be reported as failed");
 		assertEquals(2, summary.getTestsSucceededCount(),
 				"The tests of the parent and sibling environments should still pass, seeing the parent row");
+		assertEquals(0, InsistenceLayerFactory.resolve().orElseThrow().getCurrentLevel(),
+				"Every level should be closed after the run");
+		assertEquals(0, EnvRows.count(), "No row should stay in the database after the run");
+	}
+
+	@Test
+	void classSetupDataShouldBeSeenByEveryTestOfTheClass() {
+		TestExecutionSummary summary = runSimulatest(ClassSetupRowTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(2, summary.getTestsSucceededCount(), "Both tests should see the row the class added");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void classSetupDataShouldNotReachTheNextClass() {
+		TestExecutionSummary summary = runSimulatest(ClassSetupRowTest.class, NestedOwnEnvironmentTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(4, summary.getTestsSucceededCount(),
+				"The class that runs next should see only the rows of its environments");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void dataOfAFailedClassSetupShouldNotReachTheNextClass() {
+		TestExecutionSummary summary = runSimulatest(FailingClassSetupTest.class, NestedOwnEnvironmentTest.class);
+
+		List<String> failed = summary.getFailures().stream()
+				.map(failure -> failure.getTestIdentifier().getDisplayName())
+				.toList();
+		assertEquals(List.of("FailingClassSetupTest"), failed, "Only the failing class should be reported as failed");
+		assertEquals(2, summary.getTestsSucceededCount(),
+				"The class that runs next should see only the rows of its environments");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void nestedClassesShouldSeeTheSetupDataOfTheirOuterClassAndNotOfEachOther() {
+		TestExecutionSummary summary = runSimulatest(NestedClassSetupTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(3, summary.getTestsSucceededCount());
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	private static void assertEveryLevelIsClosedAndNoRowIsLeft() {
 		assertEquals(0, InsistenceLayerFactory.resolve().orElseThrow().getCurrentLevel(),
 				"Every level should be closed after the run");
 		assertEquals(0, EnvRows.count(), "No row should stay in the database after the run");

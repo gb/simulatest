@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.SetupLevel;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.insistencelayer.InsistenceLayer;
 
@@ -59,6 +60,14 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 		EnvironmentFactory envFactory = factory().orElseThrow(() -> new IllegalStateException(
 				"Cannot run environment '" + definition.getName() + "': no Simulatest session open"));
 		envFactory.createAndRun(definition);
+	}
+
+	/**
+	 * Returns a level to open on top of a setup. It does nothing when no
+	 * Insistence Layer is configured.
+	 */
+	public SetupLevel newSetupLevel() {
+		return insistenceLayer().map(SetupLevel::on).orElseGet(SetupLevel::withoutLayer);
 	}
 
 	public void increaseInsistenceLevel() {

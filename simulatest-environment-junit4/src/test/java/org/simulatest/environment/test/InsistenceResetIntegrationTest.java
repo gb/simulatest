@@ -12,6 +12,7 @@ import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.junit.EnvironmentJUnitSuite;
+import org.simulatest.environment.test.testdouble.ClassSetupSuite;
 import org.simulatest.environment.test.testdouble.InsistenceIsolationSuite;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
@@ -34,6 +35,27 @@ public class InsistenceResetIntegrationTest {
 				+ (collector.failure != null ? collector.failure.getMessage() : ""),
 				collector.failure);
 		assertEquals("Should have run 2 test methods", 2, collector.testCount);
+	}
+
+	@Test
+	public void classSetupDataShouldBeSeenByEveryTestOfTheClassAndNotByTheNextClass() throws Exception {
+		TestSetup.configure();
+		createIsolationTable();
+
+		EnvironmentJUnitSuite suite = new EnvironmentJUnitSuite(ClassSetupSuite.class, null);
+
+		RunNotifier notifier = new RunNotifier();
+		FailureCollector collector = new FailureCollector();
+		notifier.addListener(collector);
+
+		suite.run(notifier);
+
+		assertNull("Every test of the class should see the row its class added, and the next class should not, "
+				+ "but got failure: " + (collector.failure != null ? collector.failure.getMessage() : ""),
+				collector.failure);
+		assertEquals("Should have run 4 test methods", 4, collector.testCount);
+		assertEquals("Every level should be closed after the run",
+				0, InsistenceLayerFactory.resolve().orElseThrow().getCurrentLevel());
 	}
 
 	private void createIsolationTable() throws Exception {

@@ -96,6 +96,61 @@ public class InsistenceLayerIntegrationTest {
 		assertEquals(1, countFromTableLog());
 	}
 
+	@Test
+	public void decreaseLevelAndResetShouldUndoTheCurrentLevelAndTheOneBelow() throws SQLException {
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 1')");
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 2')");
+
+		insistenceLayer.decreaseLevelAndReset();
+
+		assertEquals(1, insistenceLayer.getCurrentLevel());
+		assertEquals("the rows of both levels are undone", 0, countFromTableLog());
+	}
+
+	@Test
+	public void theLevelBelowShouldStillWorkAfterDecreaseLevelAndReset() throws SQLException {
+		insistenceLayer.increaseLevel();
+		insistenceLayer.increaseLevel();
+		insistenceLayer.decreaseLevelAndReset();
+
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 1 again')");
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 2 again')");
+		insistenceLayer.decreaseLevel();
+		assertEquals("a new level opens and closes on top of it", 1, countFromTableLog());
+
+		insistenceLayer.resetCurrentLevel();
+		assertEquals("and it still resets to its own start", 0, countFromTableLog());
+	}
+
+	@Test
+	public void decreaseLevelAndResetShouldForgetTheCommitsOfTheLevelBelow() throws SQLException {
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('committed in level 1')");
+		connection.commit();
+		insistenceLayer.increaseLevel();
+
+		insistenceLayer.decreaseLevelAndReset();
+		assertEquals("the committed row is undone with its level", 0, countFromTableLog());
+
+		statement.executeUpdate("INSERT INTO LOG VALUES ('after the reset')");
+		connection.rollback();
+		assertEquals("a rollback goes to the start of the level, not to the old commit", 0, countFromTableLog());
+	}
+
+	@Test
+	public void decreaseLevelAndResetAtTheFirstLevelShouldJustLeaveIt() throws SQLException {
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 1')");
+
+		insistenceLayer.decreaseLevelAndReset();
+
+		assertEquals(0, insistenceLayer.getCurrentLevel());
+		assertEquals(0, countFromTableLog());
+	}
+
 	private int countFromTableLog() throws SQLException {
 		ResultSet rs = statement.executeQuery("SELECT COUNT(*) from log");
 		rs.next();
