@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
+import org.simulatest.environment.SetupLevel;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.insistencelayer.InsistenceLayer;
 
@@ -23,7 +24,7 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null, null, null);
 
 	// Bridges the Simulatest engine context into Jupiter's internal execution so
-	// that auto-detected extensions (InsistenceAfterEachExtension, etc.) can access it.
+	// that auto-detected extensions (ClassLevelExtension, etc.) can access it.
 	// NOTE: if Jupiter's parallel execution moves @AfterEach hooks to a different
 	// thread than the one that set the context, getCurrent() returns empty.
 	private static final ThreadLocal<SimulatestExecutionContext> CURRENT = new ThreadLocal<>();
@@ -61,16 +62,12 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 		envFactory.createAndRun(definition);
 	}
 
-	public void increaseInsistenceLevel() {
-		insistenceLayer().ifPresent(InsistenceLayer::increaseLevel);
-	}
-
-	public void decreaseInsistenceLevel() {
-		insistenceLayer().ifPresent(InsistenceLayer::decreaseLevelOrCleanup);
-	}
-
-	public void resetInsistenceLevel() {
-		insistenceLayer().ifPresent(InsistenceLayer::resetCurrentLevel);
+	/**
+	 * Returns a level to open on top of a setup. It does nothing when no
+	 * Insistence Layer is configured.
+	 */
+	public SetupLevel newSetupLevel() {
+		return SetupLevel.onLayerIfAny(insistenceLayer());
 	}
 
 	public void postProcessTestInstance(Object instance) {

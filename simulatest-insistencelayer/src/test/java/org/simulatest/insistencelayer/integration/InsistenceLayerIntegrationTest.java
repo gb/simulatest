@@ -96,6 +96,85 @@ public class InsistenceLayerIntegrationTest {
 		assertEquals(1, countFromTableLog());
 	}
 
+	@Test
+	public void decreaseLevelAndResetShouldUndoTheCurrentLevelAndTheOneBelow() throws SQLException {
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 1')");
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 2')");
+
+		insistenceLayer.decreaseLevelAndReset();
+
+		assertEquals(1, insistenceLayer.getCurrentLevel());
+		assertEquals("the rows of both levels are undone", 0, countFromTableLog());
+	}
+
+	@Test
+	public void aNewLevelShouldOpenAndCloseOnTheLevelLeftByDecreaseLevelAndReset() throws SQLException {
+		leaveSecondLevelResettingTheFirst();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 1 again')");
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 2 again')");
+
+		insistenceLayer.decreaseLevel();
+
+		assertEquals("only the row of the new level is undone", 1, countFromTableLog());
+	}
+
+	@Test
+	public void theLevelLeftByDecreaseLevelAndResetShouldStillResetToItsStart() throws SQLException {
+		leaveSecondLevelResettingTheFirst();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 1 again')");
+
+		insistenceLayer.resetCurrentLevel();
+
+		assertEquals(0, countFromTableLog());
+	}
+
+	@Test
+	public void decreaseLevelAndResetShouldUndoWhatTheLevelBelowCommitted() throws SQLException {
+		commitARowInTheFirstLevelAndOpenTheSecond();
+
+		insistenceLayer.decreaseLevelAndReset();
+
+		assertEquals(0, countFromTableLog());
+	}
+
+	@Test
+	public void rollbackAfterDecreaseLevelAndResetShouldGoToTheStartOfTheLevelNotToTheOldCommit() throws SQLException {
+		commitARowInTheFirstLevelAndOpenTheSecond();
+		insistenceLayer.decreaseLevelAndReset();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('after the reset')");
+
+		connection.rollback();
+
+		assertEquals(0, countFromTableLog());
+	}
+
+	@Test
+	public void decreaseLevelAndResetAtTheFirstLevelShouldJustLeaveIt() throws SQLException {
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('level 1')");
+
+		insistenceLayer.decreaseLevelAndReset();
+
+		assertEquals(0, insistenceLayer.getCurrentLevel());
+		assertEquals(0, countFromTableLog());
+	}
+
+	private void leaveSecondLevelResettingTheFirst() {
+		insistenceLayer.increaseLevel();
+		insistenceLayer.increaseLevel();
+		insistenceLayer.decreaseLevelAndReset();
+	}
+
+	private void commitARowInTheFirstLevelAndOpenTheSecond() throws SQLException {
+		insistenceLayer.increaseLevel();
+		statement.executeUpdate("INSERT INTO LOG VALUES ('committed in level 1')");
+		connection.commit();
+		insistenceLayer.increaseLevel();
+	}
+
 	private int countFromTableLog() throws SQLException {
 		ResultSet rs = statement.executeQuery("SELECT COUNT(*) from log");
 		rs.next();

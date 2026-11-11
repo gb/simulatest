@@ -3,6 +3,7 @@ package org.simulatest.environment.junit5;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
+import org.simulatest.environment.SetupLevel;
 import org.simulatest.environment.SimulatestSession;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Objects;
 class SimulatestEngineDescriptor extends EngineDescriptor implements Node<SimulatestExecutionContext> {
 
 	private final Collection<Class<?>> testClasses;
+	private SetupLevel outermostLevel = SetupLevel.withoutLayer();
 
 	SimulatestEngineDescriptor(UniqueId uniqueId, Collection<Class<?>> testClasses) {
 		super(Objects.requireNonNull(uniqueId, "uniqueId must not be null"), "Simulatest");
@@ -27,14 +29,15 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 		SimulatestSession session = SimulatestSession.open(testClasses);
 
 		SimulatestExecutionContext ctx = new SimulatestExecutionContext(session);
-		ctx.increaseInsistenceLevel();
+		outermostLevel = ctx.newSetupLevel();
+		outermostLevel.open();
 		return ctx;
 	}
 
 	@Override
 	public void after(SimulatestExecutionContext context) {
 		try {
-			context.decreaseInsistenceLevel();
+			outermostLevel.close();
 		} finally {
 			context.close();
 		}

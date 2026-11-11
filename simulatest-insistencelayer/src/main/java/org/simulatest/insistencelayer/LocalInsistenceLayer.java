@@ -56,9 +56,7 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 
 	@Override
 	public void decreaseLevel() {
-		if (stackIsEmpty()) {
-			throw new IllegalStateException("Cannot decrease level: already at level 0");
-		}
+		requireOpenLevel();
 
 		try {
 			connection.popLevel();
@@ -67,6 +65,21 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 		}
 
 		logger.info("Level decreased to {}", getCurrentLevel());
+	}
+
+	// Overrides the interface default to roll back once instead of twice: going
+	// back to the start of the level below also undoes the current level.
+	@Override
+	public void decreaseLevelAndReset() {
+		requireOpenLevel();
+
+		try {
+			connection.popLevelAndReset();
+		} catch (SQLException exception) {
+			throw rollbackFailure(exception);
+		}
+
+		logger.info("Level decreased to {} and cleaned", getCurrentLevel());
 	}
 
 	// Overrides the interface default to optimize the decrease path:
@@ -94,6 +107,10 @@ public final class LocalInsistenceLayer implements InsistenceLayer {
 	private InsistenceLayerException rollbackFailure(SQLException exception) {
 		return new InsistenceLayerException(
 				"Error rolling back savepoint at level " + getCurrentLevel(), exception);
+	}
+
+	private void requireOpenLevel() {
+		if (stackIsEmpty()) throw new IllegalStateException("Cannot decrease level: already at level 0");
 	}
 
 	private boolean stackIsEmpty() {

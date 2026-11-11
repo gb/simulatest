@@ -74,6 +74,69 @@ public class InsistenceLayerDefaultMethodsTest {
 	}
 
 	@Test
+	public void decreaseLevelAndResetShouldDecreaseAndThenResetTheLevelBelow() {
+		RecordingLayer layer = new RecordingLayer();
+		layer.increaseLevel();
+		layer.increaseLevel();
+		layer.calls.clear();
+
+		layer.decreaseLevelAndReset();
+
+		assertEquals(List.of("decreaseLevel", "resetCurrentLevel"), layer.calls);
+	}
+
+	@Test
+	public void decreaseLevelAndResetOrCleanupShouldJustDecreaseAndResetWhenItSucceeds() {
+		RecordingLayer layer = new RecordingLayer();
+		layer.increaseLevel();
+		layer.increaseLevel();
+		layer.calls.clear();
+
+		layer.decreaseLevelAndResetOrCleanup();
+
+		assertEquals(List.of("decreaseLevel", "resetCurrentLevel"), layer.calls);
+		assertEquals("no fallback cleanup invoked", 0, layer.setLevelToInvocations);
+	}
+
+	@Test
+	public void decreaseLevelAndResetOrCleanupShouldRethrowOriginalWithFallbackSuppressed() {
+		RuntimeException original = new RuntimeException("decreaseLevel failed");
+		RuntimeException fallback = new RuntimeException("decreaseAllLevels failed");
+		RecordingLayer layer = new RecordingLayer();
+		layer.increaseLevel();
+		layer.failDecreaseLevelWith(original);
+		layer.failSetLevelToZeroWith(fallback);
+
+		try {
+			layer.decreaseLevelAndResetOrCleanup();
+			fail("decreaseLevelAndResetOrCleanup should propagate the original exception");
+		} catch (RuntimeException thrown) {
+			assertSame("original exception identity preserved", original, thrown);
+			assertEquals("exactly one suppressed fallback", 1, thrown.getSuppressed().length);
+			assertSame("fallback exception attached as suppressed", fallback, thrown.getSuppressed()[0]);
+		}
+	}
+
+	@Test
+	public void decreaseLevelAndResetOrCleanupShouldRethrowOriginalWithoutSuppressedWhenFallbackSucceeds() {
+		RuntimeException original = new RuntimeException("decreaseLevel failed");
+		RecordingLayer layer = new RecordingLayer();
+		layer.increaseLevel();
+		layer.increaseLevel();
+		layer.failDecreaseLevelWith(original);
+
+		try {
+			layer.decreaseLevelAndResetOrCleanup();
+			fail("decreaseLevelAndResetOrCleanup should propagate the original exception");
+		} catch (RuntimeException thrown) {
+			assertSame(original, thrown);
+			assertEquals("no suppressed exception when fallback succeeds",
+					0, thrown.getSuppressed().length);
+			assertEquals("fallback restored to level 0", 0, layer.getCurrentLevel());
+		}
+	}
+
+	@Test
 	public void decreaseLevelOrCleanupShouldRethrowOriginalWithFallbackSuppressed() {
 		RuntimeException original = new RuntimeException("decreaseLevel failed");
 		RuntimeException fallback = new RuntimeException("decreaseAllLevels failed");

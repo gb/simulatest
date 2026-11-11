@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.runner.Description;
@@ -75,7 +76,7 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 
 	private void createTestRunners(Set<Class<?>> testClasses) throws InitializationError {
 		for (Class<?> testCase : testClasses)
-			runnersByTest.put(testCase, new SimulatestJUnit4ClassRunner(this::resetInsistenceLevel, testCase, plugins));
+			runnersByTest.put(testCase, new SimulatestJUnit4ClassRunner(this::insistenceLayer, testCase, plugins));
 	}
 
 	private SimulatestJUnit4ClassRunner requireRunner(Class<?> testCase) {
@@ -116,9 +117,9 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 			requireRunner(testCase).run(notifier);
 	}
 
-	void resetInsistenceLevel() {
-		if (environmentRunner == null) return;
-		environmentRunner.insistenceLayer().ifPresent(InsistenceLayer::resetCurrentLevel);
+	private Optional<InsistenceLayer> insistenceLayer() {
+		if (environmentRunner == null) return Optional.empty();
+		return environmentRunner.insistenceLayer();
 	}
 
 	@Override

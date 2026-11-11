@@ -4,17 +4,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -138,6 +142,24 @@ public class InsistenceLayerTest {
 
 		verify(spyConnection, atMost(1)).popLevel();
 		verify(spyConnection, never()).resetLevel();
+	}
+
+	@Test
+	public void decreaseLevelAndResetShouldRollBackOnlyOnce() throws SQLException {
+		Connection countedConnection = mock(Connection.class, delegatesTo(connectionMock.getConnection()));
+		insistenceLayer = new LocalInsistenceLayer(new ConnectionWrapper(countedConnection));
+		insistenceLayer.increaseLevel();
+		insistenceLayer.increaseLevel();
+
+		insistenceLayer.decreaseLevelAndReset();
+
+		assertEquals(1, insistenceLayer.getCurrentLevel());
+		verify(countedConnection, times(1)).rollback(any(Savepoint.class));
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void shouldThrowWhenDecreasingAndResettingAtZero() {
+		insistenceLayer.decreaseLevelAndReset();
 	}
 
 	@Test(expected = IllegalStateException.class)

@@ -39,7 +39,11 @@ import org.simulatest.environment.junit5.test.testdouble.InheritedNestedTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedOwnEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
+import org.simulatest.environment.junit5.test.testdouble.ClassSetupRowTest;
+import org.simulatest.environment.junit5.test.testdouble.ConstructorRowTest;
 import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
+import org.simulatest.environment.junit5.test.testdouble.FailingClassSetupTest;
+import org.simulatest.environment.junit5.test.testdouble.NestedClassSetupTest;
 import org.simulatest.environment.junit5.test.testdouble.FailingEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
@@ -47,6 +51,7 @@ import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
 import org.simulatest.environment.junit5.test.testdouble.RowBaseTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelEnvironment;
+import org.simulatest.environment.junit5.test.testdouble.environment.InsistenceTestEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
 /**
@@ -62,6 +67,7 @@ class SimulatestTestEngineTest {
 		h2.setUser("sa");
 		// DDL on the raw connection: H2 commits on CREATE TABLE, which would destroy open savepoints.
 		EnvRows.createTable(h2);
+		InsistenceTestEnvironment.createTable(h2);
 		InsistenceLayerFactory.configure(h2);
 	}
 
@@ -249,16 +255,61 @@ class SimulatestTestEngineTest {
 	void failingEnvironmentShouldNotDisturbItsSiblingsOrLeaveDataBehind() {
 		TestExecutionSummary summary = runSimulatest(FailingEnvironmentTest.class, NestedOwnEnvironmentTest.class);
 
-		List<String> failed = summary.getFailures().stream()
-				.map(failure -> failure.getTestIdentifier().getDisplayName())
-				.toList();
-		assertEquals(List.of("FailingRowEnvironment"), failed,
+		assertEquals(List.of("FailingRowEnvironment"), namesOfFailed(summary),
 				"Only the failing environment should be reported as failed");
 		assertEquals(2, summary.getTestsSucceededCount(),
 				"The tests of the parent and sibling environments should still pass, seeing the parent row");
-		assertEquals(0, InsistenceLayerFactory.resolve().orElseThrow().getCurrentLevel(),
-				"Every level should be closed after the run");
-		assertEquals(0, EnvRows.count(), "No row should stay in the database after the run");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void classSetupDataShouldBeSeenByEveryTestOfTheClass() {
+		TestExecutionSummary summary = runSimulatest(ClassSetupRowTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(2, summary.getTestsSucceededCount(), "Both tests should see the row the class added");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void dataWrittenWhenATestInstanceIsBuiltShouldBeUndoneWithItsTest() {
+		TestExecutionSummary summary = runSimulatest(ConstructorRowTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(2, summary.getTestsSucceededCount(),
+				"The instance of the second test adds the same row, so the row of the first must be gone");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void classSetupDataShouldNotReachTheNextClass() {
+		TestExecutionSummary summary = runSimulatest(ClassSetupRowTest.class, NestedOwnEnvironmentTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(4, summary.getTestsSucceededCount(),
+				"2 from ClassSetupRowTest + 2 from NestedOwnEnvironmentTest, "
+				+ "which runs next and should see only the rows of its environments");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void dataOfAFailedClassSetupShouldNotReachTheNextClass() {
+		TestExecutionSummary summary = runSimulatest(FailingClassSetupTest.class, NestedOwnEnvironmentTest.class);
+
+		assertEquals(List.of("FailingClassSetupTest"), namesOfFailed(summary),
+				"Only the failing class should be reported as failed");
+		assertEquals(2, summary.getTestsSucceededCount(),
+				"The class that runs next should see only the rows of its environments");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void nestedClassesShouldSeeTheSetupDataOfTheirOuterClassAndNotOfEachOther() {
+		TestExecutionSummary summary = runSimulatest(NestedClassSetupTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(3, summary.getTestsSucceededCount(), "2 from WithItsOwnRow + 1 from WithoutItsOwnRow");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
 	}
 
 	@Test
@@ -509,6 +560,18 @@ class SimulatestTestEngineTest {
 		SummaryGeneratingListener listener = new SummaryGeneratingListener();
 		LauncherFactory.create().execute(simulatestRequest(testClasses), listener);
 		return listener.getSummary();
+	}
+
+	private static List<String> namesOfFailed(TestExecutionSummary summary) {
+		return summary.getFailures().stream()
+				.map(failure -> failure.getTestIdentifier().getDisplayName())
+				.toList();
+	}
+
+	private static void assertEveryLevelIsClosedAndNoRowIsLeft() {
+		assertEquals(0, InsistenceLayerFactory.resolve().orElseThrow().getCurrentLevel(),
+				"Every level should be closed after the run");
+		assertEquals(0, EnvRows.count(), "No row should stay in the database after the run");
 	}
 
 	private static void assertNoFailures(TestExecutionSummary summary) {
