@@ -2,84 +2,59 @@ package org.simulatest.environment.junit5.descriptor;
 
 import java.util.Set;
 
+import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestTag;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
-import org.junit.platform.engine.support.hierarchical.Node;
 import org.junit.platform.launcher.TestIdentifier;
-import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 /**
- * One test Jupiter discovered in a test class, known to the Simulatest engine
- * before anything runs.
+ * One test or container of Jupiter, as the Simulatest engine shows it to the
+ * launcher.
  *
- * <p>It carries the tags and the source Jupiter gave the test, so the filters
- * of the launcher (tags, a single method asked for by the build tool) take it
- * out like any other test. What is left is what the class runs.</p>
+ * <p>The ones Jupiter discovers in a test class are known before anything
+ * runs. They carry the tags and the source Jupiter gave them, so the filters
+ * of the launcher (tags, a single method asked for by the build tool) take
+ * them out like any other test. What is left is what the class runs.</p>
  *
- * <p>The test itself is run by Jupiter, in the inner run of the class. This
- * descriptor reports what Jupiter said about it. For a container that makes
- * its tests while it runs (a parameterized or repeated test, a test factory)
- * it also reports each of those tests.</p>
+ * <p>The ones Jupiter makes while it runs (one invocation of a parameterized
+ * or repeated test, a dynamic test or container) are added when Jupiter
+ * registers them, inside the descriptor that made them.</p>
+ *
+ * <p>Jupiter runs them all, and {@link JupiterRunReporter} reports them.</p>
  */
-final class JupiterTestDescriptor extends AbstractTestDescriptor implements Node<SimulatestExecutionContext> {
+final class JupiterTestDescriptor extends AbstractTestDescriptor {
 
-	private static final String NEVER_RUN = "Jupiter did not run it";
+	private final TestIdentifier jupiterTest;
 
-	private final TestIdentifier discovered;
-	private final JupiterOutcomes outcomes;
-
-	JupiterTestDescriptor(UniqueId uniqueId, TestIdentifier discovered, JupiterOutcomes outcomes) {
-		super(uniqueId, discovered.getDisplayName(), discovered.getSource().orElse(null));
-		this.discovered = discovered;
-		this.outcomes = outcomes;
+	/**
+	 * The unique id ends with the id Jupiter gave the test, so a later run can
+	 * select the same test. The descriptor is not added to {@code parent}.
+	 */
+	JupiterTestDescriptor(TestDescriptor parent, TestIdentifier jupiterTest) {
+		super(parent.getUniqueId().append(JupiterDelegatingClassDescriptor.TEST_SEGMENT, jupiterTest.getUniqueId()),
+				jupiterTest.getDisplayName(),
+				jupiterTest.getSource().or(parent::getSource).orElse(null));
+		this.jupiterTest = jupiterTest;
 	}
 
 	UniqueId jupiterId() {
-		return discovered.getUniqueIdObject();
+		return jupiterTest.getUniqueIdObject();
 	}
 
 	@Override
 	public Type getType() {
-		return discovered.getType();
+		return jupiterTest.getType();
 	}
 
 	@Override
 	public Set<TestTag> getTags() {
-		return discovered.getTags();
+		return jupiterTest.getTags();
 	}
 
 	@Override
 	public boolean mayRegisterTests() {
-		return discovered.isContainer();
-	}
-
-	@Override
-	public SkipResult shouldBeSkipped(SimulatestExecutionContext context) {
-		return outcomes.of(jupiterId())
-				.map(JupiterOutcome::skipResult)
-				.orElseGet(() -> SkipResult.skip(whyItNeverRan()));
-	}
-
-	@Override
-	public SimulatestExecutionContext execute(SimulatestExecutionContext context,
-			DynamicTestExecutor dynamicTestExecutor) throws Exception {
-		for (JupiterOutcome test : outcomes.testsInside(jupiterId())) {
-			dynamicTestExecutor.execute(TestResultDescriptor.addedTo(this, test));
-		}
-		outcome().rethrowFailure();
-		return context;
-	}
-
-	// A test with no outcome is skipped before it gets here, so there is one.
-	private JupiterOutcome outcome() {
-		return outcomes.of(jupiterId()).orElseThrow();
-	}
-
-	private String whyItNeverRan() {
-		return outcomes.ofNearestContainerAround(jupiterId())
-				.flatMap(JupiterOutcome::whyNothingInsideRan)
-				.orElse(NEVER_RUN);
+		return jupiterTest.isContainer();
 	}
 
 }

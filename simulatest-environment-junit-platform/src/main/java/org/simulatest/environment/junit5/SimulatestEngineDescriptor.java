@@ -21,16 +21,12 @@ class SimulatestEngineDescriptor extends EngineDescriptor implements Node<Simula
 	@Override
 	public SimulatestExecutionContext before(SimulatestExecutionContext context) {
 		List<Class<?>> testClasses = testClassesLeft();
-		if (testClasses.isEmpty()) {
-			return SimulatestExecutionContext.EMPTY;
-		}
+		if (testClasses.isEmpty()) return context;
 
-		SimulatestSession session = SimulatestSession.open(testClasses);
-
-		SimulatestExecutionContext ctx = new SimulatestExecutionContext(session);
-		outermostLevel = ctx.newSetupLevel();
+		SimulatestExecutionContext withSession = context.withSession(SimulatestSession.open(testClasses));
+		outermostLevel = withSession.newSetupLevel();
 		outermostLevel.open();
-		return ctx;
+		return withSession;
 	}
 
 	// The classes still in the tree when the run starts: a filter of the launcher

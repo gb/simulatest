@@ -39,7 +39,7 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 
 	@Override
 	protected SimulatestExecutionContext createExecutionContext(ExecutionRequest request) {
-		return SimulatestExecutionContext.EMPTY;
+		return SimulatestExecutionContext.reportingTo(request.getEngineExecutionListener());
 	}
 
 	@Override

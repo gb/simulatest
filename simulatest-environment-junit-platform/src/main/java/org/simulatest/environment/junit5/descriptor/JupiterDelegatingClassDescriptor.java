@@ -19,8 +19,8 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * <p>At discovery the tests Jupiter finds become children of this descriptor
  * ({@link JupiterTestDescriptor}), so the launcher sees them before the run
  * and its filters can take some out. At execution Jupiter runs the children
- * that are left, in one inner run, and each child then reports what Jupiter
- * said about it.</p>
+ * that are left, in one inner run, and {@link JupiterRunReporter} reports
+ * each of them at the moment Jupiter does.</p>
  *
  * <p>The level of the class in the Insistence Layer is handled by
  * {@link org.simulatest.environment.junit5.extension.ClassLevelExtension},
@@ -43,7 +43,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 
 	private final Class<?> testClass;
 	private final JupiterClassLauncher jupiter;
-	private final JupiterOutcomes outcomes = new JupiterOutcomes();
+	private List<JupiterTestDescriptor> testsToRun = List.of();
 	private RuntimeException discoveryFailure;
 
 	private JupiterDelegatingClassDescriptor(UniqueId uniqueId, Class<?> testClass, List<DiscoverySelector> parts) {
@@ -73,15 +73,10 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 	// Its failure is kept and reported when the class runs.
 	private void discoverTests() {
 		try {
-			for (TestIdentifier discovered : jupiter.discover()) addChild(descriptorOf(discovered));
+			for (TestIdentifier discovered : jupiter.discover()) addChild(new JupiterTestDescriptor(this, discovered));
 		} catch (RuntimeException failure) {
 			discoveryFailure = failure;
 		}
-	}
-
-	private JupiterTestDescriptor descriptorOf(TestIdentifier discovered) {
-		UniqueId uniqueId = getUniqueId().append(TEST_SEGMENT, discovered.getUniqueId());
-		return new JupiterTestDescriptor(uniqueId, discovered, outcomes);
 	}
 
 	public Class<?> testClass() {
@@ -101,29 +96,38 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 	}
 
 	@Override
+	public SimulatestExecutionContext prepare(SimulatestExecutionContext context) {
+		testsToRun = takeTestsOutOfTheTree();
+		return context;
+	}
+
+	// The platform would run the children itself after the class: every test
+	// reported a second time, and only when the class is over. The launcher still
+	// knows them from discovery. The ones left here are the ones no filter of
+	// the launcher took out.
+	private List<JupiterTestDescriptor> takeTestsOutOfTheTree() {
+		List<JupiterTestDescriptor> testsLeft = getChildren().stream()
+				.map(JupiterTestDescriptor.class::cast)
+				.toList();
+		testsLeft.forEach(this::removeChild);
+		return testsLeft;
+	}
+
+	@Override
 	public SimulatestExecutionContext execute(SimulatestExecutionContext context,
 			DynamicTestExecutor dynamicTestExecutor) {
 		if (discoveryFailure != null) throw discoveryFailure;
 
-		Set<UniqueId> childIds = jupiterIdsOfChildren();
-		SimulatestExecutionContext.withCurrent(context, () -> jupiter.run(childIds, outcomes));
-		reportWhatNoChildReports(childIds, dynamicTestExecutor);
+		JupiterRunReporter reporter = new JupiterRunReporter(this, testsToRun, context.listener());
+		SimulatestExecutionContext.withCurrent(context, () -> jupiter.run(jupiterIdsOfTestsToRun(), reporter));
+		reporter.rethrowFailuresOfContainers();
 		return context;
 	}
 
-	// The children left: a filter of the launcher may have taken some out since
-	// discovery.
-	private Set<UniqueId> jupiterIdsOfChildren() {
-		return getChildren().stream()
-				.map(JupiterTestDescriptor.class::cast)
+	private Set<UniqueId> jupiterIdsOfTestsToRun() {
+		return testsToRun.stream()
 				.map(JupiterTestDescriptor::jupiterId)
 				.collect(Collectors.toUnmodifiableSet());
-	}
-
-	private void reportWhatNoChildReports(Set<UniqueId> childIds, DynamicTestExecutor dynamicTestExecutor) {
-		for (JupiterOutcome outcome : outcomes.notReportedBy(childIds)) {
-			dynamicTestExecutor.execute(TestResultDescriptor.addedTo(this, outcome));
-		}
 	}
 
 }

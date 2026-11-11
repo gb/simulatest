@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -37,11 +38,13 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 import org.simulatest.environment.junit5.SimulatestTestEngine;
 import org.simulatest.environment.junit5.descriptor.EnvironmentTestDescriptor;
+import org.simulatest.environment.junit5.test.testdouble.AbortedInsideFailingTest;
 import org.simulatest.environment.junit5.test.testdouble.AdvancedJupiterTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvRows;
 import org.simulatest.environment.junit5.test.testdouble.InheritedNestedTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedOwnEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
+import org.simulatest.environment.junit5.test.testdouble.LoggedTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
 import org.simulatest.environment.junit5.test.testdouble.ClassSetupRowTest;
 import org.simulatest.environment.junit5.test.testdouble.ConstructorRowTest;
@@ -634,7 +637,86 @@ class SimulatestTestEngineTest {
 		assertTrue(ran.get(0).contains("beta"), "The second value should be the one that ran. Ran: " + ran);
 	}
 
+	// --- when the results of the tests arrive ---
+
+	@Test
+	void aTestShouldBeReportedAsStartedBeforeItRunsAndAsFinishedRightAfter() {
+		List<String> events = eventsOfRun(DiscoverySelectors.selectClass(LoggedTest.class));
+
+		assertEquals(
+				List.of("started aFirst()", "body of aFirst", "finished aFirst()",
+						"started bSecond()", "body of bSecond", "finished bSecond()"),
+				eventsAbout("aFirst", "bSecond", events));
+	}
+
+	@Test
+	void everyTestShouldBeReportedOnce() {
+		List<String> events = eventsOfRun(DiscoverySelectors.selectClass(LoggedTest.class));
+
+		assertEquals(1, Collections.frequency(events, "started aFirst()"));
+		assertEquals(1, Collections.frequency(events, "finished aFirst()"));
+	}
+
+	@Test
+	void anInvocationOfAParameterizedTestShouldBeReportedBetweenTheStartAndTheEndOfItsMethod() {
+		List<String> events = eventsOfRun(parameterizedMethod());
+
+		String method = "parameterizedTestShouldSeeEnvironment(String)";
+		int methodStarted = events.indexOf("started " + method);
+		int methodFinished = events.indexOf("finished " + method);
+		int invocationFinished = indexOfFirstStartingWith("finished [1]", events);
+		assertTrue(methodStarted >= 0 && methodStarted < invocationFinished && invocationFinished < methodFinished,
+				"Events were: " + events);
+	}
+
+	@Test
+	void aFailureOfTheClassShouldNotBeHiddenByANestedClassThatWasAborted() {
+		TestExecutionSummary summary = runSimulatest(AbortedInsideFailingTest.class);
+
+		assertEquals(List.of("AbortedInsideFailingTest"), namesOfFailed(summary));
+	}
+
+	@Test
+	void aNestedClassThatWasAbortedShouldOnlySkipItsOwnTests() {
+		TestExecutionSummary summary = runSimulatest(AbortedInsideFailingTest.class);
+
+		assertEquals(1, summary.getTestsSkippedCount(), "The test of the nested class");
+		assertEquals(1, summary.getTestsSucceededCount(), "The test of the outer class");
+	}
+
 	// --- helpers ---
+
+	// The listener writes in the tracker the tests write in, so the events of
+	// the launcher and what the tests did come out in the order they happened.
+	private static List<String> eventsOfRun(DiscoverySelector... selectors) {
+		LauncherFactory.create().execute(requestFor(selectors), new TestExecutionListener() {
+			@Override
+			public void executionStarted(TestIdentifier identifier) {
+				EnvironmentTracker.trackEvent("started " + identifier.getDisplayName());
+			}
+
+			@Override
+			public void executionFinished(TestIdentifier identifier, TestExecutionResult result) {
+				EnvironmentTracker.trackEvent("finished " + identifier.getDisplayName());
+			}
+		});
+		return List.copyOf(EnvironmentTracker.getEvents());
+	}
+
+	private static List<String> eventsAbout(String first, String second, List<String> events) {
+		return events.stream()
+				.filter(event -> event.contains(first) || event.contains(second))
+				.toList();
+	}
+
+	// JUnit 6 puts the argument of an invocation in quotes, so its display name
+	// is only matched by how it starts.
+	private static int indexOfFirstStartingWith(String start, List<String> events) {
+		for (int index = 0; index < events.size(); index++) {
+			if (events.get(index).startsWith(start)) return index;
+		}
+		return -1;
+	}
 
 	// Takes out every test method but one, like the filter Surefire adds for
 	// -Dtest=SomeClass#someMethod.

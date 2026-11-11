@@ -90,10 +90,14 @@ final class JupiterClassLauncher {
 
 	// The class is selected the same way as at discovery, so a selection of one
 	// invocation stays one invocation. A container around a leaf has to stay
-	// for the leaf to stay.
+	// for the leaf to stay, and so does what a leaf has inside it.
 	private static PostDiscoveryFilter only(Set<UniqueId> leaves) {
 		return descriptor -> FilterResult.includedIf(
-				leaves.stream().anyMatch(leaf -> leaf.hasPrefix(descriptor.getUniqueId())));
+				leaves.stream().anyMatch(leaf -> isAroundOrInside(leaf, descriptor.getUniqueId())));
+	}
+
+	private static boolean isAroundOrInside(UniqueId leaf, UniqueId other) {
+		return leaf.hasPrefix(other) || other.hasPrefix(leaf);
 	}
 
 	// Jupiter needs the full chain of enclosing classes to select a @Nested class.
