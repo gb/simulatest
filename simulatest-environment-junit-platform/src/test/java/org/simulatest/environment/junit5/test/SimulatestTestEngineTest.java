@@ -17,13 +17,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.DiscoverySelector;
+import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.PostDiscoveryFilter;
+import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -50,6 +54,7 @@ import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
 import org.simulatest.environment.junit5.test.testdouble.RowBaseTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
+import org.simulatest.environment.junit5.test.testdouble.TaggedTest;
 import org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelEnvironment;
 import org.simulatest.environment.junit5.test.testdouble.environment.InsistenceTestEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -513,7 +518,137 @@ class SimulatestTestEngineTest {
 		assertEquals(List.of(wholeClass.get(1)), oneMethod);
 	}
 
+	// --- the filters of the launcher, the way a build tool narrows a run ---
+
+	@Test
+	void includingATagShouldRunOnlyTheTestsWithThatTag() {
+		List<String> ran = testsRunBy(TagFilter.includeTags("fast"), DiscoverySelectors.selectClass(TaggedTest.class));
+
+		assertEquals(List.of("fast()"), ran);
+	}
+
+	@Test
+	void excludingATagShouldNotRunTheTestsWithThatTag() {
+		List<String> ran = testsRunBy(TagFilter.excludeTags("slow"), DiscoverySelectors.selectClass(TaggedTest.class));
+
+		assertEquals(List.of("fast()"), ran);
+	}
+
+	@Test
+	void aClassWithNoTestLeftShouldNotRunItsEnvironment() {
+		testsRunBy(TagFilter.includeTags("no-test-has-this-tag"), DiscoverySelectors.selectClass(TaggedTest.class));
+
+		assertFalse(EnvironmentTracker.getEvents().contains("FirstLevel"),
+				"No test is left to run, so the environment has nothing to be built for");
+	}
+
+	@Test
+	void aFilterShouldNotWidenASelectionOfOneInvocation() {
+		List<String> ran = testsRunBy(
+				TagFilter.excludeTags("no-test-has-this-tag"),
+				DiscoverySelectors.selectIteration(parameterizedMethod(), 1),
+				DiscoverySelectors.selectMethod(AdvancedJupiterTest.class, "repeatedTestShouldSeeEnvironment"));
+
+		assertEquals(4, ran.size(), "1 invocation of the parameterized test + 3 repetitions. Ran: " + ran);
+	}
+
+	@Test
+	void aFilterThatTakesASiblingOutShouldNotWidenASelectionOfOneInvocation() {
+		List<String> ran = testsRunBy(
+				onlyTheMethodNamed("parameterizedTestShouldSeeEnvironment"),
+				DiscoverySelectors.selectIteration(parameterizedMethod(), 1),
+				DiscoverySelectors.selectMethod(AdvancedJupiterTest.class, "repeatedTestShouldSeeEnvironment"));
+
+		assertEquals(1, ran.size(), "Only the invocation asked for. Ran: " + ran);
+	}
+
+	@Test
+	void aFilterOnTheMethodShouldRunOnlyThatMethod() {
+		List<String> ran = testsRunBy(
+				onlyTheMethodNamed("shouldNotHaveSecondLevel"), DiscoverySelectors.selectClass(FirstLevelTest.class));
+
+		assertEquals(List.of("shouldNotHaveSecondLevel()"), ran);
+	}
+
+	// --- what the launcher knows about the tests of a class ---
+
+	@Test
+	void theTestsOfAClassShouldBeKnownBeforeTheRun() {
+		TestPlan plan = LauncherFactory.create().discover(requestFor(DiscoverySelectors.selectClass(FirstLevelTest.class)));
+
+		List<String> tests = plan.getRoots().stream()
+				.flatMap(root -> plan.getDescendants(root).stream())
+				.filter(TestIdentifier::isTest)
+				.map(TestIdentifier::getDisplayName)
+				.toList();
+		assertEquals(List.of("shouldHaveFirstLevelEnvironment()", "shouldNotHaveSecondLevel()"), tests);
+	}
+
+	@Test
+	void aDisabledTestShouldBeReportedAsSkipped() {
+		TestExecutionSummary summary = runSimulatest(TaggedTest.class);
+
+		assertEquals(1, summary.getTestsSkippedCount());
+	}
+
+	@Test
+	void aClassJupiterCannotDiscoverShouldBeReportedAsFailedAndNotStopTheOthers() {
+		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+				.selectors(
+						DiscoverySelectors.selectMethod(FirstLevelTest.class, "aMethodTheClassDoesNotHave"),
+						DiscoverySelectors.selectClass(AnotherFirstLevelTest.class))
+				.filters(EngineFilter.includeEngines(SimulatestTestEngine.ENGINE_ID))
+				.build();
+		SummaryGeneratingListener listener = new SummaryGeneratingListener();
+
+		LauncherFactory.create().execute(request, listener);
+
+		assertEquals(List.of("FirstLevelTest"), namesOfFailed(listener.getSummary()));
+		assertEquals(1, listener.getSummary().getTestsSucceededCount(),
+				"The test of AnotherFirstLevelTest should still run");
+	}
+
+	@Test
+	void theTestsOfAClassWhoseSetupFailsShouldBeReportedAsSkipped() {
+		TestExecutionSummary summary = runSimulatest(FailingBeforeAllTest.class);
+
+		assertEquals(1, summary.getTestsSkippedCount(), "The test never ran, and should not be missing from the report");
+	}
+
+	@Test
+	void theInvocationsOfAParameterizedTestShouldBeReportedInsideTheirMethod() {
+		String invocation = uniqueIdsOfTestsRunBy(parameterizedMethod()).get(0);
+
+		String method = UniqueId.parse(invocation).removeLastSegment().getLastSegment().getValue();
+		assertTrue(method.contains("parameterizedTestShouldSeeEnvironment"),
+				"The segment before the invocation should be its method, was: " + method);
+	}
+
+	@Test
+	void selectingTheUniqueIdOfOneInvocationShouldRunOnlyThatInvocationAgain() {
+		String secondInvocation = uniqueIdsOfTestsRunBy(parameterizedMethod()).get(1);
+
+		List<String> ran = testsRunBy(DiscoverySelectors.selectUniqueId(secondInvocation));
+
+		assertEquals(1, ran.size(), "Ran: " + ran);
+		assertTrue(ran.get(0).contains("beta"), "The second value should be the one that ran. Ran: " + ran);
+	}
+
 	// --- helpers ---
+
+	// Takes out every test method but one, like the filter Surefire adds for
+	// -Dtest=SomeClass#someMethod.
+	private static PostDiscoveryFilter onlyTheMethodNamed(String methodName) {
+		return descriptor -> FilterResult.includedIf(!isAnotherMethod(descriptor, methodName));
+	}
+
+	private static boolean isAnotherMethod(TestDescriptor descriptor, String methodName) {
+		return descriptor.getSource()
+				.filter(MethodSource.class::isInstance)
+				.map(MethodSource.class::cast)
+				.filter(source -> !source.getMethodName().equals(methodName))
+				.isPresent();
+	}
 
 	private static DiscoverySelector parameterizedMethod() {
 		return DiscoverySelectors.selectMethod(
@@ -521,17 +656,28 @@ class SimulatestTestEngineTest {
 	}
 
 	private static List<String> testsRunBy(DiscoverySelector... selectors) {
-		return finishedTestsOf(selectors).stream().map(TestIdentifier::getDisplayName).toList();
+		return finishedTestsOf(requestFor(selectors)).stream().map(TestIdentifier::getDisplayName).toList();
+	}
+
+	private static List<String> testsRunBy(PostDiscoveryFilter filter, DiscoverySelector... selectors) {
+		LauncherDiscoveryRequest filtered = LauncherDiscoveryRequestBuilder.request()
+				.selectors(selectors)
+				.filters(filter)
+				.build();
+		return finishedTestsOf(filtered).stream().map(TestIdentifier::getDisplayName).toList();
 	}
 
 	private static List<String> uniqueIdsOfTestsRunBy(DiscoverySelector... selectors) {
-		return finishedTestsOf(selectors).stream().map(TestIdentifier::getUniqueId).toList();
+		return finishedTestsOf(requestFor(selectors)).stream().map(TestIdentifier::getUniqueId).toList();
+	}
+
+	private static LauncherDiscoveryRequest requestFor(DiscoverySelector... selectors) {
+		return LauncherDiscoveryRequestBuilder.request().selectors(selectors).build();
 	}
 
 	// Runs with every engine on the classpath and the filters registered by default,
 	// like an IDE does, so a test picked up by no engine or by two shows up here.
-	private static List<TestIdentifier> finishedTestsOf(DiscoverySelector... selectors) {
-		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request().selectors(selectors).build();
+	private static List<TestIdentifier> finishedTestsOf(LauncherDiscoveryRequest request) {
 		List<TestIdentifier> finished = new ArrayList<>();
 		SummaryGeneratingListener summary = new SummaryGeneratingListener();
 

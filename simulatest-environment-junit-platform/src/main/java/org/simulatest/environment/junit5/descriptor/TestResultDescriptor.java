@@ -1,51 +1,42 @@
 package org.simulatest.environment.junit5.descriptor;
 
-import java.util.Objects;
-
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.hierarchical.Node;
-import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 /**
- * A dynamic test descriptor that replays a result captured from Jupiter's execution.
+ * Something Jupiter reported that the Simulatest engine did not know before
+ * the run: one invocation of a parameterized or repeated test, one dynamic
+ * test, or a container that did not succeed.
  *
- * <p>Created at runtime by {@link JupiterDelegatingClassDescriptor} after Jupiter
- * finishes running a test class. Each instance represents one leaf test
- * (a {@code @Test}, a single {@code @ParameterizedTest} invocation, a
- * {@code @RepeatedTest} repetition, etc.) and either succeeds or rethrows
- * the original failure so that the Simulatest engine reports the correct status.</p>
+ * <p>Registered while the class runs, with the outcome Jupiter gave it. It
+ * succeeds, is skipped, or throws the original failure, so the Simulatest
+ * engine reports the same status.</p>
  */
-class TestResultDescriptor extends AbstractTestDescriptor implements Node<SimulatestExecutionContext> {
+final class TestResultDescriptor extends AbstractTestDescriptor implements Node<SimulatestExecutionContext> {
 
-	private final Throwable failure;
-	private final String skipReason;
+	private final JupiterOutcome outcome;
 
-	private TestResultDescriptor(UniqueId uniqueId, String displayName, TestSource source,
-			Throwable failure, String skipReason) {
-		super(uniqueId, displayName, source);
-		this.failure = failure;
-		this.skipReason = skipReason;
+	private TestResultDescriptor(TestDescriptor parent, JupiterOutcome outcome) {
+		super(idInside(parent, outcome), outcome.displayName(),
+				outcome.identifier().getSource().or(parent::getSource).orElse(null));
+		this.outcome = outcome;
 	}
 
-	static TestResultDescriptor fromResult(UniqueId id, String displayName,
-			TestSource source, TestExecutionResult result) {
-		Objects.requireNonNull(result, "result must not be null");
-		Throwable throwable = null;
-		if (result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
-			throwable = result.getThrowable()
-					.orElse(new AssertionError("Test '" + displayName + "' " + result.getStatus().name().toLowerCase()));
-		}
-		return new TestResultDescriptor(id, displayName, source, throwable, null);
+	/** Creates the descriptor of the outcome as a child of {@code parent}. */
+	static TestResultDescriptor addedTo(TestDescriptor parent, JupiterOutcome outcome) {
+		TestResultDescriptor descriptor = new TestResultDescriptor(parent, outcome);
+		parent.addChild(descriptor);
+		return descriptor;
 	}
 
-	static TestResultDescriptor skipped(UniqueId id, String displayName,
-			TestSource source, String reason) {
-		Objects.requireNonNull(reason, "reason must not be null");
-		return new TestResultDescriptor(id, displayName, source, null, reason);
+	// The id ends with the id Jupiter gave the test, so a later run can select
+	// the same test.
+	private static UniqueId idInside(TestDescriptor parent, JupiterOutcome outcome) {
+		return parent.getUniqueId()
+				.append(JupiterDelegatingClassDescriptor.TEST_SEGMENT, outcome.jupiterId().toString());
 	}
 
 	@Override
@@ -55,19 +46,13 @@ class TestResultDescriptor extends AbstractTestDescriptor implements Node<Simula
 
 	@Override
 	public SkipResult shouldBeSkipped(SimulatestExecutionContext context) {
-		return skipReason != null ? SkipResult.skip(skipReason) : SkipResult.doNotSkip();
+		return outcome.skipResult();
 	}
 
 	@Override
 	public SimulatestExecutionContext execute(SimulatestExecutionContext context,
 			DynamicTestExecutor dynamicTestExecutor) throws Exception {
-		// Errors (OOM, StackOverflow, AssertionError) are propagated raw so the JVM
-		// and JUnit see them as-is. Exceptions are propagated raw to preserve type.
-		// Anything else (custom Throwable subclasses) is wrapped because the engine
-		// signature only allows Exception.
-		if (failure instanceof Exception e) throw e;
-		if (failure instanceof Error e) throw e;
-		if (failure != null) throw new EnvironmentExecutionException("Test failed with unexpected throwable", failure);
+		outcome.rethrowFailure();
 		return context;
 	}
 

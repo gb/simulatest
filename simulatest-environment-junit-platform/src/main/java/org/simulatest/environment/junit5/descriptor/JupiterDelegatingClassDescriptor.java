@@ -1,42 +1,30 @@
 package org.simulatest.environment.junit5.descriptor;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
-import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.hierarchical.Node;
-import org.junit.platform.launcher.EngineFilter;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.core.LauncherConfig;
-import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
-import org.junit.platform.launcher.core.LauncherFactory;
-import org.simulatest.environment.junit5.OwnEnvironmentClassFilter;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
 /**
- * Delegates test execution for a single class to Jupiter.
+ * One test class, whose tests are discovered and run by Jupiter.
  *
- * <p>At execution time, this descriptor launches an internal Jupiter session for
- * {@code testClass}. Jupiter handles all discovery and execution — {@code @Test},
- * {@code @ParameterizedTest}, {@code @RepeatedTest}, {@code @TestFactory},
- * {@code @Nested}, lifecycle callbacks, extensions — everything. Results are
- * captured and replayed as dynamic {@link TestResultDescriptor} children so the
- * Simulatest engine reports them correctly to the IDE.</p>
+ * <p>At discovery the tests Jupiter finds become children of this descriptor
+ * ({@link JupiterTestDescriptor}), so the launcher sees them before the run
+ * and its filters can take some out. At execution Jupiter runs the children
+ * that are left, in one inner run, and each child then reports what Jupiter
+ * said about it.</p>
  *
- * <p>The Insistence Layer's per-test {@code resetCurrentLevel()} is handled by
+ * <p>The level of the class in the Insistence Layer is handled by
  * {@link org.simulatest.environment.junit5.extension.ClassLevelExtension},
- * which Jupiter auto-detects during the internal session.</p>
+ * which Jupiter auto-detects during the inner run.</p>
  *
  * <p><b>Thread-safety:</b> not thread-safe; one descriptor instance is executed
  * by the JUnit Platform on a single executor thread per parent.</p>
@@ -53,35 +41,51 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 	 */
 	public static final String TEST_SEGMENT = "test";
 
-	private static final String JUPITER_ENGINE_ID = "junit-jupiter";
-	private static final String AUTODETECTION_KEY = "junit.jupiter.extensions.autodetection.enabled";
-	private static final String AUTODETECTION_VALUE_ENABLED = "true";
+	private final Class<?> testClass;
+	private final JupiterClassLauncher jupiter;
+	private final JupiterOutcomes outcomes = new JupiterOutcomes();
+	private RuntimeException discoveryFailure;
 
-	// Shared launcher for the inner Jupiter sessions. Auto-registration is disabled
-	// to prevent SimulatestPostDiscoveryFilter from intercepting these internal runs
-	// (which would cause infinite recursion) and to avoid duplicate listener output.
-	private static final Launcher JUPITER_LAUNCHER;
-
-	static {
-		LauncherConfig config = LauncherConfig.builder()
-				.enablePostDiscoveryFilterAutoRegistration(false)
-				.enableTestExecutionListenerAutoRegistration(false)
-				.build();
-		JUPITER_LAUNCHER = LauncherFactory.create(config);
+	private JupiterDelegatingClassDescriptor(UniqueId uniqueId, Class<?> testClass, List<DiscoverySelector> parts) {
+		super(uniqueId, testClass.getSimpleName(), ClassSource.from(testClass));
+		this.testClass = testClass;
+		this.jupiter = new JupiterClassLauncher(testClass, parts);
 	}
 
-	private final Class<?> testClass;
-	private final List<DiscoverySelector> parts;
-
 	/**
+	 * Creates the descriptor of {@code testClass} with one child for each test
+	 * Jupiter finds in it.
+	 *
 	 * @param parts the selectors that narrow the run to part of {@code testClass};
 	 *              empty to run the whole class
 	 */
-	public JupiterDelegatingClassDescriptor(UniqueId uniqueId, Class<?> testClass, List<DiscoverySelector> parts) {
-		super(uniqueId, Objects.requireNonNull(testClass, "testClass must not be null").getSimpleName(),
-				ClassSource.from(testClass));
-		this.testClass = testClass;
-		this.parts = List.copyOf(Objects.requireNonNull(parts, "parts must not be null"));
+	public static JupiterDelegatingClassDescriptor discover(UniqueId uniqueId, Class<?> testClass,
+			List<DiscoverySelector> parts) {
+		Objects.requireNonNull(testClass, "testClass must not be null");
+		Objects.requireNonNull(parts, "parts must not be null");
+
+		JupiterDelegatingClassDescriptor descriptor = new JupiterDelegatingClassDescriptor(uniqueId, testClass, parts);
+		descriptor.discoverTests();
+		return descriptor;
+	}
+
+	// A class Jupiter cannot discover must not stop the discovery of the others.
+	// Its failure is kept and reported when the class runs.
+	private void discoverTests() {
+		try {
+			for (TestIdentifier discovered : jupiter.discover()) addChild(descriptorOf(discovered));
+		} catch (RuntimeException failure) {
+			discoveryFailure = failure;
+		}
+	}
+
+	private JupiterTestDescriptor descriptorOf(TestIdentifier discovered) {
+		UniqueId uniqueId = getUniqueId().append(TEST_SEGMENT, discovered.getUniqueId());
+		return new JupiterTestDescriptor(uniqueId, discovered, outcomes);
+	}
+
+	public Class<?> testClass() {
+		return testClass;
 	}
 
 	@Override
@@ -89,97 +93,36 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 		return Type.CONTAINER;
 	}
 
+	// The launcher drops a container with no test in it. A class that could not
+	// be discovered has no child, and has to stay to report why.
 	@Override
 	public boolean mayRegisterTests() {
-		return true;
+		return discoveryFailure != null;
 	}
 
 	@Override
 	public SimulatestExecutionContext execute(SimulatestExecutionContext context,
 			DynamicTestExecutor dynamicTestExecutor) {
-		SimulatestExecutionContext.withCurrent(context, () -> {
-			List<CapturedResult> results = runJupiter();
-			registerDynamicTests(results, dynamicTestExecutor);
-		});
+		if (discoveryFailure != null) throw discoveryFailure;
+
+		Set<UniqueId> childIds = jupiterIdsOfChildren();
+		SimulatestExecutionContext.withCurrent(context, () -> jupiter.run(childIds, outcomes));
+		reportWhatNoChildReports(childIds, dynamicTestExecutor);
 		return context;
 	}
 
-	private List<CapturedResult> runJupiter() {
-		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(parts.isEmpty() ? List.of(selectTestClass()) : parts)
-				.filters(EngineFilter.includeEngines(JUPITER_ENGINE_ID), new OwnEnvironmentClassFilter(testClass))
-				.configurationParameter(AUTODETECTION_KEY, AUTODETECTION_VALUE_ENABLED)
-				.build();
-
-		ResultCapturingListener listener = new ResultCapturingListener();
-		JUPITER_LAUNCHER.execute(request, listener);
-		return listener.results;
+	// The children left: a filter of the launcher may have taken some out since
+	// discovery.
+	private Set<UniqueId> jupiterIdsOfChildren() {
+		return getChildren().stream()
+				.map(JupiterTestDescriptor.class::cast)
+				.map(JupiterTestDescriptor::jupiterId)
+				.collect(Collectors.toUnmodifiableSet());
 	}
 
-	// Jupiter requires the full enclosing-class chain for @Nested inner classes;
-	// for top-level classes, a simple selectClass suffices.
-	private DiscoverySelector selectTestClass() {
-		Class<?> enclosing = testClass.getEnclosingClass();
-		if (enclosing == null) {
-			return DiscoverySelectors.selectClass(testClass);
-		}
-		List<Class<?>> enclosingChain = new ArrayList<>();
-		for (Class<?> c = enclosing; c != null; c = c.getEnclosingClass()) {
-			enclosingChain.add(c);
-		}
-		Collections.reverse(enclosingChain);
-		return DiscoverySelectors.selectNestedClass(enclosingChain, testClass);
-	}
-
-	private void registerDynamicTests(List<CapturedResult> results, DynamicTestExecutor executor) {
-		TestSource fallbackSource = ClassSource.from(testClass);
-		for (CapturedResult captured : results) {
-			TestResultDescriptor descriptor = descriptorFor(captured, fallbackSource);
-			addChild(descriptor);
-			executor.execute(descriptor);
-		}
-	}
-
-	private TestResultDescriptor descriptorFor(CapturedResult captured, TestSource fallbackSource) {
-		TestSource source = captured.source != null ? captured.source : fallbackSource;
-		UniqueId testId = getUniqueId().append(TEST_SEGMENT, captured.jupiterId);
-		return captured.isSkipped()
-				? TestResultDescriptor.skipped(testId, captured.displayName, source, captured.skipReason)
-				: TestResultDescriptor.fromResult(testId, captured.displayName, source, captured.result);
-	}
-
-	private static class ResultCapturingListener implements TestExecutionListener {
-
-		final List<CapturedResult> results = new ArrayList<>();
-
-		@Override
-		public void executionFinished(TestIdentifier identifier, TestExecutionResult result) {
-			if (identifier.isTest() || result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
-				results.add(new CapturedResult(
-						identifier.getUniqueId(),
-						identifier.getDisplayName(),
-						identifier.getSource().orElse(null),
-						result, null));
-			}
-		}
-
-		@Override
-		public void executionSkipped(TestIdentifier identifier, String reason) {
-			if (identifier.isTest()) {
-				results.add(new CapturedResult(
-						identifier.getUniqueId(),
-						identifier.getDisplayName(),
-						identifier.getSource().orElse(null),
-						null, reason));
-			}
-		}
-	}
-
-	private record CapturedResult(String jupiterId, String displayName, TestSource source,
-			TestExecutionResult result, String skipReason) {
-
-		boolean isSkipped() {
-			return skipReason != null;
+	private void reportWhatNoChildReports(Set<UniqueId> childIds, DynamicTestExecutor dynamicTestExecutor) {
+		for (JupiterOutcome outcome : outcomes.notReportedBy(childIds)) {
+			dynamicTestExecutor.execute(TestResultDescriptor.addedTo(this, outcome));
 		}
 	}
 

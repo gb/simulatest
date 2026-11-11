@@ -45,7 +45,7 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 	@Override
 	public TestDescriptor discover(EngineDiscoveryRequest request, UniqueId uniqueId) {
 		SelectedTests selected = new UseEnvironmentClassScanner(request).scan();
-		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(uniqueId, selected.classes());
+		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(uniqueId);
 		if (!selected.isEmpty()) populateDescriptors(engineDescriptor, selected);
 
 		return engineDescriptor;
@@ -96,7 +96,7 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 		for (Class<?> testClass : testClasses) {
 			UniqueId classId = parent.getUniqueId()
 					.append(JupiterDelegatingClassDescriptor.CLASS_SEGMENT, testClass.getName());
-			parent.addChild(new JupiterDelegatingClassDescriptor(classId, testClass, selected.partsOf(testClass)));
+			parent.addChild(JupiterDelegatingClassDescriptor.discover(classId, testClass, selected.partsOf(testClass)));
 		}
 	}
 
