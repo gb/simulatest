@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -15,12 +16,15 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
@@ -39,6 +43,7 @@ import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
+import org.simulatest.environment.junit5.test.testdouble.RowBaseTest;
 import org.simulatest.environment.junit5.test.testdouble.SecondLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.environment.FirstLevelEnvironment;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
@@ -318,7 +323,160 @@ class SimulatestTestEngineTest {
 				"Both isolation tests should pass, proving per-test insistence reset works");
 	}
 
+	// --- selecting less than a class, the way an IDE asks for one test ---
+
+	@Test
+	void selectingOneMethodShouldRunOnlyThatMethod() {
+		List<String> ran = testsRunBy(
+				DiscoverySelectors.selectMethod(FirstLevelTest.class, "shouldHaveFirstLevelEnvironment"));
+
+		assertEquals(List.of("shouldHaveFirstLevelEnvironment()"), ran);
+	}
+
+	@Test
+	void selectingTwoMethodsOfOneClassShouldRunBoth() {
+		List<String> ran = testsRunBy(
+				DiscoverySelectors.selectMethod(FirstLevelTest.class, "shouldHaveFirstLevelEnvironment"),
+				DiscoverySelectors.selectMethod(FirstLevelTest.class, "shouldNotHaveSecondLevel"));
+
+		assertEquals(List.of("shouldHaveFirstLevelEnvironment()", "shouldNotHaveSecondLevel()"), ran);
+	}
+
+	@Test
+	void selectingAClassAndOneOfItsMethodsShouldRunTheWholeClassOnce() {
+		List<String> ran = testsRunBy(
+				DiscoverySelectors.selectMethod(FirstLevelTest.class, "shouldHaveFirstLevelEnvironment"),
+				DiscoverySelectors.selectClass(FirstLevelTest.class));
+
+		assertEquals(List.of("shouldHaveFirstLevelEnvironment()", "shouldNotHaveSecondLevel()"), ran);
+	}
+
+	@Test
+	void selectingAParameterizedMethodShouldRunEveryInvocation() {
+		List<String> ran = testsRunBy(parameterizedMethod());
+
+		assertEquals(3, ran.size(), "One test per value. Ran: " + ran);
+	}
+
+	@Test
+	void selectingOneIterationShouldRunOnlyThatInvocation() {
+		List<String> ran = testsRunBy(DiscoverySelectors.selectIteration(parameterizedMethod(), 1));
+
+		assertEquals(1, ran.size(), "Ran: " + ran);
+		assertTrue(ran.get(0).contains("beta"), "The second value should be the one that ran. Ran: " + ran);
+	}
+
+	@Test
+	void selectingANestedClassShouldRunOnlyItsTestsUnderTheEnclosingEnvironment() throws ClassNotFoundException {
+		Class<?> innerClass = Class.forName(AdvancedJupiterTest.class.getName() + "$InnerTest");
+
+		List<String> ran = testsRunBy(
+				DiscoverySelectors.selectNestedClass(List.of(AdvancedJupiterTest.class), innerClass));
+
+		assertEquals(List.of("nestedTestShouldSeeEnvironment()"), ran);
+	}
+
+	@Test
+	void selectingAMethodOfANestedClassShouldRunOnlyThatMethod() throws ClassNotFoundException {
+		Class<?> innerClass = Class.forName(AdvancedJupiterTest.class.getName() + "$InnerTest");
+
+		List<String> ran = testsRunBy(DiscoverySelectors.selectNestedMethod(
+				List.of(AdvancedJupiterTest.class), innerClass, "nestedTestShouldSeeEnvironment"));
+
+		assertEquals(List.of("nestedTestShouldSeeEnvironment()"), ran);
+	}
+
+	@Test
+	void selectingANestedClassWithItsOwnEnvironmentShouldRunItUnderThatEnvironment() throws ClassNotFoundException {
+		Class<?> nestedClass = Class.forName(NestedOwnEnvironmentTest.class.getName() + "$WithChildEnvironment");
+
+		List<String> ran = testsRunBy(
+				DiscoverySelectors.selectNestedClass(List.of(NestedOwnEnvironmentTest.class), nestedClass));
+
+		assertEquals(List.of("nestedShouldSeeParentAndChildRows()"), ran);
+	}
+
+	@Test
+	void selectingAMethodOfANestedClassWithItsOwnEnvironmentShouldRunItUnderThatEnvironment()
+			throws ClassNotFoundException {
+		Class<?> nestedClass = Class.forName(NestedOwnEnvironmentTest.class.getName() + "$WithChildEnvironment");
+
+		List<String> ran = testsRunBy(DiscoverySelectors.selectNestedMethod(
+				List.of(NestedOwnEnvironmentTest.class), nestedClass, "nestedShouldSeeParentAndChildRows"));
+
+		assertEquals(List.of("nestedShouldSeeParentAndChildRows()"), ran);
+	}
+
+	@Test
+	void selectingAnInheritedNestedClassShouldRunItUnderTheSubclassEnvironment() throws ClassNotFoundException {
+		Class<?> inheritedNested = Class.forName(RowBaseTest.class.getName() + "$InheritedNested");
+
+		List<String> ran = testsRunBy(
+				DiscoverySelectors.selectNestedClass(List.of(InheritedNestedTest.class), inheritedNested));
+
+		assertEquals(List.of("shouldSeeTheRowsOfTheRunningClass()"), ran);
+	}
+
+	@Test
+	void selectingTheUniqueIdOfATestShouldRunOnlyThatTestAgain() {
+		String uniqueId = uniqueIdsOfTestsRunBy(DiscoverySelectors.selectClass(FirstLevelTest.class)).get(1);
+
+		List<String> ran = testsRunBy(DiscoverySelectors.selectUniqueId(uniqueId));
+
+		assertEquals(List.of("shouldNotHaveSecondLevel()"), ran);
+	}
+
+	@Test
+	void selectingTheUniqueIdOfATestClassShouldRunTheWholeClassAgain() {
+		String testId = uniqueIdsOfTestsRunBy(DiscoverySelectors.selectClass(FirstLevelTest.class)).get(0);
+		String classId = UniqueId.parse(testId).removeLastSegment().toString();
+
+		List<String> ran = testsRunBy(DiscoverySelectors.selectUniqueId(classId));
+
+		assertEquals(List.of("shouldHaveFirstLevelEnvironment()", "shouldNotHaveSecondLevel()"), ran);
+	}
+
+	@Test
+	void theUniqueIdOfATestShouldNotChangeWhenFewerTestsRun() {
+		List<String> wholeClass = uniqueIdsOfTestsRunBy(DiscoverySelectors.selectClass(FirstLevelTest.class));
+		List<String> oneMethod = uniqueIdsOfTestsRunBy(
+				DiscoverySelectors.selectMethod(FirstLevelTest.class, "shouldNotHaveSecondLevel"));
+
+		assertEquals(List.of(wholeClass.get(1)), oneMethod);
+	}
+
 	// --- helpers ---
+
+	private static DiscoverySelector parameterizedMethod() {
+		return DiscoverySelectors.selectMethod(
+				AdvancedJupiterTest.class, "parameterizedTestShouldSeeEnvironment", "java.lang.String");
+	}
+
+	private static List<String> testsRunBy(DiscoverySelector... selectors) {
+		return finishedTestsOf(selectors).stream().map(TestIdentifier::getDisplayName).toList();
+	}
+
+	private static List<String> uniqueIdsOfTestsRunBy(DiscoverySelector... selectors) {
+		return finishedTestsOf(selectors).stream().map(TestIdentifier::getUniqueId).toList();
+	}
+
+	// Runs with every engine on the classpath and the filters registered by default,
+	// like an IDE does, so a test picked up by no engine or by two shows up here.
+	private static List<TestIdentifier> finishedTestsOf(DiscoverySelector... selectors) {
+		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request().selectors(selectors).build();
+		List<TestIdentifier> finished = new ArrayList<>();
+		SummaryGeneratingListener summary = new SummaryGeneratingListener();
+
+		LauncherFactory.create().execute(request, summary, new TestExecutionListener() {
+			@Override
+			public void executionFinished(TestIdentifier identifier, TestExecutionResult result) {
+				if (identifier.isTest()) finished.add(identifier);
+			}
+		});
+
+		assertNoFailures(summary.getSummary());
+		return finished;
+	}
 
 	private static LauncherDiscoveryRequest simulatestRequest(Class<?>... testClasses) {
 		return LauncherDiscoveryRequestBuilder.request()

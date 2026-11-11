@@ -37,7 +37,7 @@ public final class SimulatestPostDiscoveryFilter implements PostDiscoveryFilter 
 
 	private static boolean belongsToUseEnvironmentClass(TestDescriptor descriptor) {
 		return resolveTestClass(descriptor)
-				.flatMap(UseEnvironmentClassScanner::resolveUseEnvironmentClass)
+				.flatMap(testClass -> ClassChain.enclosing(testClass).nearestWithEnvironment())
 				.isPresent();
 	}
 

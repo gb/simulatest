@@ -44,6 +44,15 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
 public final class JupiterDelegatingClassDescriptor extends AbstractTestDescriptor
 		implements Node<SimulatestExecutionContext> {
 
+	/** Type of the unique id segment that names a test class. */
+	public static final String CLASS_SEGMENT = "class";
+
+	/**
+	 * Type of the unique id segment that names one test. Its value is the
+	 * unique id Jupiter gave the test, so a later run can select the same test.
+	 */
+	public static final String TEST_SEGMENT = "test";
+
 	private static final String JUPITER_ENGINE_ID = "junit-jupiter";
 	private static final String AUTODETECTION_KEY = "junit.jupiter.extensions.autodetection.enabled";
 	private static final String AUTODETECTION_VALUE_ENABLED = "true";
@@ -62,11 +71,17 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 	}
 
 	private final Class<?> testClass;
+	private final List<DiscoverySelector> parts;
 
-	public JupiterDelegatingClassDescriptor(UniqueId uniqueId, Class<?> testClass) {
+	/**
+	 * @param parts the selectors that narrow the run to part of {@code testClass};
+	 *              empty to run the whole class
+	 */
+	public JupiterDelegatingClassDescriptor(UniqueId uniqueId, Class<?> testClass, List<DiscoverySelector> parts) {
 		super(uniqueId, Objects.requireNonNull(testClass, "testClass must not be null").getSimpleName(),
 				ClassSource.from(testClass));
 		this.testClass = testClass;
+		this.parts = List.copyOf(Objects.requireNonNull(parts, "parts must not be null"));
 	}
 
 	@Override
@@ -91,7 +106,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 
 	private List<CapturedResult> runJupiter() {
 		LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-				.selectors(selectTestClass())
+				.selectors(parts.isEmpty() ? List.of(selectTestClass()) : parts)
 				.filters(EngineFilter.includeEngines(JUPITER_ENGINE_ID), new OwnEnvironmentClassFilter(testClass))
 				.configurationParameter(AUTODETECTION_KEY, AUTODETECTION_VALUE_ENABLED)
 				.build();
@@ -118,17 +133,16 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 
 	private void registerDynamicTests(List<CapturedResult> results, DynamicTestExecutor executor) {
 		TestSource fallbackSource = ClassSource.from(testClass);
-		int index = 0;
 		for (CapturedResult captured : results) {
-			TestResultDescriptor descriptor = descriptorFor(captured, fallbackSource, index++);
+			TestResultDescriptor descriptor = descriptorFor(captured, fallbackSource);
 			addChild(descriptor);
 			executor.execute(descriptor);
 		}
 	}
 
-	private TestResultDescriptor descriptorFor(CapturedResult captured, TestSource fallbackSource, int index) {
+	private TestResultDescriptor descriptorFor(CapturedResult captured, TestSource fallbackSource) {
 		TestSource source = captured.source != null ? captured.source : fallbackSource;
-		UniqueId testId = getUniqueId().append("test", captured.displayName + "#" + index);
+		UniqueId testId = getUniqueId().append(TEST_SEGMENT, captured.jupiterId);
 		return captured.isSkipped()
 				? TestResultDescriptor.skipped(testId, captured.displayName, source, captured.skipReason)
 				: TestResultDescriptor.fromResult(testId, captured.displayName, source, captured.result);
@@ -142,6 +156,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 		public void executionFinished(TestIdentifier identifier, TestExecutionResult result) {
 			if (identifier.isTest() || result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
 				results.add(new CapturedResult(
+						identifier.getUniqueId(),
 						identifier.getDisplayName(),
 						identifier.getSource().orElse(null),
 						result, null));
@@ -152,6 +167,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 		public void executionSkipped(TestIdentifier identifier, String reason) {
 			if (identifier.isTest()) {
 				results.add(new CapturedResult(
+						identifier.getUniqueId(),
 						identifier.getDisplayName(),
 						identifier.getSource().orElse(null),
 						null, reason));
@@ -159,7 +175,7 @@ public final class JupiterDelegatingClassDescriptor extends AbstractTestDescript
 		}
 	}
 
-	private record CapturedResult(String displayName, TestSource source,
+	private record CapturedResult(String jupiterId, String displayName, TestSource source,
 			TestExecutionResult result, String skipReason) {
 
 		boolean isSkipped() {
