@@ -52,10 +52,6 @@ public final class Node<T> {
 		return Collections.unmodifiableList(children);
 	}
 
-	public boolean isLeaf() {
-		return children.isEmpty();
-	}
-	
 	public Node<T> getFirstChild() {
 		return children.isEmpty() ? null : children.getFirst();
 	}

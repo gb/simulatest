@@ -15,6 +15,7 @@ import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.manipulation.Filterable;
 import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.simulatest.environment.EnvironmentDefinition;
@@ -24,6 +25,7 @@ import org.simulatest.environment.tree.EnvironmentTreeBuilder;
 import org.simulatest.environment.plugin.SimulatestPlugin;
 import org.simulatest.environment.SimulatestSession;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
+import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.Tree;
 import org.simulatest.insistencelayer.InsistenceLayer;
@@ -106,8 +108,16 @@ public class EnvironmentJUnitRunner extends Runner implements Filterable {
 				}
 			});
 
+			environmentRunner.onEnvironmentFailure(
+					(environment, failure) -> reportFailedEnvironment(notifier, environment, failure));
+
 			session.run(environmentRunner::run);
 		}
+	}
+
+	private void reportFailedEnvironment(RunNotifier notifier, EnvironmentDefinition environment,
+			EnvironmentExecutionException failure) {
+		notifier.fireTestFailure(new Failure(infrastructure.descriptions().descriptionOf(environment), failure));
 	}
 
 	private void runTestOfEnvironment(RunNotifier notifier, EnvironmentDefinition environment) {

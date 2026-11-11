@@ -17,6 +17,8 @@ import org.simulatest.environment.junit.EnvironmentJUnitSuite;
 import org.simulatest.environment.test.testdouble.ClassSetupSuite;
 import org.simulatest.environment.test.testdouble.FailingClassSetupSuite;
 import org.simulatest.environment.test.testdouble.FailingClassSetupTestDouble;
+import org.simulatest.environment.test.testdouble.FailingEnvironmentSuite;
+import org.simulatest.environment.test.testdouble.FailingRowEnvironment;
 import org.simulatest.environment.test.testdouble.InsistenceIsolationSuite;
 import org.simulatest.insistencelayer.InsistenceLayerFactory;
 
@@ -59,6 +61,17 @@ public class InsistenceResetIntegrationTest {
 		assertEquals("Only the class whose setup fails should be reported, and the next class should not see its row",
 				List.of(FailingClassSetupTestDouble.class.getName()), result.failures);
 		assertEquals("2 from InsistenceIsolationTestDouble", 2, result.testCount);
+		assertEveryLevelIsClosed();
+	}
+
+	@Test
+	public void aFailingEnvironmentShouldBeReportedAndTheOtherEnvironmentsShouldStillRun() throws Exception {
+		SuiteResult result = run(FailingEnvironmentSuite.class);
+
+		assertEquals("Only the failing environment should be reported",
+				List.of(FailingRowEnvironment.class.getName()), result.failures);
+		assertEquals("2 from InsistenceIsolationTestDouble; the tests of the failing environment "
+				+ "and of its child do not run", 2, result.testCount);
 		assertEveryLevelIsClosed();
 	}
 

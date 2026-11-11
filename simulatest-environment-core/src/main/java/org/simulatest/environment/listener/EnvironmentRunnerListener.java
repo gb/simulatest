@@ -21,8 +21,9 @@ public interface EnvironmentRunnerListener {
 	default void beforeRun(EnvironmentDefinition definition) { }
 
 	/**
-	 * Called after {@code run()} completes (or fails). This is where test
-	 * execution typically hooks in.
+	 * Called after {@code run()} completes. This is where test execution
+	 * typically hooks in. Not called for an environment that failed, so its
+	 * tests do not run.
 	 *
 	 * @param definition the environment that just ran
 	 */
@@ -30,7 +31,9 @@ public interface EnvironmentRunnerListener {
 
 	/**
 	 * Called after all children of the environment have finished. Used by the
-	 * Insistence Layer to decrease the checkpoint level.
+	 * Insistence Layer to decrease the checkpoint level. Called for every
+	 * environment that got {@code afterRun}, also when a child or a listener
+	 * failed after it.
 	 *
 	 * @param definition the parent environment whose children have all run
 	 */

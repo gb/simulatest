@@ -34,11 +34,15 @@ public final class EnvironmentDescriptionTreeBuilder {
 	public void addTestDescription(EnvironmentDefinition environment, Description description) {
 		Objects.requireNonNull(environment, "environment must not be null");
 		Objects.requireNonNull(description, "description must not be null");
-		Description parent = descriptions.get(environment);
-		if (parent == null) {
+		descriptionOf(environment).addChild(description);
+	}
+
+	public Description descriptionOf(EnvironmentDefinition environment) {
+		Description description = descriptions.get(environment);
+		if (description == null) {
 			throw new IllegalArgumentException("Unknown environment: " + environment.getName());
 		}
-		parent.addChild(description);
+		return description;
 	}
 
 	public Description getDescription() {
