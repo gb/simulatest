@@ -122,7 +122,7 @@ public interface InsistenceLayer extends AutoCloseable {
 	 * @throws RuntimeException the original exception from {@code decreaseLevel()}
 	 */
 	default void decreaseLevelOrCleanup() {
-		orCleanup(this::decreaseLevel);
+		leaveLevelOrCleanUp(this::decreaseLevel);
 	}
 
 	/**
@@ -132,10 +132,10 @@ public interface InsistenceLayer extends AutoCloseable {
 	 * @throws RuntimeException the original exception from {@code decreaseLevelAndReset()}
 	 */
 	default void decreaseLevelAndResetOrCleanup() {
-		orCleanup(this::decreaseLevelAndReset);
+		leaveLevelOrCleanUp(this::decreaseLevelAndReset);
 	}
 
-	private void orCleanup(Runnable leaveLevel) {
+	private void leaveLevelOrCleanUp(Runnable leaveLevel) {
 		try {
 			leaveLevel.run();
 		} catch (RuntimeException exception) {

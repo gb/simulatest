@@ -33,6 +33,9 @@ public final class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 
 	private final Supplier<Optional<InsistenceLayer>> insistenceLayer;
 	private final List<SimulatestPlugin> plugins;
+
+	// Set when the class starts and opened when its tests start. JUnit runs the
+	// tests (childrenInvoker) inside the class (classBlock), so it is set first.
 	private SetupLevel classLevel = SetupLevel.withoutLayer();
 
 	/**
@@ -95,17 +98,17 @@ public final class SimulatestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 	}
 
 	private SetupLevel newClassLevel() {
-		return insistenceLayer.get().map(SetupLevel::on).orElseGet(SetupLevel::withoutLayer);
+		return SetupLevel.onLayerIfAny(insistenceLayer.get());
 	}
 
-	// Reset the Insistence Layer after each test so sibling tests start
-	// with the same database state (the savepoint of the class).
+	// Reset the level of the class after each test so sibling tests start
+	// from the same state: the environment and the class setup.
 	@Override
 	protected void runChild(FrameworkMethod method, RunNotifier notifier) {
 		try {
 			super.runChild(method, notifier);
 		} finally {
-			insistenceLayer.get().ifPresent(InsistenceLayer::resetCurrentLevel);
+			classLevel.reset();
 		}
 	}
 

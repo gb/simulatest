@@ -3,6 +3,7 @@ package org.simulatest.environment.junit5.extension;
 import java.util.Optional;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -16,10 +17,10 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * per-class test instance) is seen by every test of the class.
  *
  * <p>The level opens right before the first test of the class, after the
- * class setup ran. The reset after each test goes back to it, so the class
- * setup data stays and the data of the test is undone. When the class ends,
- * one rollback undoes the level and the class setup data below it, before
- * the next class starts.</p>
+ * class setup ran. It is reset after each test, so sibling tests start from
+ * the same state: the class setup data stays and the data of the test is
+ * undone. When the class ends, one rollback undoes the level and the class
+ * setup data below it, before the next class starts.</p>
  *
  * <p>The cost is one savepoint and one rollback per class, however many
  * tests it has. The environments are not run again and their levels are not
@@ -32,7 +33,8 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * <p>Auto-registered via {@code META-INF/services}. Does nothing outside a
  * Simulatest run.</p>
  */
-public final class ClassLevelExtension implements BeforeAllCallback, BeforeEachCallback, AfterAllCallback {
+public final class ClassLevelExtension
+		implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
 
 	private static final Namespace NAMESPACE = Namespace.create(ClassLevelExtension.class);
 
@@ -48,6 +50,11 @@ public final class ClassLevelExtension implements BeforeAllCallback, BeforeEachC
 	@Override
 	public void beforeEach(ExtensionContext testContext) {
 		levelOf(testContext.getRequiredTestClass(), testContext).ifPresent(SetupLevel::open);
+	}
+
+	@Override
+	public void afterEach(ExtensionContext testContext) {
+		levelOf(testContext.getRequiredTestClass(), testContext).ifPresent(SetupLevel::reset);
 	}
 
 	@Override

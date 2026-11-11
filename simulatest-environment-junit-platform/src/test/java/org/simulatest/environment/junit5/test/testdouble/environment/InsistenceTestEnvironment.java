@@ -12,8 +12,6 @@ import javax.sql.DataSource;
 
 public class InsistenceTestEnvironment implements Environment {
 
-	// On the raw connection, before any level opens: H2 commits on CREATE TABLE,
-	// which would destroy the open savepoints.
 	public static void createTable(DataSource rawDataSource) {
 		try (Connection connection = rawDataSource.getConnection();
 			 Statement stmt = connection.createStatement()) {

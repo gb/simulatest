@@ -150,7 +150,7 @@ public final class ConnectionWrapper {
 	 * below, this is {@link #popLevel()}.
 	 */
 	public void popLevelAndReset() throws SQLException {
-		if (levels.size() < 2) {
+		if (!hasLevelBelowCurrent()) {
 			popLevel();
 			return;
 		}
@@ -173,6 +173,10 @@ public final class ConnectionWrapper {
 		Level current = levels.peek();
 		if (current == null) throw new IllegalStateException("No level is open");
 		return current;
+	}
+
+	private boolean hasLevelBelowCurrent() {
+		return levels.size() > 1;
 	}
 
 	private Level levelBelowCurrent() {

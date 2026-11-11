@@ -1,6 +1,7 @@
 package org.simulatest.environment;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.simulatest.insistencelayer.InsistenceLayer;
 
@@ -14,18 +15,21 @@ import org.simulatest.insistencelayer.InsistenceLayer;
  * what ran on top; closing it and undoing the setup also undoes the setup
  * data in the level below, with a single rollback.</p>
  *
- * <p>A level that was never opened is safe to close. That is the case when
- * the setup failed: nothing is left open, and undoing the setup still undoes
- * what the failed setup wrote.</p>
+ * <p>A level opens once and closes once; every other call does nothing. A
+ * level that never opened is the case of a setup that failed: nothing is
+ * left open, and undoing the setup still undoes what the failed setup
+ * wrote.</p>
  *
  * <p><b>Thread-safety:</b> not thread-safe, like the layer it drives.</p>
  */
 public final class SetupLevel {
 
+	private enum State { NOT_OPENED, OPEN, CLOSED }
+
 	private static final InsistenceLayer NO_LAYER = new NoLayer();
 
 	private final InsistenceLayer layer;
-	private boolean open;
+	private State state = State.NOT_OPENED;
 
 	private SetupLevel(InsistenceLayer layer) {
 		this.layer = layer;
@@ -40,31 +44,38 @@ public final class SetupLevel {
 		return new SetupLevel(NO_LAYER);
 	}
 
-	/** Opens the level. Does nothing when it is already open. */
+	/** A level on the given layer, or one that does nothing when there is no layer. */
+	public static SetupLevel onLayerIfAny(Optional<InsistenceLayer> layer) {
+		return layer.map(SetupLevel::on).orElseGet(SetupLevel::withoutLayer);
+	}
+
 	public void open() {
-		if (open) return;
+		if (state != State.NOT_OPENED) return;
 
 		layer.increaseLevel();
-		open = true;
+		state = State.OPEN;
+	}
+
+	/** Undoes what ran on top of the setup since the level opened or was last reset. */
+	public void reset() {
+		if (state == State.OPEN) layer.resetCurrentLevel();
 	}
 
 	/** Undoes what ran on top of the setup and keeps the setup data. */
 	public void close() {
-		if (!open) return;
+		State stateBeforeClosing = state;
+		state = State.CLOSED;
 
-		open = false;
-		layer.decreaseLevelOrCleanup();
+		if (stateBeforeClosing == State.OPEN) layer.decreaseLevelOrCleanup();
 	}
 
 	/** Undoes what ran on top of the setup and the setup data itself. */
 	public void closeUndoingSetup() {
-		if (!open) {
-			layer.resetCurrentLevel();
-			return;
-		}
+		State stateBeforeClosing = state;
+		state = State.CLOSED;
 
-		open = false;
-		layer.decreaseLevelAndResetOrCleanup();
+		if (stateBeforeClosing == State.OPEN) layer.decreaseLevelAndResetOrCleanup();
+		if (stateBeforeClosing == State.NOT_OPENED) layer.resetCurrentLevel();
 	}
 
 	private static final class NoLayer implements InsistenceLayer {

@@ -35,7 +35,7 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * Simulatest engine reports them correctly to the IDE.</p>
  *
  * <p>The Insistence Layer's per-test {@code resetCurrentLevel()} is handled by
- * {@link org.simulatest.environment.junit5.extension.InsistenceAfterEachExtension},
+ * {@link org.simulatest.environment.junit5.extension.ClassLevelExtension},
  * which Jupiter auto-detects during the internal session.</p>
  *
  * <p><b>Thread-safety:</b> not thread-safe; one descriptor instance is executed
