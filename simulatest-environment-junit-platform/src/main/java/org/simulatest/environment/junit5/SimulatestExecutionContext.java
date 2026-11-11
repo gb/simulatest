@@ -3,6 +3,7 @@ package org.simulatest.environment.junit5;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.junit.platform.engine.EngineExecutionListener;
 import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 import org.simulatest.environment.EnvironmentDefinition;
 import org.simulatest.environment.EnvironmentFactory;
@@ -21,8 +22,6 @@ import org.simulatest.insistencelayer.InsistenceLayer;
  */
 public final class SimulatestExecutionContext implements EngineExecutionContext {
 
-	static final SimulatestExecutionContext EMPTY = new SimulatestExecutionContext(null, null, null);
-
 	// Bridges the Simulatest engine context into Jupiter's internal execution so
 	// that auto-detected extensions (ClassLevelExtension, etc.) can access it.
 	// NOTE: if Jupiter's parallel execution moves @AfterEach hooks to a different
@@ -32,19 +31,40 @@ public final class SimulatestExecutionContext implements EngineExecutionContext 
 	private final SimulatestSession session;
 	private final EnvironmentFactory factory;
 	private final InsistenceLayer insistenceLayer;
-
-	public SimulatestExecutionContext(SimulatestSession session) {
-		this(
-				Objects.requireNonNull(session, "session must not be null"),
-				session.factory(),
-				session.insistenceLayer().orElse(null));
-	}
+	private final EngineExecutionListener listener;
 
 	public SimulatestExecutionContext(SimulatestSession session, EnvironmentFactory factory,
 			InsistenceLayer insistenceLayer) {
+		this(session, factory, insistenceLayer, EngineExecutionListener.NOOP);
+	}
+
+	private SimulatestExecutionContext(SimulatestSession session, EnvironmentFactory factory,
+			InsistenceLayer insistenceLayer, EngineExecutionListener listener) {
 		this.session = session;
 		this.factory = factory;
 		this.insistenceLayer = insistenceLayer;
+		this.listener = listener;
+	}
+
+	/** The context a run starts with: no session yet, only where the engine reports to. */
+	static SimulatestExecutionContext reportingTo(EngineExecutionListener listener) {
+		return new SimulatestExecutionContext(null, null, null,
+				Objects.requireNonNull(listener, "listener must not be null"));
+	}
+
+	/** This context with the session of the run, reporting to the same listener. */
+	SimulatestExecutionContext withSession(SimulatestSession session) {
+		Objects.requireNonNull(session, "session must not be null");
+		return new SimulatestExecutionContext(
+				session, session.factory(), session.insistenceLayer().orElse(null), listener);
+	}
+
+	/**
+	 * Where the engine reports to. A test class uses it to report its tests
+	 * while they run.
+	 */
+	public EngineExecutionListener listener() {
+		return listener;
 	}
 
 	public Optional<InsistenceLayer> insistenceLayer() {
