@@ -24,6 +24,11 @@ import org.slf4j.LoggerFactory;
  * Walks an {@link EnvironmentDefinition} tree, instantiating and running
  * each environment and firing listener callbacks at phase boundaries.
  *
+ * <p>An environment that fails gets no {@code afterRun}, so its tests do not
+ * run, and its child environments are skipped. By default the failure then
+ * stops the run; {@link #onEnvironmentFailure(EnvironmentFailureHandler)}
+ * lets the caller take the failure and let the run go on.</p>
+ *
  * <p><b>Thread-safety:</b> not thread-safe. A runner is intended to be built
  * and invoked by the owning test runner on a single thread for the duration
  * of a suite run.</p>
@@ -32,10 +37,15 @@ public final class EnvironmentRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(EnvironmentRunner.class);
 
+	private static final EnvironmentFailureHandler STOP_THE_RUN = (definition, failure) -> {
+		throw failure;
+	};
+
 	private final EnvironmentFactory factory;
 	private final Tree<EnvironmentDefinition> tree;
 	private final List<EnvironmentRunnerListener> listeners;
 	private final InsistenceLayer insistenceLayer;
+	private EnvironmentFailureHandler failureHandler = STOP_THE_RUN;
 
 	public EnvironmentRunner(EnvironmentFactory factory, Tree<EnvironmentDefinition> environmentTree) {
 		this.factory = Objects.requireNonNull(factory, "factory must not be null");
@@ -84,55 +94,58 @@ public final class EnvironmentRunner {
 		listeners.sort(Comparator.comparing(EnvironmentRunnerListener::getPhase));
 	}
 
+	/**
+	 * Sets who takes the failure of an environment. Without a handler the
+	 * failure itself is thrown.
+	 *
+	 * @see EnvironmentFailureHandler
+	 */
+	public void onEnvironmentFailure(EnvironmentFailureHandler handler) {
+		this.failureHandler = Objects.requireNonNull(handler, "handler must not be null");
+	}
+
 	public void run() {
-		runTree();
+		runSubtree(tree.getRootNode());
 	}
 
-	private void runTree() {
-		for (Node<EnvironmentDefinition> node : tree) runNode(node);
-	}
-
-	private void runNode(Node<EnvironmentDefinition> node) {
-		executeWithCleanup(
-				() -> runEnvironmentLifecycle(node.getValue()),
-				() -> fireLeafCallbacks(node));
-	}
-
-	private void runEnvironmentLifecycle(EnvironmentDefinition definition) {
+	private void runSubtree(Node<EnvironmentDefinition> node) {
+		EnvironmentDefinition definition = node.getValue();
 		logger.info("Running environment: {}", definition.getName());
 
 		fireBeforeRun(definition);
+		try {
+			factory.createAndRun(definition);
+		} catch (EnvironmentExecutionException failure) {
+			failureHandler.environmentFailed(definition, failure);
+			return;
+		}
+		runTestsAndChildrenOf(node);
+	}
+
+	// afterChildrenRun closes what afterRun opened, so it fires even when a
+	// listener or a child environment fails in between.
+	private void runTestsAndChildrenOf(Node<EnvironmentDefinition> node) {
 		executeWithCleanup(
-				() -> executeEnvironment(definition),
-				() -> fireAfterRun(definition));
+				() -> fireAfterRunAndRunChildrenOf(node),
+				() -> fireAfterChildrenRun(node.getValue()));
 	}
 
-	private void executeEnvironment(EnvironmentDefinition definition) {
-		factory.createAndRun(definition);
+	private void fireAfterRunAndRunChildrenOf(Node<EnvironmentDefinition> node) {
+		fireAfterRun(node.getValue());
+		for (Node<EnvironmentDefinition> child : node.getChildren()) runChild(child, node.getValue());
 	}
 
-	// After visiting a leaf, propagate "after children" callbacks up the tree
-	// for any ancestor whose subtree is now fully visited (i.e., the leaf is
-	// the last child at each level). Non-last siblings get a reset instead.
-	private void fireLeafCallbacks(Node<EnvironmentDefinition> node) {
-		if (!node.isLeaf()) return;
-
+	private void runChild(Node<EnvironmentDefinition> child, EnvironmentDefinition parent) {
 		executeWithCleanup(
-				() -> fireAfterChildrenRun(node.getValue()),
-				() -> fireParentBoundaryCallbacks(node));
+				() -> runSubtree(child),
+				() -> cleanUpBeforeNextSibling(child, parent));
 	}
 
-	private void fireParentBoundaryCallbacks(Node<EnvironmentDefinition> node) {
-		if (!node.hasParent()) return;
-
-		if (node.isLastChild()) propagateAfterChildrenRun(node.getParent());
-		else fireAfterSiblingCleanup(node.getParentValue().orElseThrow());
-	}
-
-	private void propagateAfterChildrenRun(Node<EnvironmentDefinition> parent) {
-		executeWithCleanup(
-				() -> fireAfterChildrenRun(parent.getValue()),
-				() -> fireParentBoundaryCallbacks(parent));
+	// Undoes what the child wrote in the level of its parent, also when the
+	// child failed halfway. The last child needs none: its parent is about to
+	// close that level.
+	private void cleanUpBeforeNextSibling(Node<EnvironmentDefinition> child, EnvironmentDefinition parent) {
+		if (!child.isLastChild()) fireAfterSiblingCleanup(parent);
 	}
 
 	private void fireBeforeRun(EnvironmentDefinition definition) {

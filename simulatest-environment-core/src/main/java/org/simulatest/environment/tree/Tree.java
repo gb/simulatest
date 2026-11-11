@@ -35,6 +35,10 @@ public final class Tree<T> implements Iterable<Node<T>> {
 		nodesByValue.put(rootValue, rootNode);
 	}
 	
+	public Node<T> getRootNode() {
+		return rootNode;
+	}
+
 	public T getRootValue() {
 		return rootNode.getValue();
 	}

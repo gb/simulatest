@@ -2,6 +2,8 @@ package org.simulatest.environment.test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -24,6 +26,7 @@ import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.test.testdouble.Environments.ColaboradorEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.DummyEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.EmpresaEnvironment;
+import org.simulatest.environment.test.testdouble.Environments.PessoaFisicaEnvironment;
 import org.simulatest.environment.test.testdouble.Environments.ProjetoEnvironment;
 
 public class EnvironmentRunnerTest {
@@ -236,6 +239,94 @@ public class EnvironmentRunnerTest {
 		assertTrue("parent's afterSiblingCleanup must fire so insistence level resets before next sibling; "
 				+ "listener log was: " + listenerLog.getLogs(),
 				listenerLog.getLogs().contains("[PessoaEnvironment] afterSiblingCleanup"));
+	}
+
+	@Test
+	public void aFailedEnvironmentShouldNotGetAfterRun() {
+		EnvironmentRunner runner = runnerWhereTheOnlyEnvironmentFails();
+
+		assertThrows(EnvironmentExecutionException.class, runner::run);
+
+		assertFalse("afterRun is where the tests of an environment run; log was: " + listenerLog.getLogs(),
+				listenerLog.getLogs().contains("[DummyEnvironment] afterRun"));
+	}
+
+	@Test
+	public void theParentOfAFailedEnvironmentShouldStillGetAfterChildrenRun() {
+		EnvironmentRunner runner = runnerWhereTheOnlyEnvironmentFails();
+
+		assertThrows(EnvironmentExecutionException.class, runner::run);
+
+		assertTrue("the parent must close the level it opened; log was: " + listenerLog.getLogs(),
+				listenerLog.getLogs().contains("[BigBangEnvironment] afterChildrenRun"));
+	}
+
+	@Test
+	public void theHandlerShouldGetTheFailedEnvironment() {
+		List<String> failed = new ArrayList<>();
+		EnvironmentRunner runner = runnerWhereTheFirstBranchFails();
+		runner.onEnvironmentFailure((definition, failure) -> failed.add(definition.getName()));
+
+		runner.run();
+
+		assertEquals(List.of("PessoaFisicaEnvironment"), failed);
+	}
+
+	@Test
+	public void theChildrenOfAFailedEnvironmentShouldNotRun() {
+		EnvironmentRunner runner = runnerThatGoesOnWhereTheFirstBranchFails();
+
+		runner.run();
+
+		assertFalse("log was: " + listenerLog.getLogs(),
+				listenerLog.getLogs().contains("[ColaboradorEnvironment] beforeRun"));
+	}
+
+	@Test
+	public void theSiblingsOfAFailedEnvironmentShouldStillRun() {
+		EnvironmentRunner runner = runnerThatGoesOnWhereTheFirstBranchFails();
+
+		runner.run();
+
+		assertTrue("log was: " + listenerLog.getLogs(),
+				listenerLog.getLogs().contains("[EmpresaEnvironment] afterRun"));
+	}
+
+	@Test
+	public void theLevelOfTheParentShouldBeCleanedBeforeTheSiblingOfAFailedEnvironmentRuns() {
+		EnvironmentRunner runner = runnerThatGoesOnWhereTheFirstBranchFails();
+
+		runner.run();
+
+		List<String> logs = listenerLog.getLogs();
+		int cleanup = logs.indexOf("[PessoaEnvironment] afterSiblingCleanup");
+		int sibling = logs.indexOf("[PessoaJuridicaEnvironment] beforeRun");
+		assertTrue("the cleanup should fire; log was: " + logs, cleanup >= 0);
+		assertTrue("the cleanup should come before the sibling; log was: " + logs, cleanup < sibling);
+	}
+
+	private EnvironmentRunner runnerWhereTheOnlyEnvironmentFails() {
+		builder.add(create(DummyEnvironment.class));
+		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
+		runner.addListener(listenerLog);
+		return runner;
+	}
+
+	// Pessoa has two branches: PessoaFisica -> Colaborador, which runs first, and
+	// PessoaJuridica -> Empresa. PessoaFisica is the environment that fails.
+	private EnvironmentRunner runnerWhereTheFirstBranchFails() {
+		builder.add(create(ColaboradorEnvironment.class));
+		builder.add(create(EmpresaEnvironment.class));
+		EnvironmentRunner runner = new EnvironmentRunner(
+				new ThrowingEnvironmentFactory(PessoaFisicaEnvironment.class), builder);
+		runner.addListener(listenerLog);
+		return runner;
+	}
+
+	private EnvironmentRunner runnerThatGoesOnWhereTheFirstBranchFails() {
+		EnvironmentRunner runner = runnerWhereTheFirstBranchFails();
+		runner.onEnvironmentFailure((definition, failure) -> { });
+		return runner;
 	}
 
 	@Test

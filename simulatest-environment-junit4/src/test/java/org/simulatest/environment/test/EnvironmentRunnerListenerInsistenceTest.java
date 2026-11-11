@@ -65,7 +65,7 @@ public class EnvironmentRunnerListenerInsistenceTest {
 	}
 
 	@Test
-	public void shouldStillDecreaseOnEnvironmentFailure() {
+	public void aFailedEnvironmentShouldOpenNoLevel() {
 		builder.add(create(DummyEnvironment.class));
 
 		EnvironmentRunner runner = new EnvironmentRunner(factory, builder);
@@ -77,12 +77,10 @@ public class EnvironmentRunnerListenerInsistenceTest {
 			// DummyEnvironment throws during run()
 		}
 
-		// Even though DummyEnvironment fails, afterRun fires for both BigBang
-		// and DummyEnvironment (increaseLevel x2), and afterChildrenRun fires
-		// during cleanup for both (decreaseLevel x2). The checkpoint stack
-		// is fully unwound by the runner's exception safety.
-		verify(insistenceLayer, times(2)).increaseLevel();
-		verify(insistenceLayer, times(2)).decreaseLevelOrCleanup();
+		// Only BigBang opens a level. DummyEnvironment fails, so it opens none,
+		// and the level of BigBang is still closed on the way out.
+		verify(insistenceLayer, times(1)).increaseLevel();
+		verify(insistenceLayer, times(1)).decreaseLevelOrCleanup();
 	}
 
 }
