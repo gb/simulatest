@@ -3,7 +3,6 @@ package org.simulatest.environment.junit5;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.platform.engine.EngineDiscoveryRequest;
 import org.junit.platform.engine.ExecutionRequest;
@@ -33,8 +32,6 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 
 	public static final String ENGINE_ID = "simulatest";
 
-	private final UseEnvironmentClassScanner scanner = new UseEnvironmentClassScanner();
-
 	@Override
 	public String getId() {
 		return ENGINE_ID;
@@ -47,22 +44,22 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 
 	@Override
 	public TestDescriptor discover(EngineDiscoveryRequest request, UniqueId uniqueId) {
-		Set<Class<?>> testClasses = scanner.scan(request);
-		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(uniqueId, testClasses);
-		if (!testClasses.isEmpty()) populateDescriptors(engineDescriptor, testClasses);
+		SelectedTests selected = new UseEnvironmentClassScanner(request).scan();
+		SimulatestEngineDescriptor engineDescriptor = new SimulatestEngineDescriptor(uniqueId, selected.classes());
+		if (!selected.isEmpty()) populateDescriptors(engineDescriptor, selected);
 
 		return engineDescriptor;
 	}
 
-	private void populateDescriptors(SimulatestEngineDescriptor engineDescriptor, Set<Class<?>> testClasses) {
-		EnvironmentExtractor extractor = EnvironmentExtractor.extract(testClasses);
+	private void populateDescriptors(SimulatestEngineDescriptor engineDescriptor, SelectedTests selected) {
+		EnvironmentExtractor extractor = EnvironmentExtractor.extract(selected.classes());
 		Tree<EnvironmentDefinition> envTree = new EnvironmentTreeBuilder(extractor.getEnvironments()).getTree();
 
-		buildDescriptorTree(engineDescriptor, envTree, extractor);
+		buildDescriptorTree(engineDescriptor, envTree, extractor, selected);
 	}
 
 	private void buildDescriptorTree(SimulatestEngineDescriptor engineDescriptor, Tree<EnvironmentDefinition> envTree,
-									 EnvironmentExtractor extractor) {
+									 EnvironmentExtractor extractor, SelectedTests selected) {
 		Map<EnvironmentDefinition, EnvironmentTestDescriptor> descriptorsByEnv = new HashMap<>();
 
 		for (Node<EnvironmentDefinition> node : envTree) {
@@ -72,7 +69,7 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 
 			descriptorsByEnv.put(node.getValue(), environmentDescriptor);
 			parent.addChild(environmentDescriptor);
-			addTestClassChildren(environmentDescriptor, extractor.getTests(node.getValue()));
+			addTestClassChildren(environmentDescriptor, extractor.getTests(node.getValue()), selected);
 		}
 	}
 
@@ -94,10 +91,12 @@ public final class SimulatestTestEngine extends HierarchicalTestEngine<Simulates
 		return new EnvironmentTestDescriptor(id, environmentDefinition, lastEnvironmentSibling);
 	}
 
-	private void addTestClassChildren(EnvironmentTestDescriptor parent, List<Class<?>> testClasses) {
+	private void addTestClassChildren(EnvironmentTestDescriptor parent, List<Class<?>> testClasses,
+			SelectedTests selected) {
 		for (Class<?> testClass : testClasses) {
-			UniqueId classId = parent.getUniqueId().append("class", testClass.getName());
-			parent.addChild(new JupiterDelegatingClassDescriptor(classId, testClass));
+			UniqueId classId = parent.getUniqueId()
+					.append(JupiterDelegatingClassDescriptor.CLASS_SEGMENT, testClass.getName());
+			parent.addChild(new JupiterDelegatingClassDescriptor(classId, testClass, selected.partsOf(testClass)));
 		}
 	}
 
