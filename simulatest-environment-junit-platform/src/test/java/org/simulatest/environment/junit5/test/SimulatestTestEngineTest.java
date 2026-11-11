@@ -36,6 +36,7 @@ import org.simulatest.environment.junit5.test.testdouble.NestedOwnEnvironmentTes
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
 import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
+import org.simulatest.environment.junit5.test.testdouble.FailingEnvironmentTest;
 import org.simulatest.environment.junit5.test.testdouble.AnotherFirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.FirstLevelTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedEnvironmentsTest;
@@ -237,6 +238,22 @@ class SimulatestTestEngineTest {
 
 		assertTrue(summary.getTestsFailedCount() > 0 || summary.getContainersFailedCount() > 0,
 				"A @BeforeAll failure should surface as a failure, not be silently swallowed");
+	}
+
+	@Test
+	void failingEnvironmentShouldNotDisturbItsSiblingsOrLeaveDataBehind() {
+		TestExecutionSummary summary = runSimulatest(FailingEnvironmentTest.class, NestedOwnEnvironmentTest.class);
+
+		List<String> failed = summary.getFailures().stream()
+				.map(failure -> failure.getTestIdentifier().getDisplayName())
+				.toList();
+		assertEquals(List.of("FailingRowEnvironment"), failed,
+				"Only the failing environment should be reported as failed");
+		assertEquals(2, summary.getTestsSucceededCount(),
+				"The tests of the parent and sibling environments should still pass, seeing the parent row");
+		assertEquals(0, InsistenceLayerFactory.resolve().orElseThrow().getCurrentLevel(),
+				"Every level should be closed after the run");
+		assertEquals(0, EnvRows.count(), "No row should stay in the database after the run");
 	}
 
 	@Test

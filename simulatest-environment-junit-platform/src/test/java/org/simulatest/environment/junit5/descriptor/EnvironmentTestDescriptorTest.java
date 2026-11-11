@@ -52,10 +52,33 @@ class EnvironmentTestDescriptorTest {
 		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
 		DescriptorFixture fixture = DescriptorFixture.with(new TrackingEnvironment(), insistenceLayer);
 
+		fixture.descriptor.before(fixture.context);
 		fixture.descriptor.after(fixture.context);
 
-		assertEquals(List.of("decrease"), insistenceLayer.operations(),
+		assertEquals(List.of("increase", "decrease"), insistenceLayer.operations(),
 				"The last environment sibling should only unwind its own level; the parent will roll past its savepoint");
+	}
+
+	@Test
+	void afterShouldNotDecreaseWhenTheEnvironmentFailed() {
+		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
+		DescriptorFixture fixture = DescriptorFixture.with(failingEnvironment(), insistenceLayer);
+
+		runFailingBeforeThenAfter(fixture);
+
+		assertEquals(List.of(), insistenceLayer.operations(),
+				"A failed environment never opened a level, so closing one would close its parent's level");
+	}
+
+	@Test
+	void afterShouldOnlyResetWhenTheEnvironmentFailedAndAnotherSiblingFollows() {
+		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
+		DescriptorFixture fixture = DescriptorFixture.notLastSibling(failingEnvironment(), insistenceLayer);
+
+		runFailingBeforeThenAfter(fixture);
+
+		assertEquals(List.of("reset"), insistenceLayer.operations(),
+				"The reset should undo what the failed environment wrote, so the next sibling starts clean");
 	}
 
 	@Test
@@ -63,10 +86,21 @@ class EnvironmentTestDescriptorTest {
 		TrackingInsistenceLayer insistenceLayer = new TrackingInsistenceLayer();
 		DescriptorFixture fixture = DescriptorFixture.notLastSibling(new TrackingEnvironment(), insistenceLayer);
 
+		fixture.descriptor.before(fixture.context);
 		fixture.descriptor.after(fixture.context);
 
-		assertEquals(List.of("decrease", "reset"), insistenceLayer.operations(),
+		assertEquals(List.of("increase", "decrease", "reset"), insistenceLayer.operations(),
 				"A non-last environment should reset the parent level for the next sibling subtree");
+	}
+
+	private static Environment failingEnvironment() {
+		return new ThrowingEnvironment(new IllegalStateException("boom"));
+	}
+
+	// Mirrors the platform, which calls after() even when before() threw.
+	private static void runFailingBeforeThenAfter(DescriptorFixture fixture) {
+		assertThrows(EnvironmentExecutionException.class, () -> fixture.descriptor.before(fixture.context));
+		fixture.descriptor.after(fixture.context);
 	}
 
 	private static final class DescriptorFixture {
