@@ -64,6 +64,11 @@ public final class Node<T> {
 		return hasParent() && isTheLastChildOfParent();
 	}
 	
+	/** The root has no sibling at all, so it has none after it. */
+	public boolean hasNextSibling() {
+		return hasParent() && !isTheLastChildOfParent();
+	}
+
 	private boolean isTheLastChildOfParent() {
 		return this == getParent().getLastChild();
 	}

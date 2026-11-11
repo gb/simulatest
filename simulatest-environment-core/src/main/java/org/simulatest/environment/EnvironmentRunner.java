@@ -10,7 +10,6 @@ import java.util.function.BiConsumer;
 import org.simulatest.environment.infra.ExceptionAggregator;
 import org.simulatest.environment.infra.ServiceLoaders;
 import org.simulatest.environment.listener.EnvironmentRunnerListener;
-import org.simulatest.environment.listener.EnvironmentRunnerListenerInsistence;
 import org.simulatest.environment.infra.exception.EnvironmentExecutionException;
 import org.simulatest.environment.infra.exception.EnvironmentInstantiationException;
 import org.simulatest.environment.tree.EnvironmentTreeBuilder;
@@ -23,6 +22,12 @@ import org.slf4j.LoggerFactory;
 /**
  * Walks an {@link EnvironmentDefinition} tree, instantiating and running
  * each environment and firing listener callbacks at phase boundaries.
+ *
+ * <p>When an Insistence Layer is given, each environment gets one level on
+ * top of what it wrote, so its tests and its child environments can be undone
+ * without losing it. An environment with a sibling after it has its own data
+ * undone too, before that sibling runs. The data of the last sibling is left
+ * for the parent to undo: the parent rolls back past it anyway.</p>
  *
  * <p>An environment that fails gets no {@code afterRun}, so its tests do not
  * run, and its child environments are skipped. By default the failure then
@@ -60,7 +65,6 @@ public final class EnvironmentRunner {
 		this.tree = Objects.requireNonNull(environmentTree, "environmentTree must not be null");
 		this.listeners = new ArrayList<>();
 		this.insistenceLayer = Objects.requireNonNull(insistenceLayer, "insistenceLayer must not be null");
-		addListener(new EnvironmentRunnerListenerInsistence(insistenceLayer));
 	}
 
 	public EnvironmentRunner(EnvironmentFactory factory, EnvironmentTreeBuilder builder) {
@@ -87,7 +91,7 @@ public final class EnvironmentRunner {
 		return Optional.ofNullable(insistenceLayer);
 	}
 
-	// Listeners are kept sorted by phase so infrastructure listeners fire before user listeners.
+	// Listeners are kept sorted by phase, so infrastructure listeners fire before application ones.
 	public void addListener(EnvironmentRunnerListener listener) {
 		Objects.requireNonNull(listener, "listener must not be null");
 		listeners.add(listener);
@@ -105,10 +109,19 @@ public final class EnvironmentRunner {
 	}
 
 	public void run() {
-		runSubtree(tree.getRootNode());
+		runOnItsOwnLevel(tree.getRootNode());
 	}
 
-	private void runSubtree(Node<EnvironmentDefinition> node) {
+	private void runOnItsOwnLevel(Node<EnvironmentDefinition> node) {
+		SetupLevel level = newSetupLevel();
+		executeWithCleanup(
+				() -> runSubtree(node, level),
+				() -> close(level, node));
+	}
+
+	// The level opens only when the environment ran, so a failed environment
+	// never closes the level of its parent.
+	private void runSubtree(Node<EnvironmentDefinition> node, SetupLevel level) {
 		EnvironmentDefinition definition = node.getValue();
 		logger.info("Running environment: {}", definition.getName());
 
@@ -119,11 +132,12 @@ public final class EnvironmentRunner {
 			failureHandler.environmentFailed(definition, failure);
 			return;
 		}
+		level.open();
 		runTestsAndChildrenOf(node);
 	}
 
-	// afterChildrenRun closes what afterRun opened, so it fires even when a
-	// listener or a child environment fails in between.
+	// afterChildrenRun pairs with afterRun, so it fires even when a listener or
+	// a child environment fails in between.
 	private void runTestsAndChildrenOf(Node<EnvironmentDefinition> node) {
 		executeWithCleanup(
 				() -> fireAfterRunAndRunChildrenOf(node),
@@ -132,20 +146,24 @@ public final class EnvironmentRunner {
 
 	private void fireAfterRunAndRunChildrenOf(Node<EnvironmentDefinition> node) {
 		fireAfterRun(node.getValue());
-		for (Node<EnvironmentDefinition> child : node.getChildren()) runChild(child, node.getValue());
+		for (Node<EnvironmentDefinition> child : node.getChildren()) runOnItsOwnLevel(child);
 	}
 
-	private void runChild(Node<EnvironmentDefinition> child, EnvironmentDefinition parent) {
-		executeWithCleanup(
-				() -> runSubtree(child),
-				() -> cleanUpBeforeNextSibling(child, parent));
+	// Also when the environment failed halfway: what it wrote before failing is
+	// undone too. When the undoing itself fails the run is stopping, and the
+	// listeners are not told of a cleanup that did not happen.
+	private void close(SetupLevel level, Node<EnvironmentDefinition> node) {
+		if (!node.hasNextSibling()) {
+			level.close();
+			return;
+		}
+
+		level.closeUndoingSetup();
+		fireAfterSiblingCleanup(node.getParent().getValue());
 	}
 
-	// Undoes what the child wrote in the level of its parent, also when the
-	// child failed halfway. The last child needs none: its parent is about to
-	// close that level.
-	private void cleanUpBeforeNextSibling(Node<EnvironmentDefinition> child, EnvironmentDefinition parent) {
-		if (!child.isLastChild()) fireAfterSiblingCleanup(parent);
+	private SetupLevel newSetupLevel() {
+		return SetupLevel.onLayerIfAny(insistenceLayer());
 	}
 
 	private void fireBeforeRun(EnvironmentDefinition definition) {
