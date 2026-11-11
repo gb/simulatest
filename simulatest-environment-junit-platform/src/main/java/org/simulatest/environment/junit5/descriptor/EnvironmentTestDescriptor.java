@@ -17,6 +17,7 @@ public final class EnvironmentTestDescriptor extends AbstractTestDescriptor
 
 	private final EnvironmentDefinition definition;
 	private final boolean lastEnvironmentSibling;
+	private boolean levelOpened;
 
 	public EnvironmentTestDescriptor(UniqueId uniqueId, EnvironmentDefinition definition, boolean lastEnvironmentSibling) {
 		super(uniqueId, Objects.requireNonNull(definition, "definition must not be null").getName());
@@ -41,14 +42,18 @@ public final class EnvironmentTestDescriptor extends AbstractTestDescriptor
 	public SimulatestExecutionContext before(SimulatestExecutionContext context) {
 		context.runEnvironment(definition);
 		context.increaseInsistenceLevel();
+		levelOpened = true;
 		return context;
 	}
 
+	// The platform calls after() even when before() threw. A failed environment
+	// opened no level, so decreasing here would close its parent's level instead.
 	@Override
 	public void after(SimulatestExecutionContext context) {
-		context.decreaseInsistenceLevel();
+		if (levelOpened) context.decreaseInsistenceLevel();
 
-		// Skip the redundant reset for the last sibling: the parent's decreaseLevel
+		// Undoes what this environment wrote in the parent's level, also when it
+		// failed halfway. Skipped for the last sibling: the parent's decreaseLevel
 		// will roll back past this savepoint anyway, so resetting here would waste I/O.
 		if (!lastEnvironmentSibling) {
 			context.resetInsistenceLevel();
