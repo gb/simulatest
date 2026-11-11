@@ -139,23 +139,39 @@ final class UseEnvironmentClassScanner {
 	}
 
 	// The id of a class ends in a class segment. The id of one test ends in a test
-	// segment, which holds the id Jupiter gave the test, right after the segment of
-	// the class that ran it.
+	// segment, which holds the id Jupiter gave the test. It comes after the segment
+	// of the class that ran it, with one more test segment in between when the test
+	// was made by a method while it ran.
 	private void selectReported(UniqueId uniqueId) {
 		Segment last = uniqueId.getLastSegment();
 
-		if (JupiterDelegatingClassDescriptor.CLASS_SEGMENT.equals(last.getType())) {
+		if (isClass(last)) {
 			classNamedBy(last).ifPresent(selected::addWholeClass);
-		} else if (JupiterDelegatingClassDescriptor.TEST_SEGMENT.equals(last.getType())) {
-			classNamedBy(uniqueId.removeLastSegment().getLastSegment()).ifPresent(owner ->
+		} else if (isTest(last)) {
+			classThatRan(uniqueId).ifPresent(owner ->
 					selected.addPart(owner, DiscoverySelectors.selectUniqueId(last.getValue())));
 		}
 	}
 
-	private static Optional<Class<?>> classNamedBy(Segment segment) {
-		if (!JupiterDelegatingClassDescriptor.CLASS_SEGMENT.equals(segment.getType())) return Optional.empty();
-		return ReflectionSupport.tryToLoadClass(segment.getValue()).toOptional()
+	private static Optional<Class<?>> classThatRan(UniqueId testId) {
+		UniqueId id = testId;
+		while (isTest(id.getLastSegment())) id = id.removeLastSegment();
+		return Optional.of(id.getLastSegment())
+				.filter(UseEnvironmentClassScanner::isClass)
+				.flatMap(UseEnvironmentClassScanner::classNamedBy);
+	}
+
+	private static Optional<Class<?>> classNamedBy(Segment classSegment) {
+		return ReflectionSupport.tryToLoadClass(classSegment.getValue()).toOptional()
 				.filter(ClassChain::hasEnvironment);
+	}
+
+	private static boolean isClass(Segment segment) {
+		return JupiterDelegatingClassDescriptor.CLASS_SEGMENT.equals(segment.getType());
+	}
+
+	private static boolean isTest(Segment segment) {
+		return JupiterDelegatingClassDescriptor.TEST_SEGMENT.equals(segment.getType());
 	}
 
 }
