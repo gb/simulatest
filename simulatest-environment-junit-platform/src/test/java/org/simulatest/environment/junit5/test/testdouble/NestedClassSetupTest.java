@@ -37,15 +37,14 @@ public class NestedClassSetupTest {
 		}
 
 		@Test
-		void aShouldSeeTheParentOuterAndNestedRows() {
+		void aShouldSeeTheParentOuterAndNestedRowsAndAddItsOwn() {
 			assertEquals(3, EnvRows.count());
 			EnvRows.insert(20, "test");
 		}
 
 		@Test
-		void bShouldSeeTheParentOuterAndNestedRows() {
+		void bShouldSeeTheParentOuterAndNestedRowsOnly() {
 			assertEquals(3, EnvRows.count());
-			EnvRows.insert(20, "test");
 		}
 
 	}

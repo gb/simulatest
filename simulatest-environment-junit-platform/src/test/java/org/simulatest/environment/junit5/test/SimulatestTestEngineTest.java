@@ -40,6 +40,7 @@ import org.simulatest.environment.junit5.test.testdouble.NestedOwnEnvironmentTes
 import org.simulatest.environment.junit5.test.testdouble.InsistenceIsolationTest;
 import org.simulatest.environment.junit5.test.testdouble.EnvironmentTracker;
 import org.simulatest.environment.junit5.test.testdouble.ClassSetupRowTest;
+import org.simulatest.environment.junit5.test.testdouble.ConstructorRowTest;
 import org.simulatest.environment.junit5.test.testdouble.FailingBeforeAllTest;
 import org.simulatest.environment.junit5.test.testdouble.FailingClassSetupTest;
 import org.simulatest.environment.junit5.test.testdouble.NestedClassSetupTest;
@@ -267,6 +268,16 @@ class SimulatestTestEngineTest {
 
 		assertNoFailures(summary);
 		assertEquals(2, summary.getTestsSucceededCount(), "Both tests should see the row the class added");
+		assertEveryLevelIsClosedAndNoRowIsLeft();
+	}
+
+	@Test
+	void dataWrittenWhenATestInstanceIsBuiltShouldBeUndoneWithItsTest() {
+		TestExecutionSummary summary = runSimulatest(ConstructorRowTest.class);
+
+		assertNoFailures(summary);
+		assertEquals(2, summary.getTestsSucceededCount(),
+				"The instance of the second test adds the same row, so the row of the first must be gone");
 		assertEveryLevelIsClosedAndNoRowIsLeft();
 	}
 

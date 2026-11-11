@@ -11,8 +11,8 @@ import org.simulatest.environment.junit5.test.testdouble.environment.ParentRowEn
 
 /**
  * Test double: the class adds one row of its own before its tests. Every
- * test should see it, next to the parent row, and not the row of the test
- * that ran before.
+ * test should see it, next to the parent row. The first test adds a row of
+ * its own, which the second test should not see.
  */
 @UseEnvironment(ParentRowEnvironment.class)
 @TestMethodOrder(MethodOrderer.MethodName.class)
@@ -24,15 +24,14 @@ public class ClassSetupRowTest {
 	}
 
 	@Test
-	void aShouldSeeTheParentRowAndTheClassRow() {
+	void aShouldSeeTheParentRowAndTheClassRowAndAddItsOwn() {
 		assertEquals(2, EnvRows.count());
 		EnvRows.insert(20, "test");
 	}
 
 	@Test
-	void bShouldSeeTheParentRowAndTheClassRow() {
+	void bShouldSeeTheParentRowAndTheClassRowOnly() {
 		assertEquals(2, EnvRows.count());
-		EnvRows.insert(20, "test");
 	}
 
 }

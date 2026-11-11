@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+import org.junit.jupiter.api.extension.TestInstanceFactoryContext;
+import org.junit.jupiter.api.extension.TestInstancePreConstructCallback;
 import org.simulatest.environment.SetupLevel;
 import org.simulatest.environment.junit5.SimulatestExecutionContext;
 
@@ -16,8 +18,10 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * of its own, so the data its class setup writes ({@code @BeforeAll}, a
  * per-class test instance) is seen by every test of the class.
  *
- * <p>The level opens right before the first test of the class, after the
- * class setup ran. It is reset after each test, so sibling tests start from
+ * <p>The level opens after the class setup ran and before the first test,
+ * or before the instance of the first test is built when each test gets its
+ * own instance. So what a test instance writes when it is built belongs to
+ * its test. The level is reset after each test, so sibling tests start from
  * the same state: the class setup data stays and the data of the test is
  * undone. When the class ends, one rollback undoes the level and the class
  * setup data below it, before the next class starts.</p>
@@ -33,8 +37,8 @@ import org.simulatest.environment.junit5.SimulatestExecutionContext;
  * <p>Auto-registered via {@code META-INF/services}. Does nothing outside a
  * Simulatest run.</p>
  */
-public final class ClassLevelExtension
-		implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
+public final class ClassLevelExtension implements BeforeAllCallback, TestInstancePreConstructCallback,
+		BeforeEachCallback, AfterEachCallback, AfterAllCallback {
 
 	private static final Namespace NAMESPACE = Namespace.create(ClassLevelExtension.class);
 
@@ -45,6 +49,15 @@ public final class ClassLevelExtension
 
 		levelOfOuterClass(classContext).ifPresent(SetupLevel::open);
 		classContext.getStore(NAMESPACE).put(classContext.getRequiredTestClass(), simulatest.newSetupLevel());
+	}
+
+	// With one instance per test, the instance is built after the class setup,
+	// and the level of the class is already known here. With one instance per
+	// class, the instance is built before the class setup; the level is not
+	// known yet, and beforeEach opens it.
+	@Override
+	public void preConstructTestInstance(TestInstanceFactoryContext factoryContext, ExtensionContext context) {
+		levelOf(context.getRequiredTestClass(), context).ifPresent(SetupLevel::open);
 	}
 
 	@Override

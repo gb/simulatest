@@ -18,7 +18,10 @@ public class FailingClassSetupTest {
 		throw new IllegalStateException("class setup failure");
 	}
 
+	// Has no assertion on purpose: the class setup above always throws, so this
+	// method only gives Jupiter a test to discover.
 	@Test
+	@SuppressWarnings("java:S2699")
 	void shouldNeverRun() {
 		throw new UnsupportedOperationException("Should never be reached: the class setup fails first");
 	}

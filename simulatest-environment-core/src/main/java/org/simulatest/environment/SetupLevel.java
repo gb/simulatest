@@ -86,13 +86,19 @@ public final class SetupLevel {
 		}
 
 		@Override
-		public void increaseLevel() { }
+		public void increaseLevel() {
+			// No layer: there is no level to open.
+		}
 
 		@Override
-		public void decreaseLevel() { }
+		public void decreaseLevel() {
+			// No layer: there is no level to leave.
+		}
 
 		@Override
-		public void resetCurrentLevel() { }
+		public void resetCurrentLevel() {
+			// No layer: there is nothing to undo.
+		}
 
 	}
 
