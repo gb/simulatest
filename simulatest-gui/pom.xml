@@ -16,7 +16,7 @@
 		<gpg.skip>true</gpg.skip>
 		<fest-swing.version>1.2.1</fest-swing.version>
 		<miglayout.version>3.7.4</miglayout.version>
-		<picocontainer.version>2.15.2</picocontainer.version>
+		<picocontainer.version>2.16</picocontainer.version>
 		<classgraph.version>4.8.184</classgraph.version>
 	</properties>
 
